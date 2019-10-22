@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -65,7 +66,7 @@ public class DispositivosController {
 
     @MessageMapping("/cliente/dispositivos")
     @SendTo("/cliente/dispositivos")
-    public void returnDispositivo(SimpMessageHeaderAccessor headerAccessor) {
+    public void returnDispositivo(SimpMessageHeaderAccessor headerAccessor, WebSocketSession session) {
         ResponseEntity<List<Dispositivo>> respnse = this.servicioDispositivos.getListDispositivosActivos();
         this.template.convertAndSend("/cliente/dispositivos", respnse);
         return;
