@@ -1,0 +1,64 @@
+@import "~@angular/material/prebuilt-themes/pink-bluegrey.css";
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+@import "//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css";
+@import "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css";
+
+.container-box{
+    width: 100%;
+    max-width: 1030px;
+    h4{
+        font-size: 22px;
+        margin-bottom: 50px;
+    }
+    .table-bordered{
+        background: white;
+        overflow: hidden;
+        tbody tr td{
+            border:1px solid #ece9e9;;
+        }
+         tbody tr td .switch {
+            margin-right: 10px;
+            margin-top: 4px;
+        }
+        thead tr th{
+            border:0px;
+        }
+        thead tr th:first-child{
+            width: 60px;
+        }
+        thead tr th:nth-child(2){
+            width: 100px;
+        }
+        .box-column{
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 5px 9px 5px 9px;
+            width: 30px;
+            height: 30px;
+            background: #393939 0% 0% no-repeat padding-box;
+            border-radius: 4px;
+            margin: 0 auto;
+        }
+    }
+
+}
+ .red {
+      background: red;
+    }
+  .green {
+        background: green;
+      }
+  .yellow {
+        background: yellow;
+      }
+.circuloPing {
+            margin-left: 40%;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }

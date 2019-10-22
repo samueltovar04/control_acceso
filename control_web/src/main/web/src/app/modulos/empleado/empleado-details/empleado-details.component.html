@@ -1,0 +1,24 @@
+<div *ngIf="employee">
+  <div>
+    <label>Nombre: </label> {{employee.name}}
+  </div>
+  <div>
+    <label>Apellido: </label> {{employee.lastName}}
+  </div>
+  <div>
+    <label>Correo: </label> {{employee.email}}
+  </div>
+  <div>
+    <label>Active: </label> {{employee.enabled}}
+  </div>
+
+  <span class="button is-small btn-primary" *ngIf='employee.enabled' (click)='updateActive(false)'>Inactivar</span>
+
+  <span class="button is-small btn-primary" *ngIf='!employee.enabled' (click)='updateActive(true)'>Activar</span>
+
+  <span class="button is-small btn-danger" (click)='deleteEmployee(employee.id)'>Borrar</span>
+
+  <hr/>
+  <br>
+  <button (click)="list()" class="btn btn-primary">Lista de Empleados</button><br>
+</div>

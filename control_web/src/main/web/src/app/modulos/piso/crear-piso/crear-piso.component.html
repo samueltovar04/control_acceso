@@ -1,0 +1,17 @@
+<h3>Registrar Visitante</h3>
+<div [hidden]="submitted">
+  <form (ngSubmit)="onSubmit()">
+    <div class="row">
+
+    <div class="col-md-6 col-sm-6 col-lg-6">
+
+
+    <button type="submit" class="btn btn-success">Submit</button>
+    </div>
+</div>
+  </form>
+</div>
+
+<div [hidden]="!submitted">
+  <h4>You submitted successfully!</h4>
+</div>

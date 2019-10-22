@@ -1,0 +1,24 @@
+<div *ngIf="visita">
+  <div>
+    <label>Nombre: </label> {{visita.name}}
+  </div>
+  <div>
+    <label>Apellido: </label> {{visita.lastName}}
+  </div>
+  <div>
+    <label>Correo: </label> {{visita.email}}
+  </div>
+  <div>
+    <label>Active: </label> {{visita.enabled}}
+  </div>
+
+  <span class="button is-small btn-primary" *ngIf='visita.enabled' (click)='updateActive(false)'>Inactivar</span>
+
+  <span class="button is-small btn-primary" *ngIf='!visita.enabled' (click)='updateActive(true)'>Activar</span>
+
+  <span class="button is-small btn-danger" (click)='deleteVisitante(visita.id)'>Borrar</span>
+
+  <hr/>
+  <br>
+  <button (click)="list()" class="btn btn-primary">Lista de Visitantes</button><br>
+</div>

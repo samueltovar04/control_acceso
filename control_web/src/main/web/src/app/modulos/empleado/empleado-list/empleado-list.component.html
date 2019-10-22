@@ -1,0 +1,35 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h1>Empleados</h1>
+  </div>
+  <div class="panel-body">
+    <table id="tablaEmp" class="table table-striped table-bordered table-sm row-border hover" datatable [dtOptions]="dtOptions"
+    [dtTrigger]="dtTrigger">
+      <thead>
+      <tr>
+        <th>DNI</th>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Email</th>
+        <th>Foto</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let employee of empleados$ ">
+        <td>{{employee.document}}</td>
+        <td>{{employee.name}}</td>
+        <td>{{employee.lastName}}</td>
+        <td>{{employee.email}}</td>
+        <td><img width="80px" src="{{'data:image/jpg;base64,' + employee.picture}}" /></td>
+        <td>
+          <button >List</button>
+          <button class="btn btn-info" [routerLink]="['/home/empleado-edit', employee.id]">Editar</button>
+          <button class="btn btn-danger" (click)="deleteEmployee(employee.id)">Borrar</button>
+        </td>
+      </tr>
+      </tbody>
+
+    </table>
+  </div>
+</div>

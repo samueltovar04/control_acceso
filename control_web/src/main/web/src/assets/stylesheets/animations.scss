@@ -1,0 +1,24 @@
+@keyframes showBoxApps{
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+        margin-top: 18px;
+    }
+}
+
+@keyframes showView{
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}
+
+.dropdown-menu{animation-name: dropdownEffect; animation-duration: 1s;}
+  @keyframes dropdownEffect {
+      from {opacity:.5}
+        to {opacity:1}
+}

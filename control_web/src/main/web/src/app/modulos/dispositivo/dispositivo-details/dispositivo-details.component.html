@@ -1,0 +1,24 @@
+<div *ngIf="dispositivo">
+  <div>
+    <label>IP: </label> {{dispositivo.ip}}
+  </div>
+  <div>
+    <label>Puerto: </label> {{dispositivo.port}}
+  </div>
+  <div>
+    <label>Descripcion: </label> {{dispositivo.descripcion}}
+  </div>
+  <div>
+    <label>Active: </label> {{dispositivo.state}}
+  </div>
+
+  <span class="button is-small btn-primary" *ngIf='dispositivo.state' (click)='updateActive(false)'>Inactivar</span>
+
+  <span class="button is-small btn-primary" *ngIf='!dispositivo.state' (click)='updateActive(true)'>Activar</span>
+
+  <span class="button is-small btn-danger" (click)='deleteDispositivo(dispositivo.id)'>Borrar</span>
+
+  <hr/>
+  <br>
+  <button (click)="list()" class="btn btn-primary">Lista de Dispositivo</button><br>
+</div>

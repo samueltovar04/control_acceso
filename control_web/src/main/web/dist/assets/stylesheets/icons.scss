@@ -1,0 +1,92 @@
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-next-button:before {
+  content: "\e918";
+  color: #fff;
+}
+.icon-user_profile:before {
+  content: "\e90c";
+}
+.icon-padlock:before {
+  content: "\e916";
+}
+.icon-danger:before {
+  content: "\e917";
+}
+.icon-apps:before {
+  content: "\e900";
+}
+.icon-bell:before {
+  content: "\e901";
+}
+.icon-box:before {
+  content: "\e902";
+}
+.icon-camera:before {
+  content: "\e903";
+}
+.icon-check_button:before {
+  content: "\e904";
+}
+.icon-close:before {
+  content: "\e905";
+}
+.icon-close_button:before {
+  content: "\e906";
+}
+.icon-down_arrow:before {
+  content: "\e907";
+}
+.icon-exit:before {
+  content: "\e908";
+}
+.icon-filters:before {
+  content: "\e909";
+}
+.icon-limited_cash:before {
+  content: "\e90a";
+}
+.icon-message:before {
+  content: "\e90b";
+}
+.icon-notifications_bell:before {
+  content: "\e90d";
+}
+.icon-search:before {
+  content: "\e90e";
+}
+.icon-send:before {
+  content: "\e90f";
+}
+.icon-star:before {
+  content: "\e910";
+}
+.icon-status:before {
+  content: "\e911";
+}
+.icon-time:before {
+  content: "\e912";
+}
+.icon-up_arrow:before {
+  content: "\e913";
+}
+.icon-user:before {
+  content: "\e914";
+}
+.icon-user_plus:before {
+  content: "\e915";
+}

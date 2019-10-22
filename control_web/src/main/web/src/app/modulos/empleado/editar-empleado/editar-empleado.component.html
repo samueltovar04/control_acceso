@@ -1,0 +1,74 @@
+<h3>Modificar Empleado</h3>
+<div [hidden]="submitted">
+  <form (ngSubmit)="onSubmit()">
+    <div class="row">
+    <div class="col-md-4 col-sm-4 col-lg-4 col-md-offset-4" style="position:absolute;left:40%;text-align:left">
+      <app-camera (pictureTaken)="handleImage($event)"></app-camera>
+      <div class="form-group">
+        <label for="name">Foto</label>
+        <div class="snapshot" *ngIf="webcamImage">
+          <img width="200px" [src]="webcamImage.imageAsDataUrl" />
+          <input type="hidden" class="form-control" required [(ngModel)]="employee.picture" name="picture" id="picture">
+        </div>
+        <div class="snapshot" *ngIf="!webcamImage">
+          <img width="200px" [src]="'data:image/jpeg;base64,'+employee.picture" />
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-sm-6 col-lg-6">
+
+      <div class="form-group">
+        <label for="name">Tarjeta Acceso</label>
+        <input type="number" class="form-control" id="badgeAccess" required [(ngModel)]="employee.badgeAccess" name="badgeAccess">
+      </div>
+    <div class="form-group">
+      <label for="name">DNI</label>
+      <input type="number" class="form-control" id="id" required [(ngModel)]="id" name="id">
+
+      <input type="number" class="form-control" id="document" required [(ngModel)]="employee.document" name="document">
+    </div>
+
+    <div class="form-group">
+      <label for="name">Nombre</label>
+      <input type="text" class="form-control" id="name" required [(ngModel)]="employee.name" name="name">
+    </div>
+
+    <div class="form-group">
+      <label for="name">Apellido</label>
+      <input type="text" class="form-control" id="lastName" required [(ngModel)]="employee.lastName" name="lastName">
+    </div>
+
+    <div class="form-group">
+      <label for="name">Correo</label>
+      <input type="text" class="form-control" id="email" required [(ngModel)]="employee.email" name="email">
+    </div>
+
+      <div class="form-group">
+        <label for="name">Fecha Nacimiento</label>
+        <input type="date" class="form-control" id="birthDate" required [(ngModel)]="employee.birthDate" name="birthDate">
+      </div>
+
+    <div class="form-group">
+      <section class="form-control">
+        <label for="name">Sexo</label>
+        <input name="sex" value="m" type="radio" selected [(ngModel)]="employee.sex" />
+        <i>Masculino</i>
+        <input name="sexr" value="f" type="radio" [(ngModel)]="employee.sex" />
+        <i>Femenino</i>
+      </section>
+    </div>
+
+    <div class="form-group">
+      <label for="name">Celular</label>
+      <input type="number" class="form-control" id="telephone" required [(ngModel)]="employee.telephone" name="telephone">
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+    </div>
+</div>
+  </form>
+</div>
+
+<div [hidden]="!submitted">
+  <h4>You submitted successfully!</h4>
+</div>

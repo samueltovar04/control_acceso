@@ -1,0 +1,54 @@
+<div class="container-left-menu">
+  <div id="leftMenu" class="left-menu" [ngClass]="{'left-menu-open' : showLeftMenu}" clickOutside
+    (clickOutside)="showLeftMenu = !showLeftMenu" >
+    <div class="logo-menu" (click)="openLeftMenu()">
+      <span>Logo</span>
+    </div>
+    <ul class="left-menu-buttons">
+      <li id="buttonCustomers" routerLinkActive="li-active" (click)="openCustomersSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
+        <i class="icon-user"></i>
+        <span>Empleados</span>
+        <i class="icon-down_arrow"></i>
+      </li>
+      <ul id="customersSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
+        <li routerLink="empleados" routerLinkActive="li-active" (click)="closeCustomerSubmenu()">Lista de empleados</li>
+        <li routerLink="empleado-add" routerLinkActive="li-active" (click)="closeCustomerSubmenu()">Agregar</li>
+      </ul>
+      <li id="buttonVisits" routerLinkActive="li-active" (click)="openVisitsSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
+        <i class="icon-user"></i>
+        <span>Visitantes</span>
+        <i class="icon-down_arrow"></i>
+      </li>
+      <ul id="visitsSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
+        <li routerLink="visitantes" routerLinkActive="li-active" (click)="closeVisitSubmenu()">Lista de Visitas</li>
+        <li routerLink="visitante-add" routerLinkActive="li-active" (click)="closeVisitSubmenu()">Agregar</li>
+      </ul>
+      <li id="buttonDispos" routerLinkActive="li-active" (click)="openDisposSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
+      <i class="icon-user"></i>
+      <span>Dispositivos</span>
+      <i class="icon-down_arrow"></i>
+    </li>
+      <ul id="disposSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
+        <li routerLink="dispositivos" routerLinkActive="li-active" (click)="closeDisposSubmenu()">Lista de Dispositivos</li>
+        <li routerLink="dispositivo-add" routerLinkActive="li-active" (click)="closeDisposSubmenu()">Agregar</li>
+      </ul>
+      <li id="buttonPisos" routerLinkActive="li-active" (click)="openPisosSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
+        <i class="icon-user"></i>
+        <span>Pisos</span>
+        <i class="icon-down_arrow"></i>
+      </li>
+      <ul id="pisosSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
+        <li routerLink="pisos" routerLinkActive="li-active" (click)="closePisosSubmenu()">Lista de Pisos</li>
+        <li routerLink="piso-add" routerLinkActive="li-active" (click)="closePisosSubmenu()">Agregar</li>
+      </ul>
+    </ul>
+    <div class="user-profile">
+      <div class="user-profile-data" (click)="openLeftMenu()">
+
+      </div>
+      <div class="user-profile-session">
+        <button routerLink=""><i class="icon-exit"></i><span>Cerrar Sesión</span></button>
+      </div>
+    </div>
+  </div>
+</div>

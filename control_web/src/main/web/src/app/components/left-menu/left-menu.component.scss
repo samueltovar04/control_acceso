@@ -1,0 +1,228 @@
+@import '../../../assets/stylesheets/color';
+
+.container-left-menu{
+    width: 55px;
+    height: 100vh;
+    position: relative;
+    float: left;
+    z-index: 2;
+}
+
+.left-menu{
+    background-color:#393939;
+    height: 100%;
+    z-index: 1;
+    -webkit-box-shadow: 10px 0px 5px -11px rgba(0,0,0,0.34);
+    -moz-box-shadow: 10px 0px 5px -11px rgba(0,0,0,0.34);
+    box-shadow: 10px 0px 5px -11px rgba(0,0,0,0.34);
+    padding: 9px 0 40px 0;
+    width: 55px;
+    transition: width .8s;
+    position: relative;
+    overflow: hidden;
+
+    .logo-menu{
+        margin-bottom: 56px;
+        padding-left: 11px;
+        display: inline-flex;
+        align-items: center;
+        width: 100%;
+        transition: padding-left .5s ease-in;
+
+        .logo-1{
+            width: 30px;
+            margin-right: 15px;
+        }
+
+        .logo-2{
+            height: 20px;
+            width: 76px;
+        }
+    }
+
+    &-buttons{
+        margin: 0;
+        padding: 0;
+
+        & > li{
+            list-style: none;
+            padding: 14px 2px 14px 14px;
+            font-size: 16px;
+            font-family: "lato-bold";
+            color:  $primary-color;
+            background-color: rgba(94, 105, 126,.2);
+            border-bottom: 1px solid #393939;
+            border-left: 5px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
+            white-space: nowrap;
+            transition: .3s;
+
+            .icon-down_arrow{
+                font-size: 8px;
+                font-weight: bold;
+                margin-left: 60px;
+                transition: .5s;
+            }
+
+            &.toogle-button{
+                .icon-down_arrow{
+                    transform: rotate(-180deg);
+                }
+            }
+
+            span{
+                margin-left: 55px;
+                opacity: 0;
+                transition: opacity 1s ease-in;
+            }
+
+            .icon-user{
+                font-size: 18px;
+                margin-right: 2px;
+            }
+
+            .icon-status{
+                font-size: 24px;
+            }
+
+            .icon-box{
+                font-size: 20px;
+            }
+
+            &.li-active,
+            &:hover{
+                background-color: rgba(94, 105, 126,.2);
+                border-left-color:  $primary-color;
+                color:  $primary-color;
+                cursor: pointer;
+            }
+        }
+    }
+
+    &-submenu{
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .5s linear,padding-top .5s linear;
+        padding-left: 94px;
+
+        &.submenu-open{
+            max-height: 150px;
+            padding-top: 10px;
+        }
+
+        li{
+            list-style: none;
+            font-size: 14px;
+            padding-bottom: 14px;
+            color: $primary-color;
+            cursor: pointer;
+            transition: .3s;
+            white-space: nowrap;
+        }
+
+        .li-active{
+            font-family: 'lato-bold';
+            color: white;
+        }
+    }
+
+
+    .user-profile{
+        position: absolute;
+        bottom: 50px;
+        width: 100%;
+
+        &-data{
+            white-space: nowrap;
+            padding-left: 7px;
+            display: inline-flex;
+            transition: padding-left .5s ease-in;
+
+            div{
+                opacity: 0;
+                margin-left: 14px;
+                transition: opacity 1s ease-in;
+
+                p{
+                    font-size: 12px;
+                    margin-bottom: 0;
+                    color:  $primary-color;
+                }
+
+                p:first-of-type{
+                    font-family: 'lato-bold';
+                }
+            }
+
+            .user-image{
+                width: 40px;
+                height: 40px;
+                border: 1.5px solid  $primary-color;
+            }
+        }
+
+        &-session{
+            padding-left: 18px;
+            transition: padding-left .5s ease-in;
+
+            button{
+                padding: 0;
+                margin-top: 26px;
+                background-color: transparent;
+                border: none;
+                color:  $primary-color;
+                display: inline-flex;
+                align-items: center;
+
+                .icon-exit{
+                    font-size: 20px;
+                }
+
+                span{
+                    font-family: 'lato-bold';
+                    font-size: 14px;
+                    margin-left: 26px;
+                    opacity: 0;
+                    white-space: nowrap;
+                    transition: opacity 1s ease-in;
+                }
+            }
+        }
+    }
+
+    &-open{
+        width: 255px;
+
+        .logo-menu{
+            padding-left: 46px;
+
+            span{
+                opacity: 1;
+            }
+        }
+
+        .left-menu-buttons{
+            & > li span{
+                opacity: 1;
+            }
+        }
+
+        .user-profile-data{
+            padding-left: 46px;
+
+            div{
+                opacity: 1;
+            }
+        }
+
+        .user-profile-session{
+            padding-left: 60px;
+
+            button span{
+                opacity: 1;
+            }
+        }
+    }
+}

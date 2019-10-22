@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'lato-regular';
+  src: url('~src/assets/fonts/Lato-Regular.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'lato-bold';
+  src: url('~src/assets/fonts/Lato-Bold.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'icomoon';
+  src:  url('~src/assets/fonts/icomoon/icomoon.eot?9l908m');
+  src:  url('~src/assets/fonts/icomoon/icomoon.eot?9l908m#iefix') format('embedded-opentype'),
+    url('~src/assets/fonts/icomoon/icomoon.ttf?9l908m') format('truetype'),
+    url('~src/assets/fonts/icomoon/icomoon.woff?9l908m') format('woff'),
+    url('~src/assets/fonts/icomoon/icomoon.svg?9l908m#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.f-bold{
+  font-family: 'lato-bold';
+}
+.f-regular{
+  font-family: 'lato-regular';
+}

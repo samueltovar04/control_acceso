@@ -1,0 +1,294 @@
+@import '~bootstrap/dist/css/bootstrap.min.css';
+
+@import "~@ng-select/ng-select/themes/default.theme.css";
+/*@import '~@angular/material/theming';*/
+
+@include mat-core();
+
+$webapp-primary: mat-palette($mat-indigo);
+$webapp-accent: mat-palette($mat-pink, A200, A100, A400);
+
+$webapp-warn: mat-palette($mat-red);
+
+$webapp-theme: mat-light-theme($webapp-primary, $webapp-accent, $webapp-warn);
+
+@include angular-material-theme($webapp-theme);
+
+
+@import 'assets/stylesheets/color';
+@import 'assets/stylesheets/icons';
+@import 'assets/stylesheets/fonts.scss';
+@import 'assets/stylesheets/elements';
+@import 'assets/stylesheets/animations';
+@import 'assets/stylesheets/form';
+
+body,html{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+body{
+    min-height: 100%;
+}
+
+h1{
+    font-size: 72px;
+}
+
+h2{
+    font-size: 44px;
+}
+
+h3{
+    font-size: 34px;
+}
+
+h4{
+    font-size: 22px;
+}
+
+h5{
+    font-size: 16px;
+}
+
+p{
+    font-size: 14px;
+    margin: 0px;
+}
+
+*:focus{
+    outline: none;
+}
+
+input::-ms-clear {
+    display: none;
+ }
+
+button{
+    cursor: pointer;
+}
+
+button:focus{
+    box-shadow: none !important;
+    outline: none;
+}
+
+.dropdown-toggle::after{
+    display: none;
+}
+
+.wrapper{
+    position: relative;
+    font-family: 'lato-regular';
+    color: $text-color;
+}
+
+.block{
+    display: block;
+}
+.d-flex{
+    display: flex;
+}
+.flex-wrap{
+    flex-wrap: wrap;
+}
+.d-inline-block{
+    display: inline-block;
+}
+.text-center{
+    text-align: center;
+    margin: 0 auto;
+}
+
+
+/* Colors */
+.text-green{
+    color: $green;
+}
+
+.green{
+    background-color: $green;
+}
+
+.red{
+    background-color: $red;
+}
+
+.yellow{
+    background-color: $yellow;
+}
+
+.gray{
+    background-color: $text-labels-color;
+}
+
+
+/* General */
+.view-atm-tas,
+.view-boxes,
+.view-managers,
+.view-videocall{
+    animation: showView 1s forwards;
+    column-count: 3;
+    column-gap: 20px;
+
+}
+
+
+.card-open .card-toolbar{
+    .campaing-status{
+        display: none;
+    }
+
+    .campaing-icon{
+        background-color: transparent;
+        padding-bottom: 6px;
+
+        i{
+            box-shadow: none;
+
+            &::before{
+                content: "\e905" !important;
+                font-size: 18px;
+                color: white;
+            }
+        }
+    }
+}
+
+.view-atm-tas .card-toolbar{
+    button{
+        width: 33.3% !important;
+    }
+
+    button:first-child{
+        display: none !important;
+    }
+}
+
+.modal-open{
+    padding-right: 0 !important;
+}
+
+.modal{
+    .modal-dialog{
+        margin: 18px auto;
+    }
+
+    .modal-content{
+        border-radius: 6px;
+        border: none;
+        padding: 20px auto;
+        box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.1);
+        animation: showView .3s forwards linear;
+    }
+
+    .modal-header{
+        border-bottom: 0;
+        padding: 0 20px 2px 20px;
+        border-left: 4px solid $primary-color;
+        border-top-left-radius: 0;
+        border-top-left-radius: 0;
+        margin-top: 20px;
+        height: 55px;
+        align-items: flex-end;
+        position: relative;
+
+        .modal-title{
+            font-size: 22px;
+            font-family: 'lato-bold';
+            width: 320px;
+            margin: 0 auto;
+        }
+
+        button.close{
+            padding: 0;
+            position: absolute;
+            top: 14px;
+            right: 40px;
+            border: 1.5px solid $primary-color;
+            height: 30px;
+            width: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+
+            .icon-close{
+                font-size: 12px;
+                color: $primary-color;
+            }
+
+            &:hover,
+            &:focus{
+                opacity: 1;
+            }
+        }
+    }
+
+    .modal-body{
+        padding-bottom: 50px;
+    }
+}
+
+.modal-queue{
+    .modal-dialog{
+        max-width: 580px;
+    }
+
+    .modal-body{
+        form{
+            width: 320px;
+            margin: 0 auto;
+
+            .button{
+                width: 100%;
+                margin-top: 15px;
+            }
+
+            .input-identity-card{
+                display: inline-flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+
+                .type{
+                    width: 30%;
+                }
+
+                .number{
+                    width: 64%;
+                }
+            }
+
+            .input-button-check{
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 25px;
+            }
+        }
+    }
+}
+.footer{
+    height: 40px;
+    width: 100%;
+    background-color: #505050;
+    padding: 12px 35px 0 50px;
+
+    p{
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: $primary-color;
+    }
+}
+.footer {
+    position: fixed;
+    bottom: 0;
+    width:100%;
+    height: 70px;
+    background-color: blue;
+    text-align: center;
+    color: white;
+}
