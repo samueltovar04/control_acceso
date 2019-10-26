@@ -1,0 +1,33 @@
+<div class="panel panel-default container-box">
+  <div class="panel-heading">
+    <h1>Pisos</h1>
+  </div>
+  <div class="panel-body table-responsive"  *ngIf="piso$">
+    <table id="tablaVis" class="table table-striped table-bordered table-sm row-border hover" datatable [dtOptions]="dtOptions"
+           [dtTrigger]="dtTrigger">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Piso</th>
+        <th>Descripción</th>
+        <th>Area</th>
+        <th>Estado</th>
+            <span class="slider" [ngClass]="{ disabled: !piso.state }"></span>
+          </label>
+          <span *ngIf="!piso.state">
+              Deshabilitado
+            </span>
+          <span *ngIf="piso.state">
+              Habilitado
+            </span>
+        </td>
+        <td>
+          <button>List</button>
+          <button class="btn btn-info" [routerLink]="['/home/piso-edit', piso.id]">Editar</button>
+        </td>
+      </tr>
+      </tbody>
+
+    </table>
+  </div>
+</div>

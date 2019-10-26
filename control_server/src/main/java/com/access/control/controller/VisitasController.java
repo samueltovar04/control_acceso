@@ -1,5 +1,6 @@
 package com.access.control.controller;
 
+import com.access.control.dto.VisitaDto;
 import com.access.control.model.Visita;
 import com.access.control.services.VisitasService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,32 +18,44 @@ import java.util.List;
 public class VisitasController {
     @Autowired
     VisitasService servicioVisitas;
-    @GetMapping("visitas/{id}")
+    @GetMapping("visitantes/{id}")
     public ResponseEntity<Visita> getArticleById(@PathVariable("id") Long id) {
         Visita visitas = servicioVisitas.getVisitaById(id);
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
-    @GetMapping("visitas")
+    @GetMapping("visitantes")
     public ResponseEntity<List<Visita>> getAllVisitas() {
         List<Visita> list = servicioVisitas.getListVisitas();
         return new ResponseEntity<List<Visita>>(list, HttpStatus.OK);
     }
-    @PostMapping("visitas")
-    public ResponseEntity<Void> addVisitas(@RequestBody Visita visitas, UriComponentsBuilder builder) {
+    @PostMapping("visitantes")
+    public ResponseEntity<Void> addVisitas(@RequestBody VisitaDto visitas, UriComponentsBuilder builder) {
         Visita flag = servicioVisitas.addVisita(visitas);
         if (flag.getId() == null) {
             return new ResponseEntity<Void>(HttpStatus.CONFLICT);
         }
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/visitas/{id}").buildAndExpand(visitas.getId()).toUri());
+        headers.setLocation(builder.path("/visitantes/{id}").buildAndExpand(visitas.getId()).toUri());
         return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
     }
-    @PutMapping("visitas/{id}")
-    public ResponseEntity<Visita> updateVisitas(@RequestBody Visita visitas,@PathVariable("id") Long id) {
-        visitas = servicioVisitas.updateVisita(visitas,id);
+    @PutMapping("visitantes/{id}")
+    public ResponseEntity<Visita> updateVisitas(@RequestBody VisitaDto visitantes,@PathVariable("id") Long id) {
+        Visita visitas = servicioVisitas.updateVisita(visitantes,id);
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
-    @DeleteMapping("visitas/{id}")
+    @PutMapping("visitantes/huellas/{id}")
+    public ResponseEntity<Visita> updateVisitasHuellas(@RequestBody Visita visitantes,@PathVariable("id") Long id) {
+        Visita visitas = servicioVisitas.updateVisitaHuellas(visitantes,id);
+        return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
+    }
+
+    @PutMapping("visitantes/pisos/{id}")
+    public ResponseEntity<Visita> updateVisitasPisos(@RequestBody Visita visitantes) {
+        Visita visitas = servicioVisitas.updatePisos(visitantes);
+        return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
+    }
+
+    @DeleteMapping("visitantes/{id}")
     public ResponseEntity<Void> deleteVisitas(@PathVariable("id") Long id) {
         if(servicioVisitas.deleteVisita(servicioVisitas.getVisitaById(id))){
             return new ResponseEntity<Void>(HttpStatus.OK);

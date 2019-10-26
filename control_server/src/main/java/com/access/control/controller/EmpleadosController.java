@@ -56,13 +56,34 @@ public class EmpleadosController {
         //return new ResponseEntity<Empleado>(flag, HttpStatus.CREATED);
     }
     @PutMapping("empleados/{id}")
-    public ResponseEntity<Empleado> updateEmpleado(@RequestBody Empleado empleado,@PathVariable("id") Long id) {
-        empleado = servicioEmpleado.updateEmpleado(empleado,id);
+    public ResponseEntity<Empleado> updateEmpleado(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
+        Empleado empleado = servicioEmpleado.updateEmpleado(empl,id);
         if(empleado!=null){
             return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
         }
         return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
     }
+
+    @PutMapping("empleados/huellas/{id}")
+    public ResponseEntity<Empleado> updateEmpleadohuellas(@RequestBody Empleado empl,@PathVariable("id") Long id) {
+
+        Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
+        if(empleado!=null){
+            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
+        }
+        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("empleados/pisos/{id}")
+    public ResponseEntity<Empleado> updateEmpleadopisos(@RequestBody Empleado empl,@PathVariable("id") Long id) {
+
+        Empleado empleado = servicioEmpleado.updatePisos(empl);
+        if(empleado!=null){
+            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
+        }
+        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
+    }
+
     @DeleteMapping("empleados/{id}")
     public ResponseEntity<Void> deleteEmpleado(@PathVariable("id") Long id) {
         if(servicioEmpleado.deleteEmpleado(servicioEmpleado.getEmpleadoById(id))){

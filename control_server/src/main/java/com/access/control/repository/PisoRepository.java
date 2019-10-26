@@ -15,4 +15,6 @@ public interface PisoRepository extends JpaRepository<Piso, Long> {
     Piso findByPiso(@Param("piso") String piso);
     @Query("SELECT p FROM Piso p WHERE area = :area")
     List<Piso> findByArea(@Param("area") String area);
+    @Query("SELECT p FROM Piso p WHERE state = :state")
+    List<Piso> findAllState(@Param("state") Integer state);
 }

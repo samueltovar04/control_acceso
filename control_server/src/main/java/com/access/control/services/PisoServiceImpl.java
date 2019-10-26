@@ -19,7 +19,7 @@ public class PisoServiceImpl implements PisoService{
     @Override
     @Transactional
     public List<Piso> getListPisos(Object... params) {
-        if(params != null){
+        if(params != null && params.length>0){
             return dao.findByArea((String) params[0]);
         }else {
             return (List<Piso>) dao.findAll();

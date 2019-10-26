@@ -41,6 +41,6 @@ constructor(private pisoService: PisoService,private router: Router) { }
   }
 
   gotoList() {
-    this.router.navigate(['/pisos']);
+    this.router.navigate(['/home/pisos']);
   }
 }

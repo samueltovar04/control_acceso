@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name="piso_permiso")
-public class PisoPermiso extends AbstractEntity implements Serializable {
+public class PisoPermisoVisita extends AbstractEntity implements Serializable {
     private static final long serialVersionUID = 1L;
     @ManyToOne
     @JoinColumn(name = "piso_id",insertable = true, updatable = false, nullable = false)
@@ -18,7 +18,7 @@ public class PisoPermiso extends AbstractEntity implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "badge_access", insertable = false, updatable = false,nullable = false)
-    private Empleado empleado;
+    private Visita visita;
 
     public Piso getPiso() {
         return piso;
@@ -28,11 +28,11 @@ public class PisoPermiso extends AbstractEntity implements Serializable {
         this.piso = piso;
     }
 
-    public Empleado getEmpleado() {
-        return empleado;
+    public Visita getVisita() {
+        return visita;
     }
 
-    public void setEmpleado(Empleado empleado) {
-        this.empleado = empleado;
+    public void setVisita(Visita visita) {
+        this.visita = visita;
     }
 }

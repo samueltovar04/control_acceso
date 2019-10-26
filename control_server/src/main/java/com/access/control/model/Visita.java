@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.*;
@@ -32,7 +34,16 @@ public class Visita extends AbstractEntity implements Serializable {
     private String elements;
 
     @Column
-    private String picture;
+    private byte[] picture;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    public byte[] getPicture() {
+        return picture;
+    }
+
+    public void setPicture(byte[] picture) {
+        this.picture = picture;
+    }
     @JsonProperty("visitDate")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     @Past
@@ -53,15 +64,18 @@ public class Visita extends AbstractEntity implements Serializable {
     @Column
     private String huella2;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "visita")
+    private List<PisoPermisoVisita> listPisos = new ArrayList<>();
+
+    public List<PisoPermisoVisita> getListPisos() {
+        return listPisos;
+    }
+
+    public void setListPisos(List<PisoPermisoVisita> listPisos) {
+        this.listPisos = listPisos;
+    }
+
     public Visita() {
-    }
-
-    public String getPicture() {
-        return picture;
-    }
-
-    public void setPicture(String picture) {
-        this.picture = picture;
     }
 
     public String getHuella1() {

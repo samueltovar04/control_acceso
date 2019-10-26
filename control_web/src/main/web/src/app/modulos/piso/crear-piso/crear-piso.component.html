@@ -1,12 +1,26 @@
-<h3>Registrar Visitante</h3>
+<h3>Registrar Piso</h3>
 <div [hidden]="submitted">
   <form (ngSubmit)="onSubmit()">
     <div class="row">
 
-    <div class="col-md-6 col-sm-6 col-lg-6">
+    <div class="col-md-4 col-sm-4 col-lg-4">
 
+      <div class="form-group">
+        <label for="piso">Piso:</label>
+        <input type="text" class="form-control" id="piso" required [(ngModel)]="piso.piso" name="piso">
+      </div>
 
-    <button type="submit" class="btn btn-success">Submit</button>
+      <div class="form-group">
+        <label for="descripcion">Descripción:</label>
+        <input type="text" class="form-control" id="descripcion" required [(ngModel)]="piso.descripcion" name="descripcion">
+      </div>
+
+      <div class="form-group">
+        <label for="area">Area:</label>
+        <input type="text" class="form-control" id="area" required [(ngModel)]="piso.area" name="area">
+      </div>
+
+      <button type="submit" class="btn btn-success">Guardar</button>
     </div>
 </div>
   </form>

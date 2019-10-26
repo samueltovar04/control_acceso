@@ -17,18 +17,16 @@ public class VisitaDto implements Serializable {
     private Long id;
     private Integer state;
     private Integer document;
-
+    private String typeDocument;
     private Integer badgeAccess;
 
     private String name;
 
     private String lastName;
 
-    private String email;
-
     private Boolean enabled;
 
-    private String telephone;
+    private String elements;
 
     private String picture;
 
@@ -66,6 +64,22 @@ public class VisitaDto implements Serializable {
         this.badgeAccess = badgeAccess;
     }
 
+    public String getTypeDocument() {
+        return typeDocument;
+    }
+
+    public void setTypeDocument(String typeDocument) {
+        this.typeDocument = typeDocument;
+    }
+
+    public String getElements() {
+        return elements;
+    }
+
+    public void setElements(String elements) {
+        this.elements = elements;
+    }
+
     public String getName() {
         return name;
     }
@@ -82,28 +96,12 @@ public class VisitaDto implements Serializable {
         this.lastName = lastName;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public Boolean getEnabled() {
         return enabled;
     }
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
     }
 
     public String getPicture() {

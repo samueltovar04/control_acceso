@@ -51,6 +51,6 @@ constructor(private route: ActivatedRoute,private router: Router,private pisoSer
   }
 
   gotoList() {
-    this.router.navigate(['/pisos']);
+    this.router.navigate(['/home/pisos']);
   }
 }
