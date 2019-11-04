@@ -2,7 +2,6 @@ package com.access.control.model;
 import com.access.control.model.generic.AbstractEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -66,7 +65,7 @@ public class Empleado extends AbstractEntity implements Serializable {
     @Column
     private String huella2;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "empleado")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "piso")
     private List<PisoPermiso> listPisos = new ArrayList<>();
 
     public Empleado() {

@@ -12,14 +12,24 @@
         <th>Descripción</th>
         <th>Area</th>
         <th>Estado</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let piso of piso$ ">
+        <td>{{piso.id}}</td>
+        <td>{{piso.piso}}</td>
+        <td>{{piso.descripcion}}</td>
+        <td>{{piso.area}}</td>
+        <td>
             <span class="slider" [ngClass]="{ disabled: !piso.state }"></span>
-          </label>
+          <label>
           <span *ngIf="!piso.state">
               Deshabilitado
             </span>
           <span *ngIf="piso.state">
               Habilitado
             </span>
+          </label>
         </td>
         <td>
           <button>List</button>

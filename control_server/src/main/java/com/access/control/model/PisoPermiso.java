@@ -16,9 +16,10 @@ public class PisoPermiso extends AbstractEntity implements Serializable {
     @JoinColumn(name = "piso_id",insertable = true, updatable = false, nullable = false)
     private Piso piso;
 
-    @ManyToOne
-    @JoinColumn(name = "badge_access", insertable = false, updatable = false,nullable = false)
-    private Empleado empleado;
+    //@ManyToOne
+    //@JoinColumn(name = "badge_access", insertable = false, updatable = false,nullable = false)
+    //private Empleado empleado;
+    private Integer badgeAccess;
 
     public Piso getPiso() {
         return piso;
@@ -28,11 +29,11 @@ public class PisoPermiso extends AbstractEntity implements Serializable {
         this.piso = piso;
     }
 
-    public Empleado getEmpleado() {
-        return empleado;
+    public Integer getBadgeAccess() {
+        return badgeAccess;
     }
 
-    public void setEmpleado(Empleado empleado) {
-        this.empleado = empleado;
+    public void setBadgeAccess(Integer badgeAccess) {
+        this.badgeAccess = badgeAccess;
     }
 }

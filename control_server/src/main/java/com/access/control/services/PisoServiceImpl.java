@@ -1,6 +1,5 @@
 package com.access.control.services;
 
-import com.access.control.model.Dispositivo;
 import com.access.control.model.Piso;
 import com.access.control.repository.PisoRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -68,4 +68,7 @@
 
 <div [hidden]="!submitted">
   <h4>You submitted successfully!</h4>
+  <div *ngFor="let piso of pisos$ ">
+    {{piso}}
+  </div>
 </div>

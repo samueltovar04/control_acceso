@@ -7,7 +7,6 @@ import com.access.control.model.PisoPermiso;
 import com.access.control.repository.EmpleadoRepository;
 import com.access.control.repository.PisoPermisoRepository;
 import com.access.control.repository.PisoRepository;
-import org.dozer.DozerBeanMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +77,7 @@ public class EmpleadosServiceImpl implements EmpleadosService{
         final Empleado finalEmpleado = empleadosDao.save(empleado);
         pisos.forEach(
                 p->{
-                    pisoPermiso.setEmpleado(finalEmpleado);
+                    pisoPermiso.setBadgeAccess(finalEmpleado.getBadgeAccess());
                     pisoPermiso.setPiso(p);
                     pisoPermiso.setState(0);
                     listpp.add(pisoPermiso);

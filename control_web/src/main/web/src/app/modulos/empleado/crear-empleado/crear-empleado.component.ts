@@ -15,7 +15,7 @@ import { Empleado } from "../../../shared/empleado/empleado.model";
 export class CrearEmpleadoComponent implements OnInit {
 
 employee: Empleado = new Empleado();
-
+pisos$: Subject<any> = new Subject();
 submitted = false;
 
 constructor(private empleService: EmpleadoService,private router: Router) { }
@@ -37,9 +37,11 @@ constructor(private empleService: EmpleadoService,private router: Router) { }
   save() {
     console.log(this.employee);
     this.empleService.createEmployee(this.employee)
-      .subscribe(data => console.log(data), error => console.log(error));
-    this.employee = new Empleado();
-    this.gotoList();
+      .subscribe(data =>
+      {console.log(data)
+      this.employee = data;
+      }, error => console.log(error));
+    //this.gotoList();
   }
 
   onSubmit() {

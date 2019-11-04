@@ -1,10 +1,8 @@
 package com.access.control.services;
 
 import com.access.control.dto.VisitaDto;
-import com.access.control.model.Piso;
 import com.access.control.model.PisoPermisoVisita;
 import com.access.control.model.Visita;
-import com.access.control.repository.PisoPermisoRepository;
 import com.access.control.repository.PisoPermisoVisitaRepository;
 import com.access.control.repository.PisoRepository;
 import com.access.control.repository.VisitaRepository;
@@ -25,8 +23,6 @@ public class VisitasServiceImpl implements VisitasService{
     PisoPermisoVisitaRepository pisoPermisoRepository;
     @Autowired
     PisoRepository daoPiso;
-    @Autowired
-    PisoPermisoVisita pisoPermisoVisita;
 
     @Override
     @Transactional

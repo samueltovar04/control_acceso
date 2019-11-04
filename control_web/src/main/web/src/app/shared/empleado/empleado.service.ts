@@ -14,12 +14,12 @@ constructor(private http: HttpClient) { }
     return this.http.get(`${this.baseUrl}/${id}`);
   }
 
-  createEmployee(employee: Object): Observable<Object> {
+  createEmployee(employee: Object): Observable<any> {
       return this.http.post(`${this.baseUrl}`, employee);
 
   }
 
-  updateEmployee(id: number, value: any): Observable<Object> {
+  updateEmployee(id: number, value: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/${id}`, value);
   }
 
