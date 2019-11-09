@@ -2,9 +2,9 @@ package com.access.control.services;
 
 import com.access.control.dto.VisitaDto;
 import com.access.control.model.PisoPermisoVisita;
+import com.access.control.model.PisoVisita;
 import com.access.control.model.Visita;
-import com.access.control.repository.PisoPermisoVisitaRepository;
-import com.access.control.repository.PisoRepository;
+import com.access.control.repository.PisoVisitaRepository;
 import com.access.control.repository.VisitaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,9 +20,7 @@ public class VisitasServiceImpl implements VisitasService{
     @Autowired
     VisitaRepository dao;
     @Autowired
-    PisoPermisoVisitaRepository pisoPermisoRepository;
-    @Autowired
-    PisoRepository daoPiso;
+    PisoVisitaRepository pisoDao;
 
     @Override
     @Transactional
@@ -33,13 +31,29 @@ public class VisitasServiceImpl implements VisitasService{
     @Override
     @Transactional
     public Visita getVisitaById(Long id) {
-        return dao.findById(id).orElse(null);
+        Visita vis = dao.findById(id).orElse(null);
+        if (vis != null)
+            vis.getListPisos().forEach(
+                    p->{
+                        if(p!=null)
+                            p.setPisoId(p.getPiso().getId());
+                    }
+            );
+        return vis;
     }
 
     @Override
     @Transactional
     public Visita addVisita(VisitaDto visitante) {
-        Visita visita = new Visita();
+        List<PisoVisita> pisos = pisoDao.findAllState(1);
+
+        List<PisoPermisoVisita> listpp = new ArrayList<>();
+        pisos.forEach(
+                p->{
+                    listpp.add(new PisoPermisoVisita(p,0));
+                }
+        );
+        Visita visita = new Visita(listpp);
         visita.setBadgeAccess(visitante.getBadgeAccess());
         visita.setDocument(visitante.getDocument());
         visita.setTypeDocument(visitante.getTypeDocument());
@@ -51,17 +65,7 @@ public class VisitasServiceImpl implements VisitasService{
         visita.setPicture(Base64.getDecoder().decode(Arrays.asList(visitante.getPicture().split(",")).get(1)));
         visita.setState(1);
         final Visita visitaFinal = dao.save(visita);
-        List<PisoPermisoVisita> listpp = new ArrayList<>();
-        PisoPermisoVisita pisoPermiso = new PisoPermisoVisita();
-        daoPiso.findAllState(1).forEach(
-            p->{
-                pisoPermiso.setVisita(visitaFinal);
-                pisoPermiso.setPiso(p);
-                pisoPermiso.setState(0);
-                listpp.add(pisoPermiso);
-            }
-        );
-        visitaFinal.setListPisos(pisoPermisoRepository.saveAll(listpp));
+
         return visitaFinal;
     }
 
@@ -80,25 +84,25 @@ public class VisitasServiceImpl implements VisitasService{
         visita.setVisitDate(visitante.getVisitDate());
         visita.setPicture(Base64.getDecoder().decode(Arrays.asList(visitante.getPicture().split(",")).get(1)));
         visita.setState(visitante.getState());
-        if(dao.existsById(id)){
-            return dao.save(visita);
-        }else{
-            return null;
+        Visita visit = dao.getOne(id);
+        if(visit!=null){
+            visita.setHuella1(visit.getHuella1());
+            visita.setHuella2(visit.getHuella2());
+            return dao.saveAndFlush(visita);
         }
+        return null;
 
     }
     @Override
     @Transactional
-    public Visita updateVisitaHuellas(Visita visitante,Long id) {
-        Visita visita = new Visita();
-        visita.setId(id);
-        visita.setHuella1(visitante.getHuella1());
-        visita.setHuella2(visitante.getHuella2());
-        if(dao.existsById(id)){
-            return dao.save(visita);
-        }else{
-            return null;
+    public Visita updateVisitaHuellas(VisitaDto visita,Long id) {
+        Visita visit = dao.getOne(id);
+        if(visit!=null){
+            visit.setHuella1(visita.getHuella1());
+            visit.setHuella2(visita.getHuella2());
+            return dao.saveAndFlush(visit);
         }
+        return null;
     }
 
     @Override
@@ -110,10 +114,13 @@ public class VisitasServiceImpl implements VisitasService{
 
     @Override
     @Transactional
-    public Visita updatePisos(Visita visita){
+    public Visita updatePisos(VisitaDto visita,Long id){
 
-        pisoPermisoRepository.saveAll(visita.getListPisos());
-
-        return visita;
+        Visita visit = dao.getOne(id);
+        if(visit!=null){
+            visit.addListPisos(visita.getListPisos());
+            return dao.saveAndFlush(visit);
+        }
+        return null;
     }
 }

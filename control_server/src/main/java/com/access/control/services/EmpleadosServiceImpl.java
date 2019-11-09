@@ -5,8 +5,8 @@ import com.access.control.model.Empleado;
 import com.access.control.model.Piso;
 import com.access.control.model.PisoPermiso;
 import com.access.control.repository.EmpleadoRepository;
-import com.access.control.repository.PisoPermisoRepository;
 import com.access.control.repository.PisoRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +20,6 @@ import java.util.List;
 public class EmpleadosServiceImpl implements EmpleadosService{
     @Autowired
     private EmpleadoRepository empleadosDao;
-
-    @Autowired
-    private PisoPermisoRepository pisoPermisoRepository;
 
     @Autowired
     private PisoRepository pisoDao;
@@ -47,18 +44,37 @@ public class EmpleadosServiceImpl implements EmpleadosService{
     @Transactional
     public Empleado getEmpleadoById(Long idEmpleado)
     {
-        return empleadosDao.findById(idEmpleado).orElse(null);
+        Empleado empl = empleadosDao.findById(idEmpleado).orElse(null);
+
+        if(empl!=null){
+            empl.getListPisos().forEach(
+                    p ->{
+                        if(p!=null)
+                            p.setPisoId(p.getPisos().getId());
+                    }
+            );
+            return empl;
+        }
+        return null;
     }
 
     @Override
     @Transactional
-    public Empleado addEmpleado(EmpleadoDto emp)
+    public Empleado addEmpleado(@NotNull EmpleadoDto emp)
     {
         //emp.setPicture(Base64.getDecoder().decode(emp.getPicture()));
        // emp.setPicture(Arrays.asList(emp.getPicture().split(",")).get(1));
         //String encodedString = Base64.getEncoder().encodeToString(emp.geticture());
         //Empleado empleado = new DozerBeanMapper().map(emp, Empleado.class);
-        Empleado empleado = new Empleado();
+        List<Piso> pisos = pisoDao.findAllState(1);
+
+        List<PisoPermiso> listpp = new ArrayList<>();
+        pisos.forEach(
+                p->{
+                    listpp.add(new PisoPermiso(p,0));
+                }
+        );
+        Empleado empleado = new Empleado(listpp);
         empleado.setDocument(emp.getDocument());
         empleado.setName(emp.getName());
         empleado.setBadgeAccess(emp.getBadgeAccess());
@@ -71,20 +87,9 @@ public class EmpleadosServiceImpl implements EmpleadosService{
         empleado.setState(1);
         empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
 
-        List<Piso> pisos = pisoDao.findAllState(1);
-        PisoPermiso pisoPermiso = new PisoPermiso();
-        List<PisoPermiso> listpp = new ArrayList<>();
         final Empleado finalEmpleado = empleadosDao.save(empleado);
-        pisos.forEach(
-                p->{
-                    pisoPermiso.setBadgeAccess(finalEmpleado.getBadgeAccess());
-                    pisoPermiso.setPiso(p);
-                    pisoPermiso.setState(0);
-                    listpp.add(pisoPermiso);
-                }
-        );
-        finalEmpleado.setListPisos(pisoPermisoRepository.saveAll(listpp));
-        return finalEmpleado;
+        //finalEmpleado.setListPisos(pisoPermisoRepository.saveAll(listpp));
+        return getEmpleadoById(finalEmpleado.getId());
     }
 
     @Override
@@ -104,24 +109,25 @@ public class EmpleadosServiceImpl implements EmpleadosService{
         empleado.setEnabled(emp.getEnabled());
         empleado.setState(emp.getState());
         empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
-
-        if(empleadosDao.findById(id).isPresent()){
-            return empleadosDao.saveAndFlush(empleado);
+        Empleado empl = empleadosDao.getOne(id);
+        if(empl!=null){
+            empleado.setHuella1(empl.getHuella1());
+            empleado.setHuella2(empl.getHuella2());
+            return getEmpleadoById(empleadosDao.saveAndFlush(empleado).getId());
         }
         return null;
     }
 
     @Override
     @Transactional
-    public Empleado updateEmpleadoHuella(Empleado emp,Long id)
+    public Empleado updateEmpleadoHuella(EmpleadoDto emp,Long id)
     {
-        Empleado empleado = new Empleado();
-        empleado.setId(id);
-        empleado.setHuella1(emp.getHuella1());
-        empleado.setHuella2(emp.getHuella2());
-
-        if(empleadosDao.findById(id).isPresent()){
-            return empleadosDao.saveAndFlush(empleado);
+        Empleado empl = empleadosDao.getOne(id);
+        if(empl!=null){
+            empl.setHuella1(emp.getHuella1());
+            empl.setHuella2(emp.getHuella2());
+            empleadosDao.saveAndFlush(empl);
+            return getEmpleadoById(id);
         }
         return null;
     }
@@ -136,10 +142,14 @@ public class EmpleadosServiceImpl implements EmpleadosService{
 
     @Override
     @Transactional
-    public Empleado updatePisos(Empleado emp){
+    public Empleado updatePisos(EmpleadoDto emp,Long id){
 
-        pisoPermisoRepository.saveAll(emp.getListPisos());
-
-        return emp;
+        Empleado empl = empleadosDao.getOne(id);
+        if(empl!=null){
+            empl.addListPisos(emp.getListPisos());
+            empleadosDao.saveAndFlush(empl);
+            return getEmpleadoById(id);
+        }
+        return null;
     }
 }

@@ -1,6 +1,5 @@
 package com.access.control.controller;
 
-
 import com.access.control.dto.EmpleadoDto;
 import com.access.control.model.Empleado;
 import com.access.control.services.EmpleadosService;
@@ -10,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class EmpleadosController {
     @Autowired
     EmpleadosService servicioEmpleado;
     @GetMapping("empleados/{id}")
-    public ResponseEntity<Empleado> getArticleById(@PathVariable("id") Long id) {
+    public ResponseEntity<Empleado> getEmpleadoById(@PathVariable("id") Long id) {
         Empleado empleado = servicioEmpleado.getEmpleadoById(id);
         if(empleado!=null){
             return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
@@ -35,22 +36,19 @@ public class EmpleadosController {
         }
         return new ResponseEntity<List<Empleado>>(list, HttpStatus.NO_CONTENT);
     }
-    @PostMapping("empleados")
-    public ResponseEntity<Empleado> addEmpleado(@RequestBody EmpleadoDto empleado) {
+    @PostMapping(path = "empleados",  produces = "application/json; charset=UTF-8", consumes = "application/json; charset=UTF-8")
+    public ResponseEntity<Empleado> addEmpleado(@RequestBody EmpleadoDto empleado, HttpServletResponse response, HttpServletRequest request) {
         Empleado flag = servicioEmpleado.addEmpleado(empleado);
         if (flag.getId() == null) {
             return new ResponseEntity<Empleado>(HttpStatus.CONFLICT);
         }
-        //UriComponentsBuilder builder;
-        //HttpHeaders headers = new HttpHeaders();
-        //headers.setLocation(builder.path("api/v1/empleados/{id}").buildAndExpand(empleado.getId()).toUri());
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest().path("/{id}")
                 .buildAndExpand(empleado.getId()).toUri();
 
-        return ResponseEntity.created(location).build();
-        //return new ResponseEntity<Empleado>(flag, HttpStatus.CREATED);
+       // return ResponseEntity.created(location).build();
+        return new ResponseEntity<Empleado>(flag, HttpStatus.CREATED);
     }
     @PutMapping("empleados/{id}")
     public ResponseEntity<Empleado> updateEmpleado(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
@@ -62,7 +60,7 @@ public class EmpleadosController {
     }
 
     @PutMapping("empleados/huellas/{id}")
-    public ResponseEntity<Empleado> updateEmpleadohuellas(@RequestBody Empleado empl,@PathVariable("id") Long id) {
+    public ResponseEntity<Empleado> updateEmpleadohuellas(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
 
         Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
         if(empleado!=null){
@@ -72,9 +70,9 @@ public class EmpleadosController {
     }
 
     @PutMapping("empleados/pisos/{id}")
-    public ResponseEntity<Empleado> updateEmpleadopisos(@RequestBody Empleado empl,@PathVariable("id") Long id) {
+    public ResponseEntity<Empleado> updateEmpleadopisos(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
 
-        Empleado empleado = servicioEmpleado.updatePisos(empl);
+        Empleado empleado = servicioEmpleado.updatePisos(empl,id);
         if(empleado!=null){
             return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
         }

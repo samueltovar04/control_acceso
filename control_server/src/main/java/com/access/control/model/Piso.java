@@ -1,20 +1,34 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name="pisos")
-public class Piso extends AbstractEntity implements Serializable {
+public class  Piso extends AbstractEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String piso;
     private String descripcion;
     private String area;
+
+   /* @JsonIgnore
+    @OneToMany(cascade = CascadeType.REMOVE,mappedBy = "pisos")
+    private List<PisoPermiso> pisoPermisos = new ArrayList<>();
+
+    public List<PisoPermiso> getPisoPermisos() {
+        return pisoPermisos;
+    }
+
+    public void setPisoPermisos(List<PisoPermiso> pisoPermisos) {
+        this.pisoPermisos = pisoPermisos;
+    }*/
 
     public Piso() {
     }

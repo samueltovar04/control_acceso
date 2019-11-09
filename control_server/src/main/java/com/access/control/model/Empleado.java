@@ -1,10 +1,11 @@
 package com.access.control.model;
 import com.access.control.model.generic.AbstractEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -18,10 +19,10 @@ public class Empleado extends AbstractEntity implements Serializable {
  
     private static final long serialVersionUID = -3465813074586302847L;
  
-    @Column
+    @Column(unique = true)
     private Integer document;
 
-    @Column(name="badge_access")
+    @Column(name="badge_access",unique = true)
     private Integer badgeAccess;
 
     @Column
@@ -65,10 +66,21 @@ public class Empleado extends AbstractEntity implements Serializable {
     @Column
     private String huella2;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "piso")
-    private List<PisoPermiso> listPisos = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL,mappedBy = "empleado")
+    @JsonManagedReference
+    private List<PisoPermiso> listPisos;
 
     public Empleado() {
+    }
+    public Empleado(List<PisoPermiso> pisos)
+    {
+        for(PisoPermiso listPiso : pisos) listPiso.setEmpleado(this);
+        this.listPisos = pisos;
+    }
+
+    public void addListPisos(List<PisoPermiso> listPisos) {
+        for(PisoPermiso listPiso : listPisos) listPiso.setEmpleado(this);
+        this.listPisos = listPisos;
     }
 
     public Integer getBadgeAccess() {

@@ -1,6 +1,7 @@
 package com.access.control.model;
 import com.access.control.model.generic.AbstractEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.awt.*;
@@ -18,9 +19,9 @@ import javax.validation.constraints.Past;
 public class Visita extends AbstractEntity implements Serializable {
  
     private static final long serialVersionUID = -3465813074586302847L;
-    @Column(name="badge_access")
+    @Column(name="badge_access",unique = true)
     private int badgeAccess;
-    @Column
+    @Column(unique = true)
     private int document;
     @Column
     private String name;
@@ -64,8 +65,20 @@ public class Visita extends AbstractEntity implements Serializable {
     @Column
     private String huella2;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "visita")
-    private List<PisoPermisoVisita> listPisos = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "visita")
+    @JsonManagedReference
+    private List<PisoPermisoVisita> listPisos;
+
+    public Visita(List<PisoPermisoVisita> pisos)
+    {
+        for(PisoPermisoVisita listPiso : pisos) listPiso.setVisita(this);
+        this.listPisos = pisos;
+    }
+
+    public void addListPisos(List<PisoPermisoVisita> listPisos) {
+        for(PisoPermisoVisita listPiso : listPisos) listPiso.setVisita(this);
+        this.listPisos = listPisos;
+    }
 
     public List<PisoPermisoVisita> getListPisos() {
         return listPisos;

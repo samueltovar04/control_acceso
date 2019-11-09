@@ -23,6 +23,8 @@ public interface DispositivoService {
 
     Dispositivo updateDispositivo(Dispositivo dispositivo, Long id);
 
+    Dispositivo saveDispositivo(Dispositivo dispositivo);
+
     Boolean deleteById(Long id);
 
     Boolean deleteDispositivo(Dispositivo obj);

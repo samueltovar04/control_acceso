@@ -70,8 +70,14 @@ public class DispositivoServiceImpl implements DispositivoService {
         }else{
             return null;
         }
-
     }
+
+    @Override
+    @Transactional
+    public Dispositivo saveDispositivo(Dispositivo dispositivo) {
+            return dao.saveAndFlush(dispositivo);
+    }
+
     @Override
     @Transactional
     public Boolean deleteById(Long id) {
@@ -87,6 +93,7 @@ public class DispositivoServiceImpl implements DispositivoService {
     }
 
     @Override
+    @Transactional
     @Async("threadPoolTaskScheduler")
     @Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
     public ResponseEntity<List<Dispositivo>> getListDispositivosActivos() {

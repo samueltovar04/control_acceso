@@ -1,6 +1,7 @@
 package com.access.control.dto;
 
 import com.access.control.model.PisoPermiso;
+import com.access.control.model.PisoPermisoVisita;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -31,6 +32,18 @@ public class VisitaDto implements Serializable {
     private String picture;
 
     private String sex;
+
+    @JsonProperty("visitDate")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @Past
+    @Column(name="visit_date")
+    private Date visitDate;
+
+    private String huella1;
+
+    private String huella2;
+
+    private List<PisoPermisoVisita> listPisos = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -144,24 +157,12 @@ public class VisitaDto implements Serializable {
         this.huella2 = huella2;
     }
 
-    public List<PisoPermiso> getListPisos() {
+    public List<PisoPermisoVisita> getListPisos() {
         return listPisos;
     }
 
-    public void setListPisos(List<PisoPermiso> listPisos) {
+    public void setListPisos(List<PisoPermisoVisita> listPisos) {
         this.listPisos = listPisos;
     }
-
-    @JsonProperty("visitDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    @Past
-    @Column(name="visit_date")
-    private Date visitDate;
-
-    private String huella1;
-
-    private String huella2;
-
-    private List<PisoPermiso> listPisos = new ArrayList<>();
 
 }

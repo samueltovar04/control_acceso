@@ -18,7 +18,7 @@ public class Dispositivo  extends AbstractEntity implements Serializable {
     @Column(name="entrada_salida")
     private Integer  entradaSalida;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "piso_id", referencedColumnName = "id")
     private Piso piso;
 

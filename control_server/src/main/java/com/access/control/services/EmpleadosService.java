@@ -10,7 +10,7 @@ public interface EmpleadosService {
     Empleado       getEmpleadoById(Long idEmpleado);
     Empleado       addEmpleado(EmpleadoDto emp);
     Empleado       updateEmpleado(EmpleadoDto emp,Long id);
-    Empleado       updateEmpleadoHuella(Empleado emp,Long id);
+    Empleado       updateEmpleadoHuella(EmpleadoDto emp,Long id);
     boolean        deleteEmpleado(Empleado emp);
-    Empleado       updatePisos(Empleado emp);
+    Empleado       updatePisos(EmpleadoDto emp,Long id);
 }

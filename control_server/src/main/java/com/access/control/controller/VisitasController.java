@@ -44,14 +44,14 @@ public class VisitasController {
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
     @PutMapping("visitantes/huellas/{id}")
-    public ResponseEntity<Visita> updateVisitasHuellas(@RequestBody Visita visitantes,@PathVariable("id") Long id) {
+    public ResponseEntity<Visita> updateVisitasHuellas(@RequestBody VisitaDto visitantes,@PathVariable("id") Long id) {
         Visita visitas = servicioVisitas.updateVisitaHuellas(visitantes,id);
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
 
     @PutMapping("visitantes/pisos/{id}")
-    public ResponseEntity<Visita> updateVisitasPisos(@RequestBody Visita visitantes) {
-        Visita visitas = servicioVisitas.updatePisos(visitantes);
+    public ResponseEntity<Visita> updateVisitasPisos(@RequestBody VisitaDto visitantes,@PathVariable("id") Long id) {
+        Visita visitas = servicioVisitas.updatePisos(visitantes,id);
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
 

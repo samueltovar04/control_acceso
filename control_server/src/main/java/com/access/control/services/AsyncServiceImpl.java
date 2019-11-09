@@ -21,7 +21,7 @@ public class AsyncServiceImpl implements AsyncService {
     private static final Logger logger = LoggerFactory.getLogger(AsyncServiceImpl.class);
 
     @Autowired
-    private DispositivoRepository dispositivoRepository;
+    private DispositivoService dispositivoService;
     @Override
     @Async("asynchThreadPoolTaskExecutor")
     @Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -29,7 +29,7 @@ public class AsyncServiceImpl implements AsyncService {
         logger.info("async ping started: " + new Date() + " threadId:" + Thread.currentThread().getId());
         Thread.sleep(1000);
         dis.setPing(PingState.ping(dis));
-        dispositivoRepository.saveAndFlush(dis);
+        dispositivoService.saveDispositivo(dis);
         logger.info("async ping finished: " + new Date() + " threadId:" + Thread.currentThread().getId());
         return ;
     }

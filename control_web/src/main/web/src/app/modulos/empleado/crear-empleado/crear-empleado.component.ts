@@ -14,6 +14,7 @@ import { Empleado } from "../../../shared/empleado/empleado.model";
 
 export class CrearEmpleadoComponent implements OnInit {
 
+id: number;
 employee: Empleado = new Empleado();
 pisos$: Subject<any> = new Subject();
 submitted = false;
@@ -39,9 +40,11 @@ constructor(private empleService: EmpleadoService,private router: Router) { }
     this.empleService.createEmployee(this.employee)
       .subscribe(data =>
       {console.log(data)
+      this.id = data.id;
       this.employee = data;
+      //this.pisos$ =
       }, error => console.log(error));
-    //this.gotoList();
+    this.gotoList();
   }
 
   onSubmit() {
@@ -50,6 +53,6 @@ constructor(private empleService: EmpleadoService,private router: Router) { }
   }
 
   gotoList() {
-    this.router.navigate(['/home/empleados']);
+    this.router.navigate(['/home/empleado/',this.id]);
   }
 }
