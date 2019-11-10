@@ -7,20 +7,28 @@
     [dtTrigger]="dtTrigger">
       <thead>
       <tr>
+        <th>Nro. Tarjeta</th>
         <th>DNI</th>
         <th>Nombre</th>
         <th>Apellido</th>
         <th>Email</th>
+        <th>Gerencia</th>
+        <th>Sede</th>
+        <th>Tipo COntrato</th>
         <th>Foto</th>
         <th>Actions</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let employee of empleados$ ">
+        <td>{{employee.badgeAccess}}</td>
         <td>{{employee.document}}</td>
         <td>{{employee.name}}</td>
         <td>{{employee.lastName}}</td>
         <td>{{employee.email}}</td>
+        <td>{{employee.gerencia.gerencia}}</td>
+        <td>{{employee.sede.sede}}</td>
+        <td>{{employee.tipoContrato.contrato}}</td>
         <td><img width="80px" src="{{'data:image/jpg;base64,' + employee.picture}}" /></td>
         <td>
           <button >List</button>

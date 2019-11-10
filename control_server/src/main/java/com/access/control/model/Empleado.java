@@ -70,6 +70,42 @@ public class Empleado extends AbstractEntity implements Serializable {
     @JsonManagedReference
     private List<PisoPermiso> listPisos;
 
+    @OneToOne
+    @JoinColumn(name = "gerencia_id", referencedColumnName = "id")
+    private Gerencia gerencia;
+
+    @OneToOne
+    @JoinColumn(name = "sede_id", referencedColumnName = "id")
+    private Sede sede;
+
+    @OneToOne
+    @JoinColumn(name = "tipo_contrato_id", referencedColumnName = "id")
+    private TipoContrato tipoContrato;
+
+    public Gerencia getGerencia() {
+        return gerencia;
+    }
+
+    public void setGerencia(Gerencia gerencia) {
+        this.gerencia = gerencia;
+    }
+
+    public Sede getSede() {
+        return sede;
+    }
+
+    public void setSede(Sede sede) {
+        this.sede = sede;
+    }
+
+    public TipoContrato getTipoContrato() {
+        return tipoContrato;
+    }
+
+    public void setTipoContrato(TipoContrato tipoContrato) {
+        this.tipoContrato = tipoContrato;
+    }
+
     public Empleado() {
     }
     public Empleado(List<PisoPermiso> pisos)

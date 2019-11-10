@@ -1,6 +1,9 @@
 package com.access.control.dto;
 
+import com.access.control.model.Gerencia;
 import com.access.control.model.PisoPermiso;
+import com.access.control.model.Sede;
+import com.access.control.model.TipoContrato;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -43,6 +46,36 @@ public class EmpleadoDto implements Serializable {
     private String huella2;
 
     private List<PisoPermiso> listPisos = new ArrayList<>();
+
+    private Gerencia gerencia;
+
+    private Sede sede;
+
+    private TipoContrato tipoContrato;
+
+    public Gerencia getGerencia() {
+        return gerencia;
+    }
+
+    public void setGerencia(Gerencia gerencia) {
+        this.gerencia = gerencia;
+    }
+
+    public Sede getSede() {
+        return sede;
+    }
+
+    public void setSede(Sede sede) {
+        this.sede = sede;
+    }
+
+    public TipoContrato getTipoContrato() {
+        return tipoContrato;
+    }
+
+    public void setTipoContrato(TipoContrato tipoContrato) {
+        this.tipoContrato = tipoContrato;
+    }
 
     public Long getId() {
         return id;
