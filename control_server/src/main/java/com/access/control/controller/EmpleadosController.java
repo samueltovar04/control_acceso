@@ -2,6 +2,7 @@ package com.access.control.controller;
 
 import com.access.control.dto.EmpleadoDto;
 import com.access.control.model.Empleado;
+import com.access.control.services.DispositivoService;
 import com.access.control.services.EmpleadosService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/")
@@ -20,6 +22,9 @@ import java.util.List;
 public class EmpleadosController {
     @Autowired
     EmpleadosService servicioEmpleado;
+    @Autowired
+    DispositivoService dispositivoService;
+
     @GetMapping("empleados/{id}")
     public ResponseEntity<Empleado> getEmpleadoById(@PathVariable("id") Long id) {
         Empleado empleado = servicioEmpleado.getEmpleadoById(id);
@@ -59,14 +64,37 @@ public class EmpleadosController {
         return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("empleados/huellas/{id}")
-    public ResponseEntity<Empleado> updateEmpleadohuellas(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
+    @PutMapping("empleados/huella1/{id}")
+    public ResponseEntity<Empleado> updateEmpleadohuellas(@PathVariable("id") Long id) {
 
-        Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
-        if(empleado!=null){
+        Empleado empl = servicioEmpleado.getEmpleadoById(id);
+        if(empl!=null){
+            Map<String,String> huella = dispositivoService.getHuella().getBody();
+            empl.setHuella1(huella.get("minusia"));
+            empl.setHuella2("");
+
+            Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
+            empleado.setHuella1(huella.get("huella"));
+
             return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
         }
-        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
+        return new ResponseEntity<Empleado>(empl, HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("empleados/huella2/{id}")
+    public ResponseEntity<Empleado> updateEmpleadohuella2(@PathVariable("id") Long id) {
+        Empleado empl = servicioEmpleado.getEmpleadoById(id);
+        if(empl!=null){
+            Map<String,String> huella = dispositivoService.getHuella().getBody();
+            empl.setHuella1("");
+            empl.setHuella2(huella.get("minusia"));
+
+            Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
+            empleado.setHuella2(huella.get("huella"));
+
+            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
+        }
+        return new ResponseEntity<Empleado>(empl, HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("empleados/pisos/{id}")

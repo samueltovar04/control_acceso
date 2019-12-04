@@ -4,6 +4,7 @@
         <groupId>com.access.control</groupId>
         <artifactId>control-app</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>control_server</artifactId>
     <packaging>jar</packaging>

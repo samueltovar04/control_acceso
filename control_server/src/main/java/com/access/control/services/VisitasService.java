@@ -10,7 +10,7 @@ public interface VisitasService {
     Visita       getVisitaById(Long id);
     Visita       addVisita(VisitaDto visita);
     Visita       updateVisita(VisitaDto visitante,Long id);
-    Visita       updateVisitaHuellas(VisitaDto visitante,Long id);
+    Visita       updateVisitaHuella(Visita visitante,Long id);
     boolean      deleteVisita(Visita visita);
     Visita       updatePisos(VisitaDto visita,Long id);
 }

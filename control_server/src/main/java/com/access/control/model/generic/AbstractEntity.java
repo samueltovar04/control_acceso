@@ -11,7 +11,7 @@ public class AbstractEntity {
     protected static final String DOT = ".";
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
     public static final String ID = "id";

@@ -95,14 +95,10 @@ public class VisitasServiceImpl implements VisitasService{
     }
     @Override
     @Transactional
-    public Visita updateVisitaHuellas(VisitaDto visita,Long id) {
-        Visita visit = dao.getOne(id);
-        if(visit!=null){
-            visit.setHuella1(visita.getHuella1());
-            visit.setHuella2(visita.getHuella2());
-            return dao.saveAndFlush(visit);
-        }
-        return null;
+    public Visita updateVisitaHuella(Visita visita,Long id) {
+
+        dao.saveAndFlush(visita);
+        return getVisitaById(id);
     }
 
     @Override

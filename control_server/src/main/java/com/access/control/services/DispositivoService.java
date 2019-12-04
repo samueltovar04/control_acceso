@@ -4,6 +4,7 @@ import com.access.control.model.Dispositivo;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface DispositivoService {
@@ -28,4 +29,8 @@ public interface DispositivoService {
     Boolean deleteById(Long id);
 
     Boolean deleteDispositivo(Dispositivo obj);
+
+    ResponseEntity<Map<String, String>> checkFingerPrint();
+
+    ResponseEntity<Map<String, String>> getHuella();
 }

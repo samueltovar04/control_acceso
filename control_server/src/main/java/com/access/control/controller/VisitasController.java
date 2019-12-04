@@ -2,6 +2,7 @@ package com.access.control.controller;
 
 import com.access.control.dto.VisitaDto;
 import com.access.control.model.Visita;
+import com.access.control.services.DispositivoService;
 import com.access.control.services.VisitasService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/v1/")
@@ -18,6 +20,8 @@ import java.util.List;
 public class VisitasController {
     @Autowired
     VisitasService servicioVisitas;
+    @Autowired
+    DispositivoService dispositivoService;
     @GetMapping("visitantes/{id}")
     public ResponseEntity<Visita> getArticleById(@PathVariable("id") Long id) {
         Visita visitas = servicioVisitas.getVisitaById(id);
@@ -43,10 +47,35 @@ public class VisitasController {
         Visita visitas = servicioVisitas.updateVisita(visitantes,id);
         return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
     }
-    @PutMapping("visitantes/huellas/{id}")
-    public ResponseEntity<Visita> updateVisitasHuellas(@RequestBody VisitaDto visitantes,@PathVariable("id") Long id) {
-        Visita visitas = servicioVisitas.updateVisitaHuellas(visitantes,id);
-        return new ResponseEntity<Visita>(visitas, HttpStatus.OK);
+    @PutMapping("visitantes/huella1/{id}")
+    public ResponseEntity<Visita> updateVisitahuellas(@PathVariable("id") Long id) {
+
+        Visita empl = servicioVisitas.getVisitaById(id);
+        if(empl!=null){
+            Map<String,String> huella = dispositivoService.getHuella().getBody();
+            empl.setHuella1(huella.get("minusia"));
+
+            Visita empleado = servicioVisitas.updateVisitaHuella(empl,id);
+            empleado.setHuella1(huella.get("huella"));
+
+            return new ResponseEntity<Visita>(empleado, HttpStatus.OK);
+        }
+        return new ResponseEntity<Visita>(empl, HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("visitantes/huella2/{id}")
+    public ResponseEntity<Visita> updateVisitahuella2(@PathVariable("id") Long id) {
+        Visita empl = servicioVisitas.getVisitaById(id);
+        if(empl!=null){
+            Map<String,String> huella = dispositivoService.getHuella().getBody();
+            empl.setHuella2(huella.get("minusia"));
+
+            Visita empleado = servicioVisitas.updateVisitaHuella(empl,id);
+            empleado.setHuella2(huella.get("huella"));
+
+            return new ResponseEntity<Visita>(empleado, HttpStatus.OK);
+        }
+        return new ResponseEntity<Visita>(empl, HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("visitantes/pisos/{id}")

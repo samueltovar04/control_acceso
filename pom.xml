@@ -3,6 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.access.control</groupId>
     <artifactId>control-app</artifactId>
+    <name>control-app</name>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <description>Proyecto Control Accesso</description>

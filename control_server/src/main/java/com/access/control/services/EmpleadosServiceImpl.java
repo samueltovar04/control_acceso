@@ -120,16 +120,11 @@ public class EmpleadosServiceImpl implements EmpleadosService{
 
     @Override
     @Transactional
-    public Empleado updateEmpleadoHuella(EmpleadoDto emp,Long id)
+    public Empleado updateEmpleadoHuella(Empleado emp,Long id)
     {
-        Empleado empl = empleadosDao.getOne(id);
-        if(empl!=null){
-            empl.setHuella1(emp.getHuella1());
-            empl.setHuella2(emp.getHuella2());
-            empleadosDao.saveAndFlush(empl);
+            empleadosDao.saveAndFlush(emp);
             return getEmpleadoById(id);
-        }
-        return null;
+
     }
 
     @Override
