@@ -1,0 +1,84 @@
+<div class="container p-4">
+  <div class="row g-4">
+    <!-- PERFIL Y PASE DIGITAL DE ACCESO -->
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="avatar-box mb-3">
+          <img [src]="clienteData?.foto || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+        </div>
+        <h4 class="fw-bold mb-1">{{ clienteData?.nombre }} {{ clienteData?.apellido }}</h4>
+        <p class="text-muted small mb-2">{{ clienteData?.email }}</p>
+        <span class="badge bg-success p-2 fs-6 mb-3" *ngIf="suscripcionActiva?.estado === 'ACTIVA'">Suscripción Activa</span>
+        <span class="badge bg-danger p-2 fs-6 mb-3" *ngIf="suscripcionActiva?.estado !== 'ACTIVA'">Suscripción Vencida</span>
+
+        <!-- PASE DIGITAL QR DE ACCESO -->
+        <div class="qr-card border rounded p-3 bg-light mt-2">
+          <h6 class="fw-bold text-dark"><i class="bi bi-qr-code me-1"></i> Pase Digital de Acceso</h6>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CLIENTE_1_ACCESS_KEY" class="img-fluid my-2" alt="QR Access Pass">
+          <small class="text-muted d-block">Presente este código QR en los torniquetes para ingresar.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICACIONES Y AVISOS DE PAGO -->
+    <div class="col-md-8">
+      <div class="card shadow-sm border-0 p-3 bg-white mb-4">
+        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-bell-fill me-1"></i> Avisos de Pago y Confirmaciones</h5>
+        <div class="list-group">
+          <div class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let n of notificaciones">
+            <div>
+              <h6 class="fw-bold mb-1">{{ n.titulo }}</h6>
+              <p class="mb-0 text-muted small">{{ n.mensaje }}</p>
+            </div>
+            <small class="text-muted">{{ n.fechaEnvio | date:'short' }}</small>
+          </div>
+          <div *ngIf="notificaciones.length === 0" class="text-muted text-center py-2">No tiene avisos de pago pendientes.</div>
+        </div>
+      </div>
+
+      <!-- REGISTRO / PAGO DE MEMBRESÍA VÍA WEB -->
+      <div class="card shadow-sm border-0 p-3 bg-white mb-4">
+        <h5 class="fw-bold text-success mb-3"><i class="bi bi-credit-card-fill me-1"></i> Pagar / Renovar Membresía</h5>
+        <form (ngSubmit)="realizarPagoWeb()" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Monto a Pagar ($)</label>
+            <input type="number" class="form-control" [(ngModel)]="nuevoPagoCliente.monto" name="montoWeb" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Método</label>
+            <select class="form-select" [(ngModel)]="nuevoPagoCliente.metodoPago" name="metodoWeb">
+              <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+              <option value="TARJETA">Tarjeta Online</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nro de Comprobante/Ref.</label>
+            <input type="text" class="form-control" [(ngModel)]="nuevoPagoCliente.numeroReferencia" name="refWeb" placeholder="Ej. TRANS-98765">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-success w-100 fw-bold"><i class="bi bi-send-fill me-1"></i> Enviar Pago para Verificación</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MIS SIGNOS VITALES PERSONALES -->
+      <div class="card shadow-sm border-0 p-3 bg-white" *ngIf="misSignos">
+        <h5 class="fw-bold text-danger mb-3"><i class="bi bi-heart-pulse me-1"></i> Mis Constantes Vitales (Wearable)</h5>
+        <div class="row text-center">
+          <div class="col-md-4">
+            <div class="fw-bold text-muted small">Ritmo Cardíaco</div>
+            <div class="h3 fw-bold text-danger">{{ misSignos.ritmocardiacoBpm }} BPM</div>
+          </div>
+          <div class="col-md-4">
+            <div class="fw-bold text-muted small">Oxígeno SpO2</div>
+            <div class="h3 fw-bold text-primary">{{ misSignos.saturacionOxigenoSpo2 }}%</div>
+          </div>
+          <div class="col-md-4">
+            <div class="fw-bold text-muted small">Temperatura</div>
+            <div class="h3 fw-bold text-warning">{{ misSignos.temperaturaCorporal }}°C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,18 +1,15 @@
-<div class="wrapper">
+<div class="d-flex min-vh-100 bg-light">
+  <!-- SIDEBAR LATERAL IZQUIERDO -->
   <app-left-menu></app-left-menu>
 
-  <div class="content">
+  <!-- CONTENIDO CENTRAL Y TOPBAR -->
+  <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+    <!-- TOPBAR SUPERIOR -->
+    <app-topbar></app-topbar>
 
-    <div class="principal-view">
-      <!--<app-nav-tabs *ngIf="!(router.url === '/home/estatus')"></app-nav-tabs>-->
-
-        <!--<app-navbar></app-navbar>
-        <app-filters></app-filters>-->
-
+    <!-- ÁREA DE VISTA PRINCIPAL -->
+    <main class="flex-grow-1 p-3 overflow-auto">
       <router-outlet></router-outlet>
-    </div>
-    <div class="footer">
-      <p>ARSAT | PRODUCCIÓN | V.1.0</p>
-    </div>
+    </main>
   </div>
 </div>

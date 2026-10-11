@@ -1,154 +1,120 @@
 package com.access.control.model;
-import com.access.control.model.generic.AbstractEntity;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
-
-import javax.persistence.*;
-import javax.validation.constraints.Past;
 
 @Entity
 @Table(name = "empleados")
-public class Empleado extends AbstractEntity implements Serializable {
- 
-    private static final long serialVersionUID = -3465813074586302847L;
- 
-    @Column(unique = true)
-    private Integer document;
+public class Empleado extends AbstractEntity {
 
-    @Column(name="badge_access",unique = true)
-    private Integer badgeAccess;
-
-    @Column
-    private String name;
-
-    @Column(name="last_name")
-    private String lastName;
- 
-    @Column
+    private String documento;
+    private String codigoInsignia;
+    private String nombre;
+    private String apellido;
     private String email;
+    private String telefono;
+    private String foto;
+    private String sexo;
 
-    @Column
-    private Boolean enabled;
- 
-    @Column
-    private String telephone;
+    @Temporal(TemporalType.DATE)
+    private Date fechaNacimiento;
 
-    @Column
-    private byte[] picture;
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    public byte[] getPicture() {
-        return picture;
-    }
-
-    public void setPicture(byte[] picture) {
-        this.picture = picture;
-    }
-    @Column
-    private String sex;
-
-    @JsonProperty("birthDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    @Past
-    @Column(name="birth_date")
-    private Date birthDate;
-
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String huella1;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String huella2;
 
-    @OneToMany(cascade = CascadeType.ALL,mappedBy = "empleado")
-    @JsonManagedReference
-    private List<PisoPermiso> listPisos;
+    @Column(columnDefinition = "TEXT")
+    private String faceVector;
 
-    @OneToOne
-    @JoinColumn(name = "gerencia_id", referencedColumnName = "id")
+    @ManyToOne
     private Gerencia gerencia;
 
-    @OneToOne
-    @JoinColumn(name = "sede_id", referencedColumnName = "id")
+    @ManyToOne
+    private TipoContrato tipoContrato;
+
+    @ManyToOne
     private Sede sede;
 
     @OneToOne
-    @JoinColumn(name = "tipo_contrato_id", referencedColumnName = "id")
-    private TipoContrato tipoContrato;
+    private User user;
 
-    public Gerencia getGerencia() {
-        return gerencia;
+    @ManyToMany(fetch = FetchType.LAZY)
+    private List<Piso> pisosPermitidos;
+
+    public String getDocumento() {
+        return documento;
     }
 
-    public void setGerencia(Gerencia gerencia) {
-        this.gerencia = gerencia;
+    public void setDocumento(String documento) {
+        this.documento = documento;
     }
 
-    public Sede getSede() {
-        return sede;
+    public String getCodigoInsignia() {
+        return codigoInsignia;
     }
 
-    public void setSede(Sede sede) {
-        this.sede = sede;
+    public void setCodigoInsignia(String codigoInsignia) {
+        this.codigoInsignia = codigoInsignia;
     }
 
-    public TipoContrato getTipoContrato() {
-        return tipoContrato;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setTipoContrato(TipoContrato tipoContrato) {
-        this.tipoContrato = tipoContrato;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
-    public Empleado() {
-    }
-    public Empleado(List<PisoPermiso> pisos)
-    {
-        for(PisoPermiso listPiso : pisos) listPiso.setEmpleado(this);
-        this.listPisos = pisos;
+    public String getApellido() {
+        return apellido;
     }
 
-    public void addListPisos(List<PisoPermiso> listPisos) {
-        for(PisoPermiso listPiso : listPisos) listPiso.setEmpleado(this);
-        this.listPisos = listPisos;
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
     }
 
-    public Integer getBadgeAccess() {
-        return badgeAccess;
+    public String getEmail() {
+        return email;
     }
 
-    public void setBadgeAccess(Integer badgeAccess) {
-        this.badgeAccess = badgeAccess;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public String getLastName() {
-        return lastName;
+    public String getTelefono() {
+        return telefono;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 
-    public Date getBirthDate() {
-        return birthDate;
+    public String getFoto() {
+        return foto;
     }
 
-    public void setBirthDate(Date birthDate) {
-        this.birthDate = birthDate;
+    public void setFoto(String foto) {
+        this.foto = foto;
     }
 
-    public Boolean getEnabled() {
-        return enabled;
+    public String getSexo() {
+        return sexo;
     }
 
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
+
+    public Date getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
     public String getHuella1() {
@@ -167,91 +133,51 @@ public class Empleado extends AbstractEntity implements Serializable {
         this.huella2 = huella2;
     }
 
-    public Integer getDocument() {
-		return document;
-	}
-
-	public void setDocument(Integer document) {
-		this.document = document;
-	}
-
-	public String getSex() {
-		return sex;
-	}
-
-	public void setSex(String sex) {
-		this.sex = sex;
-	}
- 
-    public String getName() {
-        return name;
-    }
- 
-    public void setName(String name) {
-        this.name = name;
-    }
- 
-    public String getEmail() {
-        return email;
-    }
- 
-    public void setEmail(String email) {
-        this.email = email;
-    }
- 
-    public String getTelephone() {
-        return telephone;
-    }
- 
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
+    public String getFaceVector() {
+        return faceVector;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Empleado)) return false;
-        Empleado empleado = (Empleado) o;
-        return getDocument().equals(empleado.getDocument()) &&
-                getBadgeAccess().equals(empleado.getBadgeAccess()) &&
-                getName().equals(empleado.getName()) &&
-                getEmail().equals(empleado.getEmail()) &&
-                getEnabled().equals(empleado.getEnabled()) &&
-                getTelephone().equals(empleado.getTelephone()) &&
-                getPicture().equals(empleado.getPicture()) &&
-                getSex().equals(empleado.getSex()) &&
-                Objects.equals(getHuella1(), empleado.getHuella1()) &&
-                Objects.equals(getHuella2(), empleado.getHuella2());
+    public void setFaceVector(String faceVector) {
+        this.faceVector = faceVector;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getDocument(), getBadgeAccess(), getName(), getEmail(), getEnabled(), getTelephone(), getPicture(), getSex(), getHuella1(), getHuella2());
+    public Gerencia getGerencia() {
+        return gerencia;
     }
 
-    @Override
-    public String toString() {
-        return "Empleado{" +
-                "document=" + document +
-                ", badgeAccess=" + badgeAccess +
-                ", name='" + name + '\'' +
-                ", lastname='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", enabled=" + enabled +
-                ", telephone='" + telephone + '\'' +
-                ", picture='" + picture + '\'' +
-                ", sex='" + sex + '\'' +
-                ", birthdate=" + birthDate +
-                ", huella1='" + huella1 + '\'' +
-                ", huella2='" + huella2 + '\'' +
-                '}';
+    public void setGerencia(Gerencia gerencia) {
+        this.gerencia = gerencia;
     }
 
-    public List<PisoPermiso> getListPisos() {
-        return listPisos;
+    public TipoContrato getTipoContrato() {
+        return tipoContrato;
     }
 
-    public void setListPisos(List<PisoPermiso> listPisos) {
-        this.listPisos = listPisos;
+    public void setTipoContrato(TipoContrato tipoContrato) {
+        this.tipoContrato = tipoContrato;
+    }
+
+    public Sede getSede() {
+        return sede;
+    }
+
+    public void setSede(Sede sede) {
+        this.sede = sede;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public List<Piso> getPisosPermitidos() {
+        return pisosPermitidos;
+    }
+
+    public void setPisosPermitidos(List<Piso> pisosPermitidos) {
+        this.pisosPermitidos = pisosPermitidos;
     }
 }

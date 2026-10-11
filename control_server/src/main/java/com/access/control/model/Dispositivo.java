@@ -1,29 +1,22 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name="dispositivos")
-public class Dispositivo  extends AbstractEntity implements Serializable {
+@Table(name = "dispositivos")
+public class Dispositivo extends AbstractEntity {
 
-    private static final long serialVersionUID = 1L;
     private String ip;
-    private Integer port;
-    private String descripcion;
-    private Boolean ping;
-    @Column(name="entrada_salida")
-    private Integer  entradaSalida;
+    private String nombre;
+    private String tipo; // TORNIQUETE, PUERTA_ACCESO, LECTOR_FACIAL, LECTOR_HUELLA
+    private String ubicacion;
+    private Boolean estadoConexion = true;
 
-    @OneToOne
-    @JoinColumn(name = "piso_id", referencedColumnName = "id")
-    private Piso piso;
-
-    public Dispositivo() {
-    }
+    @ManyToOne
+    private Sede sede;
 
     public String getIp() {
         return ip;
@@ -33,84 +26,43 @@ public class Dispositivo  extends AbstractEntity implements Serializable {
         this.ip = ip;
     }
 
-    public Integer getPort() {
-        return port;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setPort(Integer port) {
-        this.port = port;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
-    public String getDescripcion() {
-        return descripcion;
+    public String getTipo() {
+        return tipo;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
-    public Boolean getPing() {
-        return ping;
+    public String getUbicacion() {
+        return ubicacion;
     }
 
-    public void setPing(Boolean ping) {
-        this.ping = ping;
+    public void setUbicacion(String ubicacion) {
+        this.ubicacion = ubicacion;
     }
 
-    public Integer getEntradaSalida() {
-        return entradaSalida;
+    public Boolean getEstadoConexion() {
+        return estadoConexion;
     }
 
-    public void setEntradaSalida(Integer entradaSalida) {
-        this.entradaSalida = entradaSalida;
+    public void setEstadoConexion(Boolean estadoConexion) {
+        this.estadoConexion = estadoConexion;
     }
 
-    public Piso getPiso() {
-        return piso;
+    public Sede getSede() {
+        return sede;
     }
 
-    public void setPiso(Piso piso) {
-        this.piso = piso;
-    }
-
-    public String getColor(){
-        if(getState()==1 && getPing()) {
-            return "green";
-        }else if(getState()==0){
-            return "yellow";
-        }else{
-            return "red";
-        }
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Dispositivo)) return false;
-        Dispositivo that = (Dispositivo) o;
-        return Objects.equals(getIp(), that.getIp()) &&
-                Objects.equals(getPort(), that.getPort()) &&
-                Objects.equals(getDescripcion(), that.getDescripcion()) &&
-                Objects.equals(getPing(), that.getPing()) &&
-                Objects.equals(getEntradaSalida(), that.getEntradaSalida()) &&
-                Objects.equals(getPiso(), that.getPiso());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getIp(), getPort(), getDescripcion(), getPing(), getEntradaSalida(), getPiso());
-    }
-
-    @Override
-    public String toString() {
-        return "Dispositivo{" +
-                "ip='" + ip + '\'' +
-                ", port=" + port +
-                ", descripcion='" + descripcion + '\'' +
-                ", ping=" + ping +
-                ", entradaSalida=" + entradaSalida +
-                ", piso=" + piso +
-                '}';
+    public void setSede(Sede sede) {
+        this.sede = sede;
     }
 }

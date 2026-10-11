@@ -1,32 +1,29 @@
 package com.access.control.model;
 
-import javax.persistence.*;
-import java.io.Serializable;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name="tipo_contratos")
-public class TipoContrato implements Serializable {
-    private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    @Column(name = "id")
-    private Long id;
-    @Column
-    private String contrato;
+@Table(name = "tipo_contratos")
+public class TipoContrato extends AbstractEntity {
 
-    public Long getId() {
-        return id;
+    private String nombre;
+    private String descripcion;
+
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
-    public String getContrato() {
-        return contrato;
+    public String getDescripcion() {
+        return descripcion;
     }
 
-    public void setContrato(String contrato) {
-        this.contrato = contrato;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

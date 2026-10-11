@@ -1,10 +1,54 @@
-HELP.md
+# Compilacion y Builds
 target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**
-!**/src/test/**
+**/target/
+build/
+**/build/
+dist/
+**/dist/
+.angular/
+**/.angular/
+out/
+**/out/
 
-### STS ###
+# Node & Frontend
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android & Gradle
+.gradle/
+**/.gradle/
+local.properties
+*.apk
+*.aab
+*.dex
+*.class
+**/android/app/build/
+**/android/.gradle/
+**/android/build/
+control_mobile/android/app/build/
+control_mobile/android/.gradle/
+control_mobile/android/build/
+
+# iOS
+**/ios/Pods/
+**/ios/build/
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+
+# IDEs & Herramientas
+.idea/
+**/.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+**/.vscode/
 .apt_generated
 .classpath
 .factorypath
@@ -12,20 +56,10 @@ target/
 .settings
 .springBeans
 .sts4-cache
+.DS_Store
+**/.DS_Store
+Thumbs.db
+HELP.md
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-
-### VS Code ###
-.vscode/
+# Maven Wrapper Keep
+!.mvn/wrapper/maven-wrapper.jar

@@ -1,0 +1,90 @@
+<div class="login-wrapper min-vh-100 d-flex align-items-center justify-content-center bg-light py-5">
+  <div class="card shadow border-0 rounded-4 p-4 p-md-5 bg-white" style="max-width: 460px; width: 100%;">
+    <div class="text-center mb-4">
+      <div class="brand-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 56px; height: 56px;">
+        <i class="bi bi-shield-lock-fill fs-3"></i>
+      </div>
+      <h3 class="fw-bold text-dark">Control de Acceso</h3>
+      <p class="text-muted small">Plataforma Biométrica de Seguridad y Torniquetes</p>
+    </div>
+
+    <!-- PESTAÑAS DE MODALIDAD DE ACCESO -->
+    <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-3">
+      <li class="nav-item">
+        <button class="nav-link py-2 small fw-bold" [ngClass]="{'active': modoAuth === 'credenciales'}" (click)="modoAuth = 'credenciales'">
+          <i class="bi bi-key-fill d-block fs-5"></i> Contraseña
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link py-2 small fw-bold" [ngClass]="{'active': modoAuth === 'facial'}" (click)="modoAuth = 'facial'">
+          <i class="bi bi-person-bounding-box d-block fs-5"></i> Rostro
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link py-2 small fw-bold" [ngClass]="{'active': modoAuth === 'huella'}" (click)="modoAuth = 'huella'">
+          <i class="bi bi-fingerprint d-block fs-5"></i> Huella
+        </button>
+      </li>
+    </ul>
+
+    <!-- MENSAJE DE ERROR -->
+    <div *ngIf="errorLogin" class="alert alert-danger py-2 small mb-3">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorLogin }}
+    </div>
+
+    <!-- MODO 1: CONTRASEÑA -->
+    <div *ngIf="modoAuth === 'credenciales'">
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-secondary">Usuario o Documento</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" class="form-control" [(ngModel)]="usuario" placeholder="Ej: admin">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label small fw-bold text-secondary">Contraseña</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" class="form-control" [(ngModel)]="contrasena" placeholder="••••••••">
+        </div>
+      </div>
+      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="loginCredenciales()">
+        Iniciar Sesión
+      </button>
+    </div>
+
+    <!-- MODO 2: RECONOCIMIENTO FACIAL -->
+    <div *ngIf="modoAuth === 'facial'" class="text-center">
+      <div class="camera-login border rounded-3 bg-dark mb-3 position-relative d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
+        <webcam [trigger]="triggerObservable" (imageCapture)="handleImageLogin($event)"></webcam>
+        <div *ngIf="procesandoFacial" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark bg-opacity-75 text-white">
+          <div class="spinner-border text-primary mb-2"></div>
+          <span class="small">Verificando rasgos faciales...</span>
+        </div>
+      </div>
+      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="iniciarLoginFacial()" [disabled]="procesandoFacial">
+        <i class="bi bi-camera-fill me-2"></i> Escanear Rostro
+      </button>
+    </div>
+
+    <!-- MODO 3: HUELLA DACTILAR -->
+    <div *ngIf="modoAuth === 'huella'" class="text-center">
+      <div class="border rounded-3 bg-light p-4 mb-3 d-flex flex-column align-items-center justify-content-center" style="height: 220px;">
+        <div class="fingerprint-scan-area position-relative mb-3 cursor-pointer" (click)="iniciarLoginHuella()">
+          <i class="bi bi-fingerprint display-1" [ngClass]="escaneandoHuella ? 'text-primary' : 'text-secondary'"></i>
+          <div *ngIf="escaneandoHuella" class="spinner-border text-primary position-absolute top-50 start-50 translate-middle"></div>
+        </div>
+        <div *ngIf="escaneandoHuella" class="w-100">
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" [style.width.%]="progresoHuella"></div>
+          </div>
+          <small class="text-muted mt-2 d-block">Identificando minutas dactilares...</small>
+        </div>
+        <span *ngIf="!escaneandoHuella" class="text-muted small">Haga clic o coloque su huella en el lector</span>
+      </div>
+      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="iniciarLoginHuella()" [disabled]="escaneandoHuella">
+        <i class="bi bi-fingerprint me-2"></i> Capturar Huella
+      </button>
+    </div>
+  </div>
+</div>

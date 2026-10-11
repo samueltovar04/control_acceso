@@ -1,44 +1,28 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.List;
+import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "user")
-public class User extends AbstractEntity implements Serializable {
+@Table(name = "users")
+public class User extends AbstractEntity {
 
-    @Column
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column
     private String password;
 
-    @Column
-    private boolean enabled;
-
-
-    public User(String username, String password, List grantList) {
-        this.username = username;
-        this.password = password;
-        this.setAuthority((Set<Authority>)grantList);
-    }
+    private Boolean enabled = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name="authorities_users",
-            joinColumns=@JoinColumn(name="user_id"),
-            inverseJoinColumns=@JoinColumn(name="authority_id"))
-    private Set<Authority> authority;
-
-    public Set<Authority> getAuthority(){
-      return authority;
-    }
-
-//Getters y Setters
-
+    @JoinTable(
+        name = "user_authorities",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "authority_id")
+    )
+    private Set<Authority> authorities = new HashSet<>();
 
     public String getUsername() {
         return username;
@@ -56,49 +40,19 @@ public class User extends AbstractEntity implements Serializable {
         this.password = password;
     }
 
-    public boolean isEnabled() {
+    public Boolean getEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public void setAuthority(Set<Authority> authority) {
-        this.authority = authority;
+    public Set<Authority> getAuthorities() {
+        return authorities;
     }
 
-    public User() {
+    public void setAuthorities(Set<Authority> authorities) {
+        this.authorities = authorities;
     }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((this.getId() == null) ? 0 :this.getId().hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        User other = (User) obj;
-        if (getId() == null) {
-            if (other.getId() != null)
-                return false;
-        } else if (!getId().equals(other.getId()))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "User [id=" + getId() + ", username=" + username + ", password=" + password + "]";
-    }
-
 }

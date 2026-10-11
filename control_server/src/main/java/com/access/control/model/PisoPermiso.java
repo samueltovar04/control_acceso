@@ -1,61 +1,21 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import javax.persistence.*;
-import java.io.Serializable;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name="piso_permiso")
-@JsonIgnoreProperties("empleado")
-public class PisoPermiso extends AbstractEntity implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Table(name = "piso_permisos")
+public class PisoPermiso extends AbstractEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference(value = "empleadoJson")
-    @JoinColumn(name = "badge_access",referencedColumnName = "badge_access")
+    @ManyToOne
+    private Piso piso;
+
+    @ManyToOne
     private Empleado empleado;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference(value = "pisoJson")
-    @JoinColumn(name = "piso_id",referencedColumnName = "id")
-    private Piso pisos;
+    public Piso getPiso() { return piso; }
+    public void setPiso(Piso piso) { this.piso = piso; }
 
-    private Long pisoId;
-
-    public Long getPisoId() {
-        return pisoId;
-    }
-
-    public void setPisoId(Long pisoId) {
-        this.pisoId = pisoId;
-    }
-
-    public PisoPermiso(Piso piso, Integer state){
-        this.pisos=piso;
-        this.setState(state);
-    }
-
-    public PisoPermiso() {
-    }
-
-    public Piso getPisos() {
-        return pisos;
-    }
-
-    public void setPisos(Piso pisos) {
-        this.pisos = pisos;
-    }
-
-    public Empleado getEmpleado() {
-        return empleado;
-    }
-
-    public void setEmpleado(Empleado empleado) {
-        this.empleado = empleado;
-    }
-
+    public Empleado getEmpleado() { return empleado; }
+    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
 }

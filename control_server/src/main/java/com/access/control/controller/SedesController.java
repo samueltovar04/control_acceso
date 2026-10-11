@@ -2,51 +2,58 @@ package com.access.control.controller;
 
 import com.access.control.model.Sede;
 import com.access.control.services.SedeService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/sedes")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class SedesController {
-    @Autowired
-    SedeService servicioSedes;
-    @GetMapping("sedes/{id}")
-    public ResponseEntity<Sede> getArticleById(@PathVariable("id") Long id) {
-        Sede sedes = servicioSedes.getSedeById(id);
-        return new ResponseEntity<Sede>(sedes, HttpStatus.OK);
+
+    @Inject
+    SedeService sedeService;
+
+    @GET
+    public List<Sede> getAllSedes() {
+        return sedeService.getListSedes();
     }
-    @GetMapping("sedes")
-    public ResponseEntity<List<Sede>> getAllSedes() {
-        List<Sede> list = servicioSedes.getListSedes();
-        return new ResponseEntity<List<Sede>>(list, HttpStatus.OK);
-    }
-    @PostMapping("sedes")
-    public ResponseEntity<Void> addSedes(@RequestBody Sede sedes, UriComponentsBuilder builder) {
-        Sede flag = servicioSedes.addSede(sedes);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+
+    @GET
+    @Path("/{id}")
+    public Response getSedeById(@PathParam("id") Long id) {
+        Sede s = sedeService.getSedeById(id);
+        if (s == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/sedes/{id}").buildAndExpand(sedes.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return Response.ok(s).build();
     }
-    @PutMapping("sedes")
-    public ResponseEntity<Sede> updateSedes(@RequestBody Sede sedes,@PathVariable("id") Long id) {
-        sedes = servicioSedes.updateSede(sedes,id);
-        return new ResponseEntity<Sede>(sedes, HttpStatus.OK);
+
+    @POST
+    public Response addSede(Sede sede) {
+        Sede s = sedeService.addSede(sede);
+        return Response.status(Response.Status.CREATED).entity(s).build();
     }
-    @DeleteMapping("sedes/{id}")
-    public ResponseEntity<Void> deleteSedes(@PathVariable("id") Long id) {
-        if(servicioSedes.deleteSede(servicioSedes.getSedeById(id))){
-            return new ResponseEntity<Void>(HttpStatus.OK);
+
+    @PUT
+    @Path("/{id}")
+    public Response updateSede(@PathParam("id") Long id, Sede sede) {
+        Sede s = sedeService.updateSede(sede, id);
+        if (s == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.ok(s).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteSede(@PathParam("id") Long id) {
+        Sede s = sedeService.getSedeById(id);
+        if (s != null && sedeService.deleteSede(s)) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }

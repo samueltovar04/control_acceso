@@ -2,57 +2,53 @@ package com.access.control.services;
 
 import com.access.control.model.Sede;
 import com.access.control.repository.SedeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
 
-@Service
+@ApplicationScoped
 public class SedeServiceImpl implements SedeService {
-    @Autowired
-    SedeRepository dao;
-    @Override
-    public List<Sede> getListSedes(Object... params) {
-        if(params != null && params.length>0){
-            return dao.findAll();
-        }else {
-            return (List<Sede>) dao.findAll();
-        }
-    }
 
-    @Override
-    public Sede getSede(Sede params) {
-        return dao.getOne(params.getId());
-    }
-
-    @Override
-    public Optional<Sede> findById(Long id) {
-        return dao.findById(id);
-    }
+    @Inject
+    SedeRepository sedeRepository;
 
     @Override
     public Sede getSedeById(Long id) {
-        return dao.findById(id).orElse(null);
+        return sedeRepository.findById(id);
     }
 
     @Override
-    public Sede addSede(Sede obj) {
-        return dao.save(obj);
+    public List<Sede> getListSedes() {
+        return sedeRepository.listAll();
     }
 
     @Override
-    public Sede updateSede(Sede obj, Long id) {
-        if(dao.findById(id).isPresent()) {
-            return dao.save(obj);
-        }else{
-            return null;
+    @Transactional
+    public Sede addSede(Sede sede) {
+        sedeRepository.persist(sede);
+        return sede;
+    }
+
+    @Override
+    @Transactional
+    public Sede updateSede(Sede sede, Long id) {
+        Sede s = sedeRepository.findById(id);
+        if (s != null) {
+            s.setNombre(sede.getNombre());
+            s.setDireccion(sede.getDireccion());
+            s.setTelefono(sede.getTelefono());
+            s.setCodigoSucursal(sede.getCodigoSucursal());
         }
+        return s;
     }
 
     @Override
-    public Boolean deleteSede(Sede obj) {
-        dao.delete(obj);
-        return dao.existsById(obj.getId());
+    @Transactional
+    public boolean deleteSede(Sede sede) {
+        if (sede != null && sede.getId() != null) {
+            return sedeRepository.deleteById(sede.getId());
+        }
+        return false;
     }
 }

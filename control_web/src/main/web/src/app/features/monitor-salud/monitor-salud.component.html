@@ -1,0 +1,86 @@
+<div class="container-fluid p-4 bg-light">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Monitor de Salud en Tiempo Real</h2>
+    <div class="d-flex align-items-center gap-2">
+      <input type="number" class="form-control" [(ngModel)]="clienteIdBusqueda" placeholder="ID Cliente">
+      <button class="btn btn-outline-primary" (click)="cargarDatosCliente()">Consultar</button>
+    </div>
+  </div>
+
+  <!-- TARJETAS DE SIGNOS VITALES DEL CLIENTE -->
+  <div class="row g-3 mb-4" *ngIf="signosActuales">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="text-muted small uppercase fw-bold">Ritmo Cardíaco</div>
+        <div class="h1 fw-bold text-danger my-2"><i class="bi bi-activity me-1"></i> {{ signosActuales.ritmocardiacoBpm }}</div>
+        <div class="small text-muted">BPM (Pulsaciones/min)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="text-muted small uppercase fw-bold">Oxígeno SpO2</div>
+        <div class="h1 fw-bold text-primary my-2"><i class="bi bi-droplet-fill me-1"></i> {{ signosActuales.saturacionOxigenoSpo2 }}%</div>
+        <div class="small text-muted">Saturación de Oxígeno</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="text-muted small uppercase fw-bold">Temperatura</div>
+        <div class="h1 fw-bold text-warning my-2"><i class="bi bi-thermometer-half me-1"></i> {{ signosActuales.temperaturaCorporal }}°C</div>
+        <div class="small text-muted">Corporal Directa</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="text-muted small uppercase fw-bold">Nivel de Estrés</div>
+        <div class="h1 fw-bold text-info my-2">{{ signosActuales.nivelEstres }} / 100</div>
+        <div class="small text-muted">Indicador ANS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTAS DE SALUD EN VIVO -->
+  <div class="card shadow-sm border-0 p-3 bg-white mb-4" *ngIf="alertas.length > 0">
+    <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-octagon-fill me-1"></i> Alertas Críticas de Salud Activas</h5>
+    <div class="list-group">
+      <div class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center" *ngFor="let a of alertas">
+        <div>
+          <strong>Cliente ID {{ a.cliente?.id || 'General' }}:</strong> {{ a.mensajeAlerta }}
+        </div>
+        <small class="text-muted">{{ a.timestamp | date:'mediumTime' }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL RECIENTE -->
+  <div class="card shadow-sm border-0 p-3 bg-white">
+    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history me-1"></i> Historial de Lecturas Telemétricas</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Timestamp</th>
+            <th>BPM</th>
+            <th>SpO2 %</th>
+            <th>Temp °C</th>
+            <th>Estrés</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of historial">
+            <td>{{ h.timestamp | date:'short' }}</td>
+            <td class="fw-bold text-danger">{{ h.ritmocardiacoBpm }}</td>
+            <td class="fw-bold text-primary">{{ h.saturacionOxigenoSpo2 }}%</td>
+            <td>{{ h.temperaturaCorporal }}°C</td>
+            <td>{{ h.nivelEstres }}</td>
+            <td>
+              <span class="badge bg-success" *ngIf="!h.alertaSalud">Normal</span>
+              <span class="badge bg-danger" *ngIf="h.alertaSalud">Alerta</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

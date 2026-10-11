@@ -1,9 +1,12 @@
 package com.access.control.repository;
 
 import com.access.control.model.Empleado;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Repository
-public interface EmpleadoRepository extends JpaRepository<Empleado,Long> {
+@ApplicationScoped
+public class EmpleadoRepository implements PanacheRepository<Empleado> {
+    public Empleado findByDocumento(String documento) {
+        return find("documento", documento).firstResult();
+    }
 }

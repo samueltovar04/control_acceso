@@ -1,0 +1,14 @@
+/* left-menu.component.css */
+.nav-link {
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
+}
+
+.nav-link.active {
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}

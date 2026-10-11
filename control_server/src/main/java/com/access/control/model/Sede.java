@@ -1,32 +1,47 @@
 package com.access.control.model;
 
-import javax.persistence.*;
-import java.io.Serializable;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name="sedes")
-public class Sede implements Serializable {
-    private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    @Column(name = "id")
-    private Long id;
-    @Column
-    private String sede;
+@Table(name = "sedes")
+public class Sede extends AbstractEntity {
 
-    public Long getId() {
-        return id;
+    private String nombre;
+    private String direccion;
+    private String telefono;
+    private String codigoSucursal;
+
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
-    public String getSede() {
-        return sede;
+    public String getDireccion() {
+        return direccion;
     }
 
-    public void setSede(String sede) {
-        this.sede = sede;
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public String getCodigoSucursal() {
+        return codigoSucursal;
+    }
+
+    public void setCodigoSucursal(String codigoSucursal) {
+        this.codigoSucursal = codigoSucursal;
     }
 }

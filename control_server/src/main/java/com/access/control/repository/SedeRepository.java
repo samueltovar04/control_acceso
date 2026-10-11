@@ -1,9 +1,9 @@
 package com.access.control.repository;
 
 import com.access.control.model.Sede;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Repository
-public interface SedeRepository extends JpaRepository<Sede, Long> {
+@ApplicationScoped
+public class SedeRepository implements PanacheRepository<Sede> {
 }

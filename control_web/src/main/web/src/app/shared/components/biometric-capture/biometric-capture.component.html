@@ -1,0 +1,63 @@
+<div class="card p-3 border-0 shadow-sm bg-white rounded-3 mb-3">
+  <h5 class="fw-bold text-dark mb-3">
+    <i class="bi bi-shield-lock-fill text-primary me-2"></i>{{ titulo }}
+  </h5>
+
+  <div class="row g-3">
+    <!-- PANEL 1: FOTOGRAMAS FACIALES -->
+    <div class="col-md-6 border-end">
+      <div class="p-2 text-center">
+        <h6 class="fw-bold text-secondary mb-2">1. Reconocimiento Facial (Embedding 128D)</h6>
+        
+        <div class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center" style="height: 190px; overflow: hidden;">
+          <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)"></webcam>
+          <div *ngIf="!webcamImage" class="position-absolute text-white small opacity-75">
+            <i class="bi bi-camera fs-2 d-block mb-1"></i>Enfoque el rostro
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-bold mb-2" (click)="capturarFotograma()">
+          <i class="bi bi-camera-fill me-1"></i> Capturar Fotograma
+        </button>
+
+        <div *ngIf="faceVectorGenerado" class="alert alert-success py-1 px-2 small mb-0">
+          <i class="bi bi-check-circle-fill me-1"></i> Vector 128D generado ({{ fotogramasCapturados }} fotogramas)
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: DIGITALIZACION DE HUELLAS DACTILARES -->
+    <div class="col-md-6">
+      <div class="p-2 text-center">
+        <h6 class="fw-bold text-secondary mb-2">2. Digitalización de Huellas Dactilares</h6>
+
+        <div class="fingerprint-scanner border rounded p-3 mb-2 bg-light d-flex flex-column align-items-center justify-content-center" style="height: 190px;">
+          <div class="scanner-icon mb-2 position-relative">
+            <i class="bi bi-fingerprint fs-1" [ngClass]="{'text-primary': escaneandoHuella, 'text-success': huella1Generada || huella2Generada, 'text-muted': !huella1Generada && !huella2Generada}"></i>
+            <div *ngIf="escaneandoHuella" class="spinner-border spinner-border-sm text-primary position-absolute top-50 start-50" style="margin-top:-8px; margin-left:-8px;"></div>
+          </div>
+
+          <div *ngIf="escaneandoHuella" class="w-75">
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" [style.width.%]="calidadHuella"></div>
+            </div>
+            <span class="small text-muted mt-1 d-block">Escaneando crestas: {{ calidadHuella }}%</span>
+          </div>
+
+          <div *ngIf="!escaneandoHuella" class="small text-muted">
+            Sensor biométrico listo para lectura.
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-sm" [ngClass]="huella1Generada ? 'btn-success' : 'btn-outline-secondary'" (click)="iniciarEscaneoHuella(1)" [disabled]="escaneandoHuella">
+            <i class="bi bi-check-lg" *ngIf="huella1Generada"></i> Huella Principal (Índice)
+          </button>
+          <button type="button" class="btn btn-sm" [ngClass]="huella2Generada ? 'btn-success' : 'btn-outline-secondary'" (click)="iniciarEscaneoHuella(2)" [disabled]="escaneandoHuella">
+            <i class="bi bi-check-lg" *ngIf="huella2Generada"></i> Huella Auxiliar (Pulgar)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

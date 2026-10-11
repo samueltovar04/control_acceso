@@ -1,0 +1,138 @@
+<div class="container-fluid p-4 bg-light">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark"><i class="bi bi-bank me-2"></i>Control Financiero de Sucursal & Deudores</h2>
+    <button class="btn btn-primary" (click)="cargarDatos()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
+  </div>
+
+  <!-- TARJETAS DE BALANCE FINANCIERO -->
+  <div class="row g-3 mb-4" *ngIf="balance">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 border-start border-success border-4 p-3 bg-white">
+        <div class="text-muted small uppercase fw-bold">Total Ingresos</div>
+        <div class="h2 fw-bold text-success mb-0">${{ balance.totalIngresos | number:'1.2-2' }}</div>
+        <small class="text-muted">{{ balance.totalTransaccionesIngresos }} cobros registrados</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 border-start border-danger border-4 p-3 bg-white">
+        <div class="text-muted small uppercase fw-bold">Total Gastos Operativos</div>
+        <div class="h2 fw-bold text-danger mb-0">${{ balance.totalGastos | number:'1.2-2' }}</div>
+        <small class="text-muted">{{ balance.totalRegistrosGastos }} registros de egresos</small>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 border-start border-primary border-4 p-3 bg-white">
+        <div class="text-muted small uppercase fw-bold">Balance Neto</div>
+        <div class="h2 fw-bold text-primary mb-0">${{ balance.balanceNeto | number:'1.2-2' }}</div>
+        <small class="text-muted">Sucursal Principal</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- REGISTRO DE COBROS -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3 bg-white h-100">
+        <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-plus-circle me-1"></i> Registrar Cobro / Pago de Cliente</h5>
+        <form (ngSubmit)="registrarPago()">
+          <div class="mb-3">
+            <label class="form-label">ID de Cliente</label>
+            <input type="number" class="form-control" [(ngModel)]="clienteIdSeleccionado" name="clienteId" placeholder="Ej. 1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Monto ($)</label>
+            <input type="number" class="form-control" [(ngModel)]="nuevoPago.monto" name="monto" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Método de Pago</label>
+            <select class="form-select" [(ngModel)]="nuevoPago.metodoPago" name="metodoPago">
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="TARJETA">Tarjeta de Débito / Crédito</option>
+              <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+              <option value="APP_ONLINE">Pago en Línea</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Número de Referencia / Comprobante</label>
+            <input type="text" class="form-control" [(ngModel)]="nuevoPago.numeroReferencia" name="referencia" placeholder="Nro de Operación">
+          </div>
+          <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg me-1"></i> Confirmar Pago</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CONCILIACION BANCARIA PENDIENTE -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 p-3 bg-white h-100">
+        <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-shield-check me-1"></i> Conciliación Bancaria de Transferencias</h5>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto</th>
+                <th>Ref.</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of pendientesConciliacion">
+                <td>{{ p.fechaPago | date:'shortDate' }}</td>
+                <td>{{ p.cliente?.nombre }} {{ p.cliente?.apellido }}</td>
+                <td class="fw-bold text-success">${{ p.monto }}</td>
+                <td><small>{{ p.numeroReferencia || 'N/A' }}</small></td>
+                <td>
+                  <button class="btn btn-sm btn-success me-1" (click)="conciliar(p, 'CONCILIADO')">Aprobar</button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="conciliar(p, 'DISCREPANCIA')">Rechazar</button>
+                </td>
+              </tr>
+              <tr *ngIf="pendientesConciliacion.length === 0">
+                <td colspan="5" class="text-center text-muted py-3">No hay transferencias pendientes de conciliación.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION DE DEUDORES Y MOROSOS -->
+  <div class="card shadow-sm border-0 p-3 bg-white mb-4">
+    <h5 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-1"></i> Control de Deudores / Membresías Vencidas</h5>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Documento</th>
+            <th>Nombre Completo</th>
+            <th>Email / Teléfono</th>
+            <th>Estatus Suscripción</th>
+            <th>Restricción Torniquete</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of deudores">
+            <td>{{ d.documento }}</td>
+            <td class="fw-bold">{{ d.nombre }} {{ d.apellido }}</td>
+            <td>{{ d.email }} / {{ d.telefono }}</td>
+            <td>
+              <span class="badge bg-danger" *ngIf="d.estadoSuscripcion === 'VENCIDA'">VENCIDA / MOROSO</span>
+              <span class="badge bg-warning text-dark" *ngIf="d.estadoSuscripcion === 'POR_VENCER'">POR VENCER</span>
+            </td>
+            <td>
+              <span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i> BLOQUEADO</span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary"><i class="bi bi-bell-fill me-1"></i> Enviar Recordatorio</button>
+            </td>
+          </tr>
+          <tr *ngIf="deudores.length === 0">
+            <td colspan="6" class="text-center text-muted py-3">No hay deudores registrados. Todos los clientes están al día.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,44 +1,50 @@
-version: '3'
 services:
-  hk-nginx:
-   container_name: hk-nginx
-   image: nginx:1.13
-   restart: always
-   ports:
-   - 80:80
-   - 443:443
-   volumes:
-   - ./nginx/conf.d:/etc/nginx/conf.d
-   depends_on:
-   - app
- 
-  hk-mysql:
-   container_name: hk-mysql
-   image: mysql/mysql-server:5.7
-   environment:
-    MYSQL_DATABASE: access_control
-    MYSQL_USER: admin
-    MYSQL_PASSWORD: 1234
-    MYSQL_ROOT_PASSWORD: 
-    MYSQL_ROOT_HOST: '%'
-   ports:
-   - "3306:3306"
-   restart: always
-   volumes:
-      - ./db/logs:/var/log/mysql:rw
-      - ./db/data:/var/lib/mysql
-  
-  app:
+  access_control_db:
+    image: postgres:15-alpine
+    container_name: access_control_db
     restart: always
-    build: .
-    working_dir: /app
     environment:
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: DEBUG
+      POSTGRES_DB: access_control
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+    ports:
+      - "5432:5432"
     volumes:
-      - .:/app
-      - /Users/samuelt/.m2:/root/.m2
-    expose:
-      - "8080"
-    command: mvn clean spring-boot:run
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d access_control"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  access_control_backend:
+    build:
+      context: ./control_server
+      dockerfile: Dockerfile
+    container_name: access_control_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://access_control_db:5432/access_control
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: adminpassword
+      QUARKUS_HTTP_PORT: 8080
+      QUARKUS_HTTP_CORS_ORIGINS: "*"
     depends_on:
-      - hk-mysql
+      access_control_db:
+        condition: service_healthy
+
+  access_control_frontend:
+    build:
+      context: ./control_web
+      dockerfile: Dockerfile
+    container_name: access_control_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - access_control_backend
+
+volumes:
+  postgres_data:

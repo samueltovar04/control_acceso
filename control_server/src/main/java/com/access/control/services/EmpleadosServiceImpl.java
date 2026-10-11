@@ -2,149 +2,77 @@ package com.access.control.services;
 
 import com.access.control.dto.EmpleadoDto;
 import com.access.control.model.Empleado;
-import com.access.control.model.Piso;
-import com.access.control.model.PisoPermiso;
 import com.access.control.repository.EmpleadoRepository;
-import com.access.control.repository.PisoRepository;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
-@Service("empleadosServiceImpl")
-public class EmpleadosServiceImpl implements EmpleadosService{
-    @Autowired
-    private EmpleadoRepository empleadosDao;
+@ApplicationScoped
+public class EmpleadosServiceImpl implements EmpleadosService {
 
-    @Autowired
-    private PisoRepository pisoDao;
+    @Inject
+    EmpleadoRepository empleadoRepository;
 
     @Override
-    @Transactional
-    public List<Empleado> getListEmpleados(boolean picture)
-    {   Integer i=0;
-        List<Empleado> emp = empleadosDao.findAll();
-       /* if (picture) {
-          for (i=0 ; i < emp.size(); i++){
-              byte[] b = "No disponible".getBytes();
-              emp.get(i).setPicture(b);
-              emp.get(i).setHuella1(b);
-              emp.get(i).setHuella2(b);
-          }
-        }*/
-        return emp;
+    public Empleado getEmpleadoById(Long id) {
+        return empleadoRepository.findById(id);
+    }
+
+    @Override
+    public List<Empleado> getListEmpleados(boolean activeOnly) {
+        return empleadoRepository.listAll();
     }
 
     @Override
     @Transactional
-    public Empleado getEmpleadoById(Long idEmpleado)
-    {
-        Empleado empl = empleadosDao.findById(idEmpleado).orElse(null);
+    public Empleado addEmpleado(EmpleadoDto dto) {
+        Empleado e = new Empleado();
+        e.setNombre(dto.getNombre());
+        e.setApellido(dto.getApellido());
+        e.setEmail(dto.getEmail());
+        e.setDocumento(dto.getDocumento());
+        e.setTelefono(dto.getTelefono());
+        empleadoRepository.persist(e);
+        return e;
+    }
 
-        if(empl!=null){
-            empl.getListPisos().forEach(
-                    p ->{
-                        if(p!=null)
-                            p.setPisoId(p.getPisos().getId());
-                    }
-            );
-            return empl;
+    @Override
+    @Transactional
+    public Empleado updateEmpleado(EmpleadoDto dto, Long id) {
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null) {
+            e.setNombre(dto.getNombre());
+            e.setApellido(dto.getApellido());
+            e.setEmail(dto.getEmail());
+            e.setTelefono(dto.getTelefono());
         }
-        return null;
+        return e;
     }
 
     @Override
     @Transactional
-    public Empleado addEmpleado(@NotNull EmpleadoDto emp)
-    {
-        //emp.setPicture(Base64.getDecoder().decode(emp.getPicture()));
-       // emp.setPicture(Arrays.asList(emp.getPicture().split(",")).get(1));
-        //String encodedString = Base64.getEncoder().encodeToString(emp.geticture());
-        //Empleado empleado = new DozerBeanMapper().map(emp, Empleado.class);
-        List<Piso> pisos = pisoDao.findAllState(1);
-
-        List<PisoPermiso> listpp = new ArrayList<>();
-        pisos.forEach(
-                p->{
-                    listpp.add(new PisoPermiso(p,0));
-                }
-        );
-        Empleado empleado = new Empleado(listpp);
-        empleado.setDocument(emp.getDocument());
-        empleado.setName(emp.getName());
-        empleado.setBadgeAccess(emp.getBadgeAccess());
-        empleado.setLastName(emp.getLastName());
-        empleado.setBirthDate(emp.getBirthDate());
-        empleado.setEmail(emp.getEmail());
-        empleado.setSex(emp.getSex());
-        empleado.setTelephone(emp.getTelephone());
-        empleado.setEnabled(true);
-        empleado.setState(1);
-        empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
-
-        final Empleado finalEmpleado = empleadosDao.save(empleado);
-        //finalEmpleado.setListPisos(pisoPermisoRepository.saveAll(listpp));
-        return getEmpleadoById(finalEmpleado.getId());
-    }
-
-    @Override
-    @Transactional
-    public Empleado updateEmpleado(EmpleadoDto emp,Long id)
-    {
-        Empleado empleado = new Empleado();
-        empleado.setId(id);
-        empleado.setDocument(emp.getDocument());
-        empleado.setName(emp.getName());
-        empleado.setBadgeAccess(emp.getBadgeAccess());
-        empleado.setLastName(emp.getLastName());
-        empleado.setBirthDate(emp.getBirthDate());
-        empleado.setEmail(emp.getEmail());
-        empleado.setSex(emp.getSex());
-        empleado.setTelephone(emp.getTelephone());
-        empleado.setEnabled(emp.getEnabled());
-        empleado.setState(emp.getState());
-        empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
-        Empleado empl = empleadosDao.getOne(id);
-        if(empl!=null){
-            empleado.setHuella1(empl.getHuella1());
-            empleado.setHuella2(empl.getHuella2());
-            return getEmpleadoById(empleadosDao.saveAndFlush(empleado).getId());
+    public Empleado updateEmpleadoHuella(Empleado empleado, Long id) {
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null) {
+            e.setHuella1(empleado.getHuella1());
+            e.setHuella2(empleado.getHuella2());
         }
-        return null;
+        return e;
     }
 
     @Override
     @Transactional
-    public Empleado updateEmpleadoHuella(Empleado emp,Long id)
-    {
-            empleadosDao.saveAndFlush(emp);
-            return getEmpleadoById(id);
-
+    public Empleado updatePisos(EmpleadoDto dto, Long id) {
+        return empleadoRepository.findById(id);
     }
 
     @Override
     @Transactional
-    public boolean deleteEmpleado(Empleado emp)
-    {
-         empleadosDao.delete(emp);
-         return empleadosDao.findById(emp.getId()).isPresent();
-    }
-
-    @Override
-    @Transactional
-    public Empleado updatePisos(EmpleadoDto emp,Long id){
-
-        Empleado empl = empleadosDao.getOne(id);
-        if(empl!=null){
-            empl.addListPisos(emp.getListPisos());
-            empleadosDao.saveAndFlush(empl);
-            return getEmpleadoById(id);
+    public boolean deleteEmpleado(Empleado empleado) {
+        if (empleado != null && empleado.getId() != null) {
+            return empleadoRepository.deleteById(empleado.getId());
         }
-        return null;
+        return false;
     }
 }

@@ -2,116 +2,59 @@ package com.access.control.controller;
 
 import com.access.control.dto.EmpleadoDto;
 import com.access.control.model.Empleado;
-import com.access.control.services.DispositivoService;
 import com.access.control.services.EmpleadosService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
-import java.util.Map;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/empleados")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class EmpleadosController {
-    @Autowired
+
+    @Inject
     EmpleadosService servicioEmpleado;
-    @Autowired
-    DispositivoService dispositivoService;
 
-    @GetMapping("empleados/{id}")
-    public ResponseEntity<Empleado> getEmpleadoById(@PathVariable("id") Long id) {
-        Empleado empleado = servicioEmpleado.getEmpleadoById(id);
-        if(empleado!=null){
-            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
-        }
-        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
-    }
-    @GetMapping("empleados")
-    public ResponseEntity<List<Empleado>> getAllEmpleados() {
-        List<Empleado> list = servicioEmpleado.getListEmpleados(true);
-        if(list!= null && list.size()>0){
-            return new ResponseEntity<List<Empleado>>(list, HttpStatus.OK);
-        }
-        return new ResponseEntity<List<Empleado>>(list, HttpStatus.NO_CONTENT);
-    }
-    @PostMapping(path = "empleados",  produces = "application/json; charset=UTF-8", consumes = "application/json; charset=UTF-8")
-    public ResponseEntity<Empleado> addEmpleado(@RequestBody EmpleadoDto empleado, HttpServletResponse response, HttpServletRequest request) {
-        Empleado flag = servicioEmpleado.addEmpleado(empleado);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Empleado>(HttpStatus.CONFLICT);
-        }
-
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest().path("/{id}")
-                .buildAndExpand(empleado.getId()).toUri();
-
-       // return ResponseEntity.created(location).build();
-        return new ResponseEntity<Empleado>(flag, HttpStatus.CREATED);
-    }
-    @PutMapping("empleados/{id}")
-    public ResponseEntity<Empleado> updateEmpleado(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
-        Empleado empleado = servicioEmpleado.updateEmpleado(empl,id);
-        if(empleado!=null){
-            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
-        }
-        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
+    @GET
+    public List<Empleado> getAllEmpleados() {
+        return servicioEmpleado.getListEmpleados(true);
     }
 
-    @PutMapping("empleados/huella1/{id}")
-    public ResponseEntity<Empleado> updateEmpleadohuellas(@PathVariable("id") Long id) {
-
-        Empleado empl = servicioEmpleado.getEmpleadoById(id);
-        if(empl!=null){
-            Map<String,String> huella = dispositivoService.getHuella().getBody();
-            empl.setHuella1(huella.get("minusia"));
-            empl.setHuella2("");
-
-            Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
-            empleado.setHuella1(huella.get("huella"));
-
-            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
+    @GET
+    @Path("/{id}")
+    public Response getEmpleadoById(@PathParam("id") Long id) {
+        Empleado e = servicioEmpleado.getEmpleadoById(id);
+        if (e == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Empleado>(empl, HttpStatus.NO_CONTENT);
+        return Response.ok(e).build();
     }
 
-    @PutMapping("empleados/huella2/{id}")
-    public ResponseEntity<Empleado> updateEmpleadohuella2(@PathVariable("id") Long id) {
-        Empleado empl = servicioEmpleado.getEmpleadoById(id);
-        if(empl!=null){
-            Map<String,String> huella = dispositivoService.getHuella().getBody();
-            empl.setHuella1("");
-            empl.setHuella2(huella.get("minusia"));
-
-            Empleado empleado = servicioEmpleado.updateEmpleadoHuella(empl,id);
-            empleado.setHuella2(huella.get("huella"));
-
-            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
-        }
-        return new ResponseEntity<Empleado>(empl, HttpStatus.NO_CONTENT);
+    @POST
+    public Response addEmpleado(EmpleadoDto dto) {
+        Empleado e = servicioEmpleado.addEmpleado(dto);
+        return Response.status(Response.Status.CREATED).entity(e).build();
     }
 
-    @PutMapping("empleados/pisos/{id}")
-    public ResponseEntity<Empleado> updateEmpleadopisos(@RequestBody EmpleadoDto empl,@PathVariable("id") Long id) {
-
-        Empleado empleado = servicioEmpleado.updatePisos(empl,id);
-        if(empleado!=null){
-            return new ResponseEntity<Empleado>(empleado, HttpStatus.OK);
+    @PUT
+    @Path("/{id}")
+    public Response updateEmpleado(@PathParam("id") Long id, EmpleadoDto dto) {
+        Empleado e = servicioEmpleado.updateEmpleado(dto, id);
+        if (e == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Empleado>(empleado, HttpStatus.NO_CONTENT);
+        return Response.ok(e).build();
     }
 
-    @DeleteMapping("empleados/{id}")
-    public ResponseEntity<Void> deleteEmpleado(@PathVariable("id") Long id) {
-        if(servicioEmpleado.deleteEmpleado(servicioEmpleado.getEmpleadoById(id))){
-            return new ResponseEntity<Void>(HttpStatus.OK);
+    @DELETE
+    @Path("/{id}")
+    public Response deleteEmpleado(@PathParam("id") Long id) {
+        Empleado e = servicioEmpleado.getEmpleadoById(id);
+        if (e != null && servicioEmpleado.deleteEmpleado(e)) {
+            return Response.noContent().build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }

@@ -1,0 +1,13 @@
+/* biometric-capture.component.css */
+.camera-box webcam {
+  width: 100%;
+  height: 100%;
+}
+
+.scanner-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.scanner-icon:hover {
+  transform: scale(1.05);
+}
