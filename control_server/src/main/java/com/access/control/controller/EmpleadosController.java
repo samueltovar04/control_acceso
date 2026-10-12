@@ -57,4 +57,30 @@ public class EmpleadosController {
         }
         return Response.status(Response.Status.NOT_FOUND).build();
     }
+
+    @GET
+    @Path("/{id}/perfil")
+    public Response getPerfilEmpleado(@PathParam("id") Long id) {
+        Empleado e = servicioEmpleado.getEmpleadoById(id);
+        if (e == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(e).build();
+    }
+
+    @GET
+    @Path("/{id}/qr")
+    public Response getEmpleadoTokenQr(@PathParam("id") Long id) {
+        Empleado e = servicioEmpleado.getEmpleadoById(id);
+        if (e == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        java.util.Map<String, Object> qrData = new java.util.HashMap<>();
+        qrData.put("empleadoId", e.getId());
+        qrData.put("documento", e.getDocumento());
+        qrData.put("nombreCompleto", e.getNombre() + " " + e.getApellido());
+        qrData.put("codigoInsignia", e.getCodigoInsignia());
+        qrData.put("tokenAcceso", "QR-EMP-" + e.getId() + "-" + System.currentTimeMillis());
+        return Response.ok(qrData).build();
+    }
 }

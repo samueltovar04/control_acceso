@@ -1,6 +1,7 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
@@ -8,22 +9,22 @@ import jakarta.persistence.Table;
 @Table(name = "gerencias")
 public class Gerencia extends AbstractEntity {
 
-    private String nombre;
-    private String codigo;
+    @Column(name = "gerencia")
+    private String gerencia;
+
+    public String getGerencia() {
+        return gerencia;
+    }
+
+    public void setGerencia(String gerencia) {
+        this.gerencia = gerencia;
+    }
 
     public String getNombre() {
-        return nombre;
+        return gerencia;
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+        this.gerencia = nombre;
     }
 }

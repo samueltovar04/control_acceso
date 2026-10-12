@@ -6,7 +6,7 @@ import { Dispositivo } from './dispositivo.model';
 @Injectable()
 export class DispositivoService {
 
-private baseUrl = 'http://localhost:8080/api/v1/dispositivos';
+private baseUrl = '/api/v1/dispositivos';
 
 constructor(private http: HttpClient) { }
 
@@ -16,7 +16,6 @@ constructor(private http: HttpClient) { }
 
   createDispositivo(dispo: Object): Observable<Object> {
       return this.http.post(`${this.baseUrl}`, dispo);
-
   }
 
   updateDispositivo(id: number, value: any): Observable<Object> {
@@ -24,10 +23,14 @@ constructor(private http: HttpClient) { }
   }
 
   deleteDispositivo(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`, { responseType: 'text' });
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
   getDispositivosList(): Observable<any> {
     return this.http.get(`${this.baseUrl}`);
+  }
+
+  abrirDispositivo(id: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${id}/abrir`, {});
   }
 }

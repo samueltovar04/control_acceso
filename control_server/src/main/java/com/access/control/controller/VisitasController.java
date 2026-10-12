@@ -57,4 +57,19 @@ public class VisitasController {
         }
         return Response.status(Response.Status.NOT_FOUND).build();
     }
+
+    @GET
+    @Path("/{id}/qr")
+    public Response getVisitaQr(@PathParam("id") Long id) {
+        Visita v = servicioVisitas.getVisitaById(id);
+        if (v == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        java.util.Map<String, Object> qr = new java.util.HashMap<>();
+        qr.put("visitaId", v.getId());
+        qr.put("documento", v.getDocumento());
+        qr.put("nombreCompleto", v.getNombre() + " " + v.getApellido());
+        qr.put("tokenAcceso", "QR-VIS-" + v.getId() + "-" + System.currentTimeMillis());
+        return Response.ok(qr).build();
+    }
 }

@@ -11,7 +11,8 @@ import { Observable, Subject } from 'rxjs';
   styleUrls: ['./biometric-capture.component.css']
 })
 export class BiometricCaptureComponent {
-  @Input() titulo: string = 'Captura de Datos Biométricos';
+  @Input() titulo: string = 'Captura de Datos Biometricos';
+  @Input() fotoExistente: string = '';
   @Output() biometricDataChange = new EventEmitter<{
     fotoUrl?: string;
     faceVector?: string;

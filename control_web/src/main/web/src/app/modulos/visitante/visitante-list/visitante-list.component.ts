@@ -1,44 +1,82 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { VisitanteService } from '../../../shared/visitante/visitante.service';
-import { Visitante } from "../../../shared/visitante/visitante.model";
-import { Observable, Subject } from "rxjs";
 
 @Component({
   selector: 'app-visitante-list',
   templateUrl: './visitante-list.component.html',
   styleUrls: ['./visitante-list.component.css']
 })
-export class VisitanteListComponent implements OnInit, OnDestroy {
-  visita$: Observable<Visitante> | any;
-  dtOptions: any = {};
-  dtTrigger: Subject<any> = new Subject<any>();
+export class VisitanteListComponent implements OnInit {
+  visitantes: any[] = [];
+  visitantesFiltrados: any[] = [];
+  itemsPaginados: any[] = [];
 
-  constructor(private visiService: VisitanteService) { }
+  filtroTexto: string = '';
+  page: number = 1;
+  pageSize: number = 10;
+  totalPaginas: number = 1;
+  paginasArray: number[] = [];
 
-  ngOnInit() {
-    this.dtOptions = {
-      pagingType: 'full_numbers',
-      pageLength: 5,
-      processing: true
-    };
+  constructor(private visiService: VisitanteService) {}
+
+  ngOnInit(): void {
     this.reloadData();
   }
 
-  reloadData() {
-    this.visiService.getVisitantesList().subscribe(data => {
-      this.visita$ = data;
-      this.dtTrigger.next(data);
+  reloadData(): void {
+    this.visiService.getVisitantesList().subscribe({
+      next: (data: any) => {
+        this.visitantes = data || [];
+        this.aplicarFiltro();
+      },
+      error: (err) => console.log('Error visitantes:', err)
     });
   }
 
-  ngOnDestroy(): void {
-    this.dtTrigger.unsubscribe();
+  aplicarFiltro(): void {
+    const q = (this.filtroTexto || '').toLowerCase().trim();
+    if (!q) {
+      this.visitantesFiltrados = [...this.visitantes];
+    } else {
+      this.visitantesFiltrados = this.visitantes.filter((v) => {
+        const nombre = (v.name || v.nombre || '').toLowerCase();
+        const apellido = (v.lastName || v.apellido || '').toLowerCase();
+        const doc = (v.document || v.documento || '').toString();
+        const email = (v.email || '').toLowerCase();
+        const badge = (v.badgeAccess || '').toString();
+        return (
+          nombre.includes(q) ||
+          apellido.includes(q) ||
+          doc.includes(q) ||
+          email.includes(q) ||
+          badge.includes(q)
+        );
+      });
+    }
+    this.totalPaginas = Math.ceil(this.visitantesFiltrados.length / this.pageSize) || 1;
+    this.page = 1;
+    this.actualizarPaginacion();
   }
 
-  deleteVisitante(id: number) {
-    this.visiService.deleteVisitante(id).subscribe({
-      next: () => this.reloadData(),
-      error: err => console.log(err)
-    });
+  actualizarPaginacion(): void {
+    const inicio = (this.page - 1) * this.pageSize;
+    this.itemsPaginados = this.visitantesFiltrados.slice(inicio, inicio + this.pageSize);
+    this.paginasArray = Array.from({ length: this.totalPaginas }, (_, i) => i + 1);
+  }
+
+  cambiarPagina(nuevaPagina: number): void {
+    if (nuevaPagina >= 1 && nuevaPagina <= this.totalPaginas) {
+      this.page = nuevaPagina;
+      this.actualizarPaginacion();
+    }
+  }
+
+  deleteVisitante(id: number): void {
+    if (confirm('Desea eliminar este visitante?')) {
+      this.visiService.deleteVisitante(id).subscribe({
+        next: () => this.reloadData(),
+        error: (err) => console.log(err)
+      });
+    }
   }
 }

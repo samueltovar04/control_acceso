@@ -5,6 +5,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { VisitanteService } from '../../../shared/visitante/visitante.service';
 import { Visitante } from "../../../shared/visitante/visitante.model";
+import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 
 @Component({
   selector: 'app-crear-visitante',
@@ -14,22 +15,29 @@ import { Visitante } from "../../../shared/visitante/visitante.model";
 
 export class CrearVisitanteComponent implements OnInit {
 
-visita: Visitante = new Visitante();
-
+visita: any = new Visitante();
+empleadosList: any[] = [];
 
 submitted = false;
 
-constructor(private visiService: VisitanteService,private router: Router) { }
+constructor(
+  private visiService: VisitanteService,
+  private empleService: EmpleadoService,
+  private router: Router
+) { }
 
  public webcamImage: WebcamImage = null;
 
   handleImage(webcamImage: WebcamImage) {
     this.webcamImage = webcamImage;
     this.visita.picture = this.webcamImage.imageAsDataUrl;
-    //console.log(this.visita.picture)
   }
  ngOnInit() {
-    }
+   this.empleService.getEmployeesList().subscribe({
+     next: (data) => (this.empleadosList = data || []),
+     error: (err) => console.log('Error empleados:', err)
+   });
+ }
   newVisitante(): void {
     this.submitted = false;
     this.visita = new Visitante();

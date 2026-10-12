@@ -4,23 +4,35 @@ import { Component, OnInit } from '@angular/core';
 
 import { DispositivoService } from '../../../shared/dispositivo/dispositivo.service';
 import { Dispositivo } from "../../../shared/dispositivo/dispositivo.model";
+import { PisoService } from '../../../shared/piso/piso.service';
 
 @Component({
   selector: 'app-crear-dispositivo',
   templateUrl: './crear-dispositivo.component.html',
   styleUrls: ['./crear-dispositivo.component.css']
 })
-
 export class CrearDispositivoComponent implements OnInit {
 
-dispositivo: Dispositivo = new Dispositivo();
+  dispositivo: Dispositivo = new Dispositivo();
+  pisosList: any[] = [];
+  submitted = false;
 
-submitted = false;
+  constructor(
+    private dispositivoService: DispositivoService,
+    private pisoService: PisoService,
+    private router: Router
+  ) { }
 
-constructor(private dispositivoService: DispositivoService,private router: Router) { }
+  ngOnInit() {
+    this.cargarPisos();
+  }
 
- ngOnInit() {
-    }
+  cargarPisos() {
+    this.pisoService.getPisosList().subscribe({
+      next: (data) => (this.pisosList = data || []),
+      error: (err) => console.log('Error cargando pisos:', err)
+    });
+  }
   newDispositivo(): void {
     this.submitted = false;
     this.dispositivo = new Dispositivo();

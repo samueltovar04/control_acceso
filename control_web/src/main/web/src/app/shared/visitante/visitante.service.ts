@@ -6,7 +6,7 @@ import { Visitante } from './visitante.model';
 @Injectable()
 export class VisitanteService {
 
-private baseUrl = 'http://localhost:8080/api/v1/visitantes';
+private baseUrl = '/api/v1/visitas';
 
 constructor(private http: HttpClient) { }
 
@@ -24,10 +24,14 @@ constructor(private http: HttpClient) { }
   }
 
   deleteVisitante(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`, { responseType: 'text' });
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
   getVisitantesList(): Observable<any> {
     return this.http.get(`${this.baseUrl}`);
+  }
+
+  getTokenQr(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${id}/qr`);
   }
 }

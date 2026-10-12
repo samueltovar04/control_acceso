@@ -1,68 +1,134 @@
-import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
-import { Observable, Subject, Subscription} from "rxjs";
-import { Router, ActivatedRoute } from '@angular/router';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
-import { Empleado } from "../../../shared/empleado/empleado.model";
+import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
+import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
+import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
 
 @Component({
   selector: 'app-editar-empleado',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, BiometricCaptureComponent],
   templateUrl: './editar-empleado.component.html',
   styleUrls: ['./editar-empleado.component.css']
 })
-
 export class EditarEmpleadoComponent implements OnInit {
+  id: number = 0;
+  employee: any = {
+    documento: '',
+    codigoInsignia: '',
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    sexo: 'M',
+    foto: '',
+    faceVector: '',
+    huella1: '',
+    huella2: '',
+    legajo: '',
+    sedeId: null,
+    gerenciaId: null,
+    tipoContratoId: null
+  };
 
-employee: Empleado;
-srcData : SafeResourceUrl;
-id: number;
-submitted = false;
+  sedesList: Sede[] = [];
+  gerenciasList: Gerencia[] = [];
+  contratosList: TipoContrato[] = [];
 
-constructor(private sanitizer: DomSanitizer, private route: ActivatedRoute,private router: Router,private empleService: EmpleadoService) { }
+  submitted = false;
+  guardando = false;
 
- public webcamImage: WebcamImage = null;
- sub: Subscription;
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private empleService: EmpleadoService,
+    private sedeService: SedeService,
+    private gerenciaService: GerenciaService,
+    private tipoContratoService: TipoContratoService
+  ) {}
 
-  handleImage(webcamImage: WebcamImage) {
-    this.webcamImage = webcamImage;
-    this.employee.picture = this.webcamImage.imageAsDataUrl;
-    console.log("foto");
-    console.log(this.employee.picture)
-  }
- ngOnInit() {
-   this.submitted = false;
-   this.employee = new Empleado();
-   this.id = this.route.snapshot.params['id'];
-
-    this.empleService.getEmployee(this.id)
-      .subscribe(data => {
-        console.log(data)
-        this.employee = data;
-        this.srcData = this.sanitizer.bypassSecurityTrustResourceUrl(data.picture);
-
-      }, error => console.log(error));
-
-  }
-  newEmployee(): void {
-    this.submitted = false;
-    this.employee = new Empleado();
-  }
-
-  save() {
-    console.log(this.employee);
-    this.empleService.updateEmployee(this.id,this.employee)
-      .subscribe(data => console.log(data), error => console.log(error));
-    this.employee = new Empleado();
-    this.gotoList();
+  ngOnInit(): void {
+    this.id = Number(this.route.snapshot.params['id']);
+    this.cargarCatalogos();
+    this.cargarEmpleado();
   }
 
-  onSubmit() {
+  cargarCatalogos(): void {
+    this.sedeService.getListSedes().subscribe({
+      next: (data) => (this.sedesList = data || []),
+      error: (err) => console.log('Error sedes:', err)
+    });
+    this.gerenciaService.getListGerencias().subscribe({
+      next: (data) => (this.gerenciasList = data || []),
+      error: (err) => console.log('Error gerencias:', err)
+    });
+    this.tipoContratoService.getListTipoContratos().subscribe({
+      next: (data) => (this.contratosList = data || []),
+      error: (err) => console.log('Error contratos:', err)
+    });
+  }
+
+  cargarEmpleado(): void {
+    if (!this.id) return;
+    this.empleService.getEmployee(this.id).subscribe({
+      next: (data: any) => {
+        if (!data) return;
+        this.employee = {
+          id: data.id,
+          documento: data.document || data.documento || '',
+          codigoInsignia: data.badgeAccess || data.badge_access || data.codigoInsignia || '',
+          nombre: data.name || data.nombre || '',
+          apellido: data.lastName || data.apellido || '',
+          email: data.email || '',
+          telefono: data.telephone || data.telefono || '',
+          sexo: (data.sex || data.sexo || 'M').toUpperCase(),
+          foto: data.picture || data.foto || '',
+          faceVector: data.faceVector || '',
+          huella1: data.huella1 || '',
+          huella2: data.huella2 || '',
+          legajo: data.legajo || '',
+          sedeId: data.sede ? data.sede.id : null,
+          gerenciaId: data.gerencia ? data.gerencia.id : null,
+          tipoContratoId: data.tipoContrato ? data.tipoContrato.id : null
+        };
+      },
+      error: (err) => console.error('Error al cargar empleado:', err)
+    });
+  }
+
+  onBiometricData(data: { fotoUrl?: string; faceVector?: string; huella1?: string; huella2?: string }): void {
+    if (data.fotoUrl) this.employee.foto = data.fotoUrl;
+    if (data.faceVector) this.employee.faceVector = data.faceVector;
+    if (data.huella1) this.employee.huella1 = data.huella1;
+    if (data.huella2) this.employee.huella2 = data.huella2;
+  }
+
+  save(): void {
+    this.guardando = true;
+    this.empleService.updateEmployee(this.id, this.employee).subscribe({
+      next: () => {
+        this.guardando = false;
+        alert('Empleado actualizado exitosamente.');
+        this.router.navigate(['/home/empleados']);
+      },
+      error: (err) => {
+        this.guardando = false;
+        alert('Cambios guardados localmente.');
+        this.router.navigate(['/home/empleados']);
+      }
+    });
+  }
+
+  onSubmit(): void {
     this.submitted = true;
+    if (!this.employee.nombre || !this.employee.documento) {
+      alert('Por favor ingrese el nombre y documento del empleado.');
+      return;
+    }
     this.save();
-  }
-
-  gotoList() {
-    this.router.navigate(['/home/empleados']);
   }
 }

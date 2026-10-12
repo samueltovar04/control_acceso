@@ -11,7 +11,10 @@
         
         <div class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center" style="height: 190px; overflow: hidden;">
           <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)"></webcam>
-          <div *ngIf="!webcamImage" class="position-absolute text-white small opacity-75">
+          <div *ngIf="!webcamImage && fotoExistente" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark">
+            <img [src]="fotoExistente" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+          </div>
+          <div *ngIf="!webcamImage && !fotoExistente" class="position-absolute text-white small opacity-75">
             <i class="bi bi-camera fs-2 d-block mb-1"></i>Enfoque el rostro
           </div>
         </div>

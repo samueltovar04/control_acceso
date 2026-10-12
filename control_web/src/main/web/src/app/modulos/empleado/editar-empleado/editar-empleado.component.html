@@ -1,75 +1,103 @@
-<h3>Modificar Empleado</h3>
-<div [hidden]="submitted">
+<div class="container-fluid p-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark m-0">
+        <i class="bi bi-person-gear text-primary me-2"></i>Modificar Empleado: {{ employee.nombre }} {{ employee.apellido }}
+      </h3>
+      <p class="text-muted small m-0">Actualizacion de datos personales, laborales y credenciales biometricas</p>
+    </div>
+    <a routerLink="/home/empleados" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Volver al listado
+    </a>
+  </div>
+
   <form (ngSubmit)="onSubmit()">
-    <div class="row">
-    <div class="col-md-4 col-sm-4 col-lg-4 col-md-offset-4" style="position:absolute;left:40%;text-align:left">
-      <app-camera (pictureTaken)="handleImage($event)"></app-camera>
-      <div class="form-group">
-        <label for="name">Foto</label>
-        <div class="snapshot" *ngIf="webcamImage">
-          <img width="200px" [src]="webcamImage.imageAsDataUrl" />
-          <input type="hidden" class="form-control" required [(ngModel)]="employee.picture" name="picture" id="picture">
+    <div class="row g-4">
+      <!-- DATOS GENERALES -->
+      <div class="col-lg-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 bg-white h-100">
+          <h5 class="fw-bold text-secondary mb-3">
+            <i class="bi bi-card-heading me-2"></i>Informacion Personal y Laboral
+          </h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Documento / Cedula</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.documento" name="documento" required placeholder="V-12345678">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Codigo Insignia / RFID</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.codigoInsignia" name="codigoInsignia" placeholder="TAG-889021">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.nombre" name="nombre" required placeholder="Nombre">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Apellido</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.apellido" name="apellido" required placeholder="Apellido">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Correo Electronico</label>
+              <input type="email" class="form-control" [(ngModel)]="employee.email" name="email" placeholder="empleado@empresa.com">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Telefono de Contacto</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.telefono" name="telefono" placeholder="+58 412 0000000">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Sexo</label>
+              <select class="form-select" [(ngModel)]="employee.sexo" name="sexo">
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Legajo / Ficha</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.legajo" name="legajo" placeholder="LEG-001">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Sede</label>
+              <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId">
+                <option [ngValue]="null">Seleccionar Sede...</option>
+                <option *ngFor="let s of sedesList" [value]="s.id">{{ s.sede }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Gerencia / Dpto.</label>
+              <select class="form-select" [(ngModel)]="employee.gerenciaId" name="gerenciaId">
+                <option [ngValue]="null">Seleccionar Gerencia...</option>
+                <option *ngFor="let g of gerenciasList" [value]="g.id">{{ g.gerencia }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Tipo de Contrato</label>
+              <select class="form-select" [(ngModel)]="employee.tipoContratoId" name="tipoContratoId">
+                <option [ngValue]="null">Seleccionar Contrato...</option>
+                <option *ngFor="let c of contratosList" [value]="c.id">{{ c.contrato }}</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="snapshot" *ngIf="!webcamImage">
-          <img width="200px" [src]="'data:image/jpeg;base64,'+employee.picture" />
+      </div>
+
+      <!-- COMPONENTE BIOMETRICO (FACIAL + HUELLAS) -->
+      <div class="col-lg-6">
+        <app-biometric-capture
+          titulo="Actualizacion Biometrica del Empleado"
+          [fotoExistente]="employee.foto"
+          (biometricDataChange)="onBiometricData($event)">
+        </app-biometric-capture>
+
+        <div class="card p-3 border-0 shadow-sm rounded-3 bg-white text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" routerLink="/home/empleados" class="btn btn-light px-4">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" [disabled]="guardando">
+              <i class="bi bi-save me-1"></i> {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-6 col-sm-6 col-lg-6">
-
-      <div class="form-group">
-        <label for="name">Tarjeta Acceso</label>
-        <input type="number" class="form-control" id="badgeAccess" required [(ngModel)]="employee.badgeAccess" name="badgeAccess">
-      </div>
-    <div class="form-group">
-      <label for="name">DNI</label>
-      <input type="hidden" class="form-control" id="id" required [(ngModel)]="id" name="id">
-
-      <input type="number" class="form-control" id="document" required [(ngModel)]="employee.document" name="document">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Nombre</label>
-      <input type="text" class="form-control" id="name" required [(ngModel)]="employee.name" name="name">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Apellido</label>
-      <input type="text" class="form-control" id="lastName" required [(ngModel)]="employee.lastName" name="lastName">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Correo</label>
-      <input type="text" class="form-control" id="email" required [(ngModel)]="employee.email" name="email">
-    </div>
-
-      <div class="form-group">
-        <label for="name">Fecha Nacimiento</label>
-        <input type="date" class="form-control" id="birthDate" required [(ngModel)]="employee.birthDate" name="birthDate">
-      </div>
-
-    <div class="form-group">
-      <section class="form-control">
-        <label for="name">Sexo</label>
-        <input name="sex" value="m" type="radio" selected [(ngModel)]="employee.sex" />
-        <i>Masculino</i>
-        <input name="sexr" value="f" type="radio" [(ngModel)]="employee.sex" />
-        <i>Femenino</i>
-      </section>
-    </div>
-
-    <div class="form-group">
-      <label for="name">Celular</label>
-      <input type="number" class="form-control" id="telephone" required [(ngModel)]="employee.telephone" name="telephone">
-    </div>
-
-    <button type="submit" class="btn btn-success">Guardar Cambios</button>
-    </div>
-</div>
   </form>
-</div>
-{{employee}}
-
-<div [hidden]="!submitted">
-  <h4>You submitted successfully!</h4>
 </div>

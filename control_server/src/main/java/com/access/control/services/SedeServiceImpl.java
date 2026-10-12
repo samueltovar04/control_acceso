@@ -35,10 +35,7 @@ public class SedeServiceImpl implements SedeService {
     public Sede updateSede(Sede sede, Long id) {
         Sede s = sedeRepository.findById(id);
         if (s != null) {
-            s.setNombre(sede.getNombre());
-            s.setDireccion(sede.getDireccion());
-            s.setTelefono(sede.getTelefono());
-            s.setCodigoSucursal(sede.getCodigoSucursal());
+            s.setSede(sede.getSede() != null ? sede.getSede() : sede.getNombre());
         }
         return s;
     }

@@ -9,35 +9,60 @@ import java.util.List;
 @Table(name = "empleados")
 public class Empleado extends AbstractEntity {
 
-    private String documento;
-    private String codigoInsignia;
-    private String nombre;
-    private String apellido;
+    @Column(name = "badge_access")
+    private Integer badgeAccess;
+
+    @Column(name = "birth_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date birthDate;
+
+    @Column(name = "document")
+    private Integer document;
+
+    @Column(name = "email")
     private String email;
-    private String telefono;
-    private String foto;
-    private String sexo;
 
-    @Temporal(TemporalType.DATE)
-    private Date fechaNacimiento;
+    @Column(name = "enabled")
+    private Boolean enabled = true;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "huella1", length = 1024)
     private String huella1;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "huella2", length = 1024)
     private String huella2;
 
-    @Column(columnDefinition = "TEXT")
-    private String faceVector;
+    @Column(name = "last_name")
+    private String lastName;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "picture", columnDefinition = "bytea")
+    private byte[] picture;
+
+    @Column(name = "sex")
+    private String sex;
+
+    @Column(name = "telephone")
+    private String telephone;
 
     @ManyToOne
+    @JoinColumn(name = "gerencia_id")
     private Gerencia gerencia;
 
     @ManyToOne
-    private TipoContrato tipoContrato;
+    @JoinColumn(name = "sede_id")
+    private Sede sede;
 
     @ManyToOne
-    private Sede sede;
+    @JoinColumn(name = "tipo_contrato_id")
+    private TipoContrato tipoContrato;
+
+    @Column(name = "legajo", length = 20)
+    private String legajo;
+
+    @Column(name = "face_vector", columnDefinition = "TEXT")
+    private String faceVector;
 
     @OneToOne
     private User user;
@@ -45,36 +70,64 @@ public class Empleado extends AbstractEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     private List<Piso> pisosPermitidos;
 
-    public String getDocumento() {
-        return documento;
+    public Integer getBadgeAccess() {
+        return badgeAccess;
     }
 
-    public void setDocumento(String documento) {
-        this.documento = documento;
+    public void setBadgeAccess(Integer badgeAccess) {
+        this.badgeAccess = badgeAccess;
     }
 
     public String getCodigoInsignia() {
-        return codigoInsignia;
+        return badgeAccess != null ? String.valueOf(badgeAccess) : null;
     }
 
     public void setCodigoInsignia(String codigoInsignia) {
-        this.codigoInsignia = codigoInsignia;
+        if (codigoInsignia != null && !codigoInsignia.trim().isEmpty()) {
+            try {
+                this.badgeAccess = Integer.parseInt(codigoInsignia.replaceAll("\\D", ""));
+            } catch (Exception e) {
+                this.badgeAccess = null;
+            }
+        }
     }
 
-    public String getNombre() {
-        return nombre;
+    public Date getBirthDate() {
+        return birthDate;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setBirthDate(Date birthDate) {
+        this.birthDate = birthDate;
     }
 
-    public String getApellido() {
-        return apellido;
+    public Date getFechaNacimiento() {
+        return birthDate;
     }
 
-    public void setApellido(String apellido) {
-        this.apellido = apellido;
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.birthDate = fechaNacimiento;
+    }
+
+    public Integer getDocument() {
+        return document;
+    }
+
+    public void setDocument(Integer document) {
+        this.document = document;
+    }
+
+    public String getDocumento() {
+        return document != null ? String.valueOf(document) : null;
+    }
+
+    public void setDocumento(String documento) {
+        if (documento != null && !documento.trim().isEmpty()) {
+            try {
+                this.document = Integer.parseInt(documento.replaceAll("\\D", ""));
+            } catch (Exception e) {
+                this.document = null;
+            }
+        }
     }
 
     public String getEmail() {
@@ -85,36 +138,12 @@ public class Empleado extends AbstractEntity {
         this.email = email;
     }
 
-    public String getTelefono() {
-        return telefono;
+    public Boolean getEnabled() {
+        return enabled;
     }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getFoto() {
-        return foto;
-    }
-
-    public void setFoto(String foto) {
-        this.foto = foto;
-    }
-
-    public String getSexo() {
-        return sexo;
-    }
-
-    public void setSexo(String sexo) {
-        this.sexo = sexo;
-    }
-
-    public Date getFechaNacimiento() {
-        return fechaNacimiento;
-    }
-
-    public void setFechaNacimiento(Date fechaNacimiento) {
-        this.fechaNacimiento = fechaNacimiento;
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getHuella1() {
@@ -133,12 +162,86 @@ public class Empleado extends AbstractEntity {
         this.huella2 = huella2;
     }
 
-    public String getFaceVector() {
-        return faceVector;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setFaceVector(String faceVector) {
-        this.faceVector = faceVector;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getApellido() {
+        return lastName;
+    }
+
+    public void setApellido(String apellido) {
+        this.lastName = apellido;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNombre() {
+        return name;
+    }
+
+    public void setNombre(String nombre) {
+        this.name = nombre;
+    }
+
+    public byte[] getPicture() {
+        return picture;
+    }
+
+    public void setPicture(byte[] picture) {
+        this.picture = picture;
+    }
+
+    public String getFoto() {
+        return picture != null ? new String(picture) : null;
+    }
+
+    public void setFoto(String foto) {
+        if (foto != null) {
+            this.picture = foto.getBytes();
+        }
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    public String getSexo() {
+        return sex;
+    }
+
+    public void setSexo(String sexo) {
+        this.sex = sexo;
+    }
+
+    public String getTelephone() {
+        return telephone;
+    }
+
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
+    }
+
+    public String getTelefono() {
+        return telephone;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telephone = telefono;
     }
 
     public Gerencia getGerencia() {
@@ -149,6 +252,14 @@ public class Empleado extends AbstractEntity {
         this.gerencia = gerencia;
     }
 
+    public Sede getSede() {
+        return sede;
+    }
+
+    public void setSede(Sede sede) {
+        this.sede = sede;
+    }
+
     public TipoContrato getTipoContrato() {
         return tipoContrato;
     }
@@ -157,12 +268,20 @@ public class Empleado extends AbstractEntity {
         this.tipoContrato = tipoContrato;
     }
 
-    public Sede getSede() {
-        return sede;
+    public String getLegajo() {
+        return legajo;
     }
 
-    public void setSede(Sede sede) {
-        this.sede = sede;
+    public void setLegajo(String legajo) {
+        this.legajo = legajo;
+    }
+
+    public String getFaceVector() {
+        return faceVector;
+    }
+
+    public void setFaceVector(String faceVector) {
+        this.faceVector = faceVector;
     }
 
     public User getUser() {

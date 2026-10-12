@@ -59,13 +59,28 @@ public class ClienteResource {
         }
         cliente.setNombre(clienteDetails.getNombre());
         cliente.setApellido(clienteDetails.getApellido());
+        if (clienteDetails.getDocumento() != null) {
+            cliente.setDocumento(clienteDetails.getDocumento());
+        }
+        if (clienteDetails.getCodigoInsignia() != null) {
+            cliente.setCodigoInsignia(clienteDetails.getCodigoInsignia());
+        }
         cliente.setEmail(clienteDetails.getEmail());
         cliente.setTelefono(clienteDetails.getTelefono());
         cliente.setFoto(clienteDetails.getFoto());
         cliente.setSexo(clienteDetails.getSexo());
         cliente.setFechaNacimiento(clienteDetails.getFechaNacimiento());
+        if (clienteDetails.getEstadoSuscripcion() != null) {
+            cliente.setEstadoSuscripcion(clienteDetails.getEstadoSuscripcion());
+        }
+        if (clienteDetails.getHuella1() != null) cliente.setHuella1(clienteDetails.getHuella1());
+        if (clienteDetails.getHuella2() != null) cliente.setHuella2(clienteDetails.getHuella2());
+        if (clienteDetails.getFaceVector() != null) cliente.setFaceVector(clienteDetails.getFaceVector());
         if (clienteDetails.getSede() != null) {
             cliente.setSede(clienteDetails.getSede());
+        }
+        if (clienteDetails.getPisosPermitidos() != null) {
+            cliente.setPisosPermitidos(clienteDetails.getPisosPermitidos());
         }
         return Response.ok(cliente).build();
     }
@@ -93,5 +108,31 @@ public class ClienteResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/{id}/perfil")
+    public Response getPerfilCliente(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(cliente).build();
+    }
+
+    @GET
+    @Path("/{id}/qr")
+    public Response getClienteTokenQr(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        java.util.Map<String, Object> qrData = new java.util.HashMap<>();
+        qrData.put("clienteId", cliente.getId());
+        qrData.put("documento", cliente.getDocumento());
+        qrData.put("nombreCompleto", cliente.getNombre() + " " + cliente.getApellido());
+        qrData.put("estadoMembresia", cliente.getEstadoSuscripcion());
+        qrData.put("tokenAcceso", "QR-CLI-" + cliente.getId() + "-" + System.currentTimeMillis());
+        return Response.ok(qrData).build();
     }
 }

@@ -41,16 +41,37 @@
               <label class="form-label small fw-bold">Teléfono de Contacto</label>
               <input type="text" class="form-control" [(ngModel)]="employee.telefono" name="telefono" placeholder="+58 412 0000000">
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Sexo</label>
-              <select class="form-select" [(ngModel)]="employee.sexo" name="sexo">
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-              </select>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Sexo</label>
+                <select class="form-select" [(ngModel)]="employee.sexo" name="sexo">
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Sede</label>
+                <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId">
+                  <option [ngValue]="null">Seleccionar Sede...</option>
+                  <option *ngFor="let s of sedesList" [value]="s.id">{{ s.sede }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Gerencia / Dpto.</label>
+                <select class="form-select" [(ngModel)]="employee.gerenciaId" name="gerenciaId">
+                  <option [ngValue]="null">Seleccionar Gerencia...</option>
+                  <option *ngFor="let g of gerenciasList" [value]="g.id">{{ g.gerencia }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Tipo de Contrato</label>
+                <select class="form-select" [(ngModel)]="employee.tipoContratoId" name="tipoContratoId">
+                  <option [ngValue]="null">Seleccionar Contrato...</option>
+                  <option *ngFor="let c of contratosList" [value]="c.id">{{ c.contrato }}</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <!-- COMPONENTE BIOMÉTRICO (FACIAL + HUELLAS) -->
       <div class="col-lg-6">

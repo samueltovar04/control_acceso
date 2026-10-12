@@ -19,9 +19,14 @@
       <input type="number" class="form-control" id="port" required [(ngModel)]="dispositivo.port" name="port">
     </div>
 
-    <div class="form-group">
-      <label for="piso_id">Piso</label>
-      <input type="number" class="form-control" id="piso_id" required [(ngModel)]="dispositivo.piso_id" name="piso_id">
+    <div class="form-group mb-3">
+      <label for="piso_id" class="form-label fw-bold">Piso / Zona Asignada:</label>
+      <select class="form-select" id="piso_id" required [(ngModel)]="dispositivo.piso_id" name="piso_id">
+        <option [ngValue]="null">Seleccione un Piso...</option>
+        <option *ngFor="let p of pisosList" [value]="p.id">
+          Piso {{ p.numeroPiso || p.piso }} - {{ p.descripcion || p.area || 'Sin descripción' }}
+        </option>
+      </select>
     </div>
 
       <div class="form-group">

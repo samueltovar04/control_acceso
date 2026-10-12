@@ -29,6 +29,15 @@ import { CrearPisoComponent } from './modulos/piso/crear-piso/crear-piso.compone
 import { EditarPisoComponent } from './modulos/piso/editar-piso/editar-piso.component';
 import { PisoListComponent } from './modulos/piso/piso-list/piso-list.component';
 
+import { ClienteListComponent } from './modulos/cliente/cliente-list/cliente-list.component';
+import { ClienteDetailsComponent } from './modulos/cliente/cliente-details/cliente-details.component';
+import { EditarClienteComponent } from './modulos/cliente/editar-cliente/editar-cliente.component';
+
+import { SedeListComponent } from './modulos/sede/sede-list/sede-list.component';
+import { GerenciaListComponent } from './modulos/gerencia/gerencia-list/gerencia-list.component';
+import { TipoContratoListComponent } from './modulos/tipo-contrato/tipo-contrato-list/tipo-contrato-list.component';
+import { PermisosPisosComponent } from './modulos/permisos/permisos-pisos/permisos-pisos.component';
+
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: '', pathMatch: 'full', redirectTo: 'home/admin-dashboard' },
@@ -41,8 +50,10 @@ const routes: Routes = [
       { path: 'monitor-salud', component: MonitorSaludComponent },
       { path: 'biometria-facial', component: BiometriaFacialComponent },
       { path: 'portal-cliente', component: PortalClienteComponent },
+      { path: 'clientes', component: ClienteListComponent },
       { path: 'cliente-add', component: CrearClienteComponent },
-      { path: 'clientes', component: AdminDashboardComponent },
+      { path: 'cliente/:id', component: ClienteDetailsComponent },
+      { path: 'cliente-edit/:id', component: EditarClienteComponent },
       { path: 'empleados', component: EmpleadoListComponent },
       { path: 'empleado-add', component: CrearEmpleadoComponent },
       { path: 'empleado/:id', component: EmpleadoDetailsComponent },
@@ -58,7 +69,11 @@ const routes: Routes = [
       { path: 'pisos', component: PisoListComponent },
       { path: 'piso-add', component: CrearPisoComponent },
       { path: 'piso/:id', component: PisoDetailsComponent },
-      { path: 'piso-edit/:id', component: EditarPisoComponent }
+      { path: 'piso-edit/:id', component: EditarPisoComponent },
+      { path: 'sedes', component: SedeListComponent },
+      { path: 'gerencias', component: GerenciaListComponent },
+      { path: 'tipo-contratos', component: TipoContratoListComponent },
+      { path: 'permisos-pisos', component: PermisosPisosComponent }
     ]
   }
 ];

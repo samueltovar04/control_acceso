@@ -16,4 +16,12 @@ public class AccesoRegistroRepository implements PanacheRepository<AccesoRegistr
     public List<AccesoRegistro> findByCliente(Long clienteId) {
         return list("cliente.id", Sort.by("fechaHora", Sort.Direction.Descending), clienteId);
     }
+
+    public List<AccesoRegistro> findPermitidos() {
+        return find("concedido = true order by fechaHora desc").page(0, 50).list();
+    }
+
+    public List<AccesoRegistro> findDenegados() {
+        return find("concedido = false order by fechaHora desc").page(0, 50).list();
+    }
 }

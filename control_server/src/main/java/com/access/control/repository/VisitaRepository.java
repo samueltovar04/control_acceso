@@ -7,6 +7,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class VisitaRepository implements PanacheRepository<Visita> {
     public Visita findByDocumento(String documento) {
-        return find("documento", documento).firstResult();
+        if (documento == null) return null;
+        try {
+            Integer docInt = Integer.parseInt(documento.replaceAll("\\D", ""));
+            return find("document", docInt).firstResult();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -35,8 +35,7 @@ public class TipoContratoServiceImpl implements TipoContratoService {
     public TipoContrato updateTipoContrato(TipoContrato tipoContrato, Long id) {
         TipoContrato tc = tipoContratoRepository.findById(id);
         if (tc != null) {
-            tc.setNombre(tipoContrato.getNombre());
-            tc.setDescripcion(tipoContrato.getDescripcion());
+            tc.setContrato(tipoContrato.getContrato() != null ? tipoContrato.getContrato() : tipoContrato.getNombre());
         }
         return tc;
     }

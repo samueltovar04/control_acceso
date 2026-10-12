@@ -25,10 +25,25 @@ public class AccesoResource {
     @Inject
     ClienteRepository clienteRepository;
 
+    @Inject
+    com.access.control.services.AccessValidationStrategy accessValidationStrategy;
+
     @GET
     @Path("/registros")
     public List<AccesoRegistro> getRegistrosRecientes() {
         return accesoRepository.findRecientes();
+    }
+
+    @GET
+    @Path("/historial/permitidos")
+    public List<AccesoRegistro> getHistorialPermitidos() {
+        return accesoRepository.findPermitidos();
+    }
+
+    @GET
+    @Path("/historial/denegados")
+    public List<AccesoRegistro> getHistorialDenegados() {
+        return accesoRepository.findDenegados();
     }
 
     @POST
@@ -37,15 +52,14 @@ public class AccesoResource {
     public Response validarAcceso(AccesoRegistro solicitud) {
         solicitud.setFechaHora(new Date());
 
-        // Si es acceso de un cliente, validar estado de su membresía
         if (solicitud.getCliente() != null && solicitud.getCliente().getId() != null) {
             Cliente c = clienteRepository.findById(solicitud.getCliente().getId());
             if (c != null) {
-                if ("VENCIDA".equals(c.getEstadoSuscripcion()) || "SUSPENDIDA".equals(c.getEstadoSuscripcion())) {
-                    solicitud.setConcedido(false);
-                    solicitud.setMotivoDenegacion("Membresía vencida o pago pendiente. Pase a recepción.");
-                } else {
-                    solicitud.setConcedido(true);
+                com.access.control.services.AccessValidationStrategy.ValidationResult result = 
+                        accessValidationStrategy.validarCliente(c, solicitud.getDispositivo());
+                solicitud.setConcedido(result.isConcedido());
+                if (!result.isConcedido()) {
+                    solicitud.setMotivoDenegacion(result.getMotivo());
                 }
             }
         }

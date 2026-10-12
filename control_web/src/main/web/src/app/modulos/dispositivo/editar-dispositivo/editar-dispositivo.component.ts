@@ -4,6 +4,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { DispositivoService } from '../../../shared/dispositivo/dispositivo.service';
 import { Dispositivo } from "../../../shared/dispositivo/dispositivo.model";
+import { PisoService } from '../../../shared/piso/piso.service';
 
 @Component({
   selector: 'app-editar-dispositivo',
@@ -14,11 +15,17 @@ import { Dispositivo } from "../../../shared/dispositivo/dispositivo.model";
 export class EditarDispositivoComponent implements OnInit {
 
 dispositivo: Dispositivo;
+pisosList: any[] = [];
 
 id: number;
 submitted = false;
 
-constructor(private route: ActivatedRoute,private router: Router,private dispositivoService: DispositivoService) { }
+constructor(
+  private route: ActivatedRoute,
+  private router: Router,
+  private dispositivoService: DispositivoService,
+  private pisoService: PisoService
+) { }
 
  sub: Subscription;
 
@@ -26,6 +33,11 @@ constructor(private route: ActivatedRoute,private router: Router,private disposi
    this.submitted = false;
    this.dispositivo = new Dispositivo();
    this.id = this.route.snapshot.params['id'];
+
+   this.pisoService.getPisosList().subscribe({
+     next: (pisos) => (this.pisosList = pisos || []),
+     error: (err) => console.log(err)
+   });
 
     this.dispositivoService.getDispositivo(this.id)
       .subscribe(data => {

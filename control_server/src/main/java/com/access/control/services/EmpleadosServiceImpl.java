@@ -14,6 +14,18 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Inject
     EmpleadoRepository empleadoRepository;
 
+    @Inject
+    com.access.control.repository.GerenciaRepository gerenciaRepository;
+
+    @Inject
+    com.access.control.repository.SedeRepository sedeRepository;
+
+    @Inject
+    com.access.control.repository.TipoContratoRepository tipoContratoRepository;
+
+    @Inject
+    com.access.control.repository.PisoRepository pisoRepository;
+
     @Override
     public Empleado getEmpleadoById(Long id) {
         return empleadoRepository.findById(id);
@@ -28,11 +40,39 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Transactional
     public Empleado addEmpleado(EmpleadoDto dto) {
         Empleado e = new Empleado();
-        e.setNombre(dto.getNombre());
-        e.setApellido(dto.getApellido());
+        e.setName(dto.getNombre());
+        e.setLastName(dto.getApellido());
         e.setEmail(dto.getEmail());
         e.setDocumento(dto.getDocumento());
-        e.setTelefono(dto.getTelefono());
+        e.setTelephone(dto.getTelefono());
+        e.setCodigoInsignia(dto.getCodigoInsignia());
+        e.setSex(dto.getSexo());
+        e.setBirthDate(dto.getFechaNacimiento());
+        if (dto.getFoto() != null) {
+            e.setFoto(dto.getFoto());
+        }
+        if (dto.getFaceVector() != null) {
+            e.setFaceVector(dto.getFaceVector());
+        }
+        if (dto.getHuella1() != null) {
+            e.setHuella1(dto.getHuella1());
+        }
+        if (dto.getHuella2() != null) {
+            e.setHuella2(dto.getHuella2());
+        }
+        if (dto.getGerenciaId() != null) {
+            e.setGerencia(gerenciaRepository.findById(dto.getGerenciaId()));
+        }
+        if (dto.getSedeId() != null) {
+            e.setSede(sedeRepository.findById(dto.getSedeId()));
+        }
+        if (dto.getTipoContratoId() != null) {
+            e.setTipoContrato(tipoContratoRepository.findById(dto.getTipoContratoId()));
+        }
+        if (dto.getPisoIds() != null && !dto.getPisoIds().isEmpty()) {
+            List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+            e.setPisosPermitidos(pisos);
+        }
         empleadoRepository.persist(e);
         return e;
     }
@@ -42,10 +82,51 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     public Empleado updateEmpleado(EmpleadoDto dto, Long id) {
         Empleado e = empleadoRepository.findById(id);
         if (e != null) {
-            e.setNombre(dto.getNombre());
-            e.setApellido(dto.getApellido());
+            e.setName(dto.getNombre());
+            e.setLastName(dto.getApellido());
             e.setEmail(dto.getEmail());
-            e.setTelefono(dto.getTelefono());
+            e.setTelephone(dto.getTelefono());
+            if (dto.getDocumento() != null) {
+                e.setDocumento(dto.getDocumento());
+            }
+            if (dto.getCodigoInsignia() != null) {
+                e.setCodigoInsignia(dto.getCodigoInsignia());
+            }
+            if (dto.getSexo() != null) {
+                e.setSex(dto.getSexo());
+            }
+            if (dto.getFechaNacimiento() != null) {
+                e.setBirthDate(dto.getFechaNacimiento());
+            }
+            if (dto.getFoto() != null) {
+                e.setFoto(dto.getFoto());
+            }
+            if (dto.getFaceVector() != null) {
+                e.setFaceVector(dto.getFaceVector());
+            }
+            if (dto.getHuella1() != null) {
+                e.setHuella1(dto.getHuella1());
+            }
+            if (dto.getHuella2() != null) {
+                e.setHuella2(dto.getHuella2());
+            }
+            if (dto.getGerenciaId() != null) {
+                e.setGerencia(gerenciaRepository.findById(dto.getGerenciaId()));
+            }
+            if (dto.getSedeId() != null) {
+                e.setSede(sedeRepository.findById(dto.getSedeId()));
+            }
+            if (dto.getTipoContratoId() != null) {
+                e.setTipoContrato(tipoContratoRepository.findById(dto.getTipoContratoId()));
+            }
+            if (dto.getPisoIds() != null) {
+                if (dto.getPisoIds().isEmpty()) {
+                    e.setPisosPermitidos(new java.util.ArrayList<>());
+                } else {
+                    List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+                    e.setPisosPermitidos(pisos);
+                }
+            }
         }
         return e;
     }
@@ -64,7 +145,16 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Override
     @Transactional
     public Empleado updatePisos(EmpleadoDto dto, Long id) {
-        return empleadoRepository.findById(id);
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null && dto.getPisoIds() != null) {
+            if (dto.getPisoIds().isEmpty()) {
+                e.setPisosPermitidos(new java.util.ArrayList<>());
+            } else {
+                List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+                e.setPisosPermitidos(pisos);
+            }
+        }
+        return e;
     }
 
     @Override

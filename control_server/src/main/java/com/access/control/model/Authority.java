@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Table(name = "authorities")
 public class Authority extends AbstractEntity {
 
-    private String name; // ROLE_ADMIN, ROLE_EMPLEADO, ROLE_CLIENTE, ROLE_RECEPCION
+    private String name; // ROLE_ADMIN, ROLE_EMPLEADO, ROLE_CLIENTE, ROLE_RECEPCION, ROLE_TECNICO
 
     public String getName() {
         return name;

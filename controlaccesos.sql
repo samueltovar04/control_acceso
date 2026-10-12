@@ -161,7 +161,8 @@ CREATE TABLE public.pisos (
     state integer,
     area character varying(255),
     descripcion character varying(255),
-    piso character varying(255)
+    piso character varying(255),
+    sede_id bigint
 );
 
 
@@ -4527,10 +4528,10 @@ INSERT INTO public.piso_permiso (id, state, pisoid, badge_access, piso_id) VALUE
 -- Data for Name: pisos; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.pisos (id, state, area, descripcion, piso) VALUES (2, 1, 'Edif. Administrativo', 'Piso 1', 'p1');
-INSERT INTO public.pisos (id, state, area, descripcion, piso) VALUES (3, 1, 'Edif. Administrativo', 'Piso 2', 'p2');
-INSERT INTO public.pisos (id, state, area, descripcion, piso) VALUES (4, 1, 'Edif. Administrativo', 'Piso 3', 'p3');
-INSERT INTO public.pisos (id, state, area, descripcion, piso) VALUES (1, 1, 'Edif. Administrativo', 'Planta Baja', 'pb');
+INSERT INTO public.pisos (id, state, area, descripcion, piso, sede_id) VALUES (2, 1, 'Edif. Administrativo', 'Piso 1', 'p1', 1);
+INSERT INTO public.pisos (id, state, area, descripcion, piso, sede_id) VALUES (3, 1, 'Edif. Administrativo', 'Piso 2', 'p2', 1);
+INSERT INTO public.pisos (id, state, area, descripcion, piso, sede_id) VALUES (4, 1, 'Edif. Administrativo', 'Piso 3', 'p3', 1);
+INSERT INTO public.pisos (id, state, area, descripcion, piso, sede_id) VALUES (1, 1, 'Edif. Administrativo', 'Planta Baja', 'pb', 1);
 
 
 --
@@ -4746,4 +4747,128 @@ ALTER TABLE ONLY public.piso_permiso
 --
 -- PostgreSQL database dump complete
 --
+
+-- ============================================================================
+-- NUEVAS TABLAS DE CONTROL DE ACCESO MODERNO (CLIENTES, PAGOS, BIOMETRIA DUAL)
+-- ============================================================================
+
+--
+-- Name: clientes; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.clientes (
+    id SERIAL PRIMARY KEY,
+    documento character varying(255) UNIQUE NOT NULL,
+    codigo_insignia character varying(255),
+    nombre character varying(255) NOT NULL,
+    apellido character varying(255) NOT NULL,
+    email character varying(255),
+    telefono character varying(255),
+    foto text,
+    sexo character varying(50),
+    fecha_nacimiento date,
+    huella1 text,
+    huella2 text,
+    face_vector text,
+    estado_suscripcion character varying(50) DEFAULT 'SIN_MEMBRESIA',
+    sede_id bigint REFERENCES public.sedes(id),
+    user_id bigint,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+--
+-- Name: clientes_pisos; Type: TABLE; Schema: public (Relacion ManyToMany)
+--
+CREATE TABLE IF NOT EXISTS public.clientes_pisos (
+    cliente_id bigint NOT NULL REFERENCES public.clientes(id) ON DELETE CASCADE,
+    piso_id bigint NOT NULL REFERENCES public.pisos(id) ON DELETE CASCADE,
+    PRIMARY KEY (cliente_id, piso_id)
+);
+
+--
+-- Name: suscripciones_cliente; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.suscripciones_cliente (
+    id SERIAL PRIMARY KEY,
+    cliente_id bigint NOT NULL REFERENCES public.clientes(id) ON DELETE CASCADE,
+    plan_nombre character varying(255) NOT NULL,
+    monto numeric(12,2) NOT NULL,
+    fecha_inicio timestamp without time zone NOT NULL,
+    fecha_vencimiento timestamp without time zone NOT NULL,
+    estado character varying(50) DEFAULT 'ACTIVA',
+    dias_gracia integer DEFAULT 3,
+    notificado_pago boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+--
+-- Name: pagos; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.pagos (
+    id SERIAL PRIMARY KEY,
+    cliente_id bigint REFERENCES public.clientes(id) ON DELETE SET NULL,
+    monto numeric(12,2) NOT NULL,
+    moneda character varying(10) DEFAULT 'USD',
+    metodo_pago character varying(50) NOT NULL, -- TARJETA, PAGO_MOVIL, TRANSFERENCIA, EFECTIVO
+    referencia_bancaria character varying(255),
+    estado_pago character varying(50) DEFAULT 'COMPLETADO', -- PENDIENTE, COMPLETADO, RECHAZADO, CONCILIADO
+    fecha_pago timestamp without time zone DEFAULT now(),
+    concepto character varying(255),
+    comprobante_url text
+);
+
+--
+-- Name: conciliaciones_pago; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.conciliaciones_pago (
+    id SERIAL PRIMARY KEY,
+    pago_id bigint REFERENCES public.pagos(id) ON DELETE CASCADE,
+    conciliado_por character varying(255),
+    fecha_conciliacion timestamp without time zone DEFAULT now(),
+    notas text,
+    estado character varying(50) DEFAULT 'CONCILIADO'
+);
+
+--
+-- Name: accesos_registro; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.accesos_registro (
+    id SERIAL PRIMARY KEY,
+    fecha_hora timestamp without time zone DEFAULT now(),
+    concedido boolean NOT NULL,
+    metodo_verificacion character varying(50) NOT NULL, -- FACIAL, HUELLA, QR, RELE_REMOTO, TARJETA_RFID
+    motivo_denegacion character varying(255),
+    cliente_id bigint REFERENCES public.clientes(id) ON DELETE SET NULL,
+    empleado_id bigint REFERENCES public.empleados(id) ON DELETE SET NULL,
+    visitante_id bigint REFERENCES public.visitantes(id) ON DELETE SET NULL,
+    dispositivo_id bigint REFERENCES public.dispositivos(id) ON DELETE SET NULL
+);
+
+--
+-- Name: signos_vitales; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.signos_vitales (
+    id SERIAL PRIMARY KEY,
+    cliente_id bigint NOT NULL REFERENCES public.clientes(id) ON DELETE CASCADE,
+    ritmo_cardiaco_bpm integer,
+    saturacion_oxigeno_spo2 integer,
+    temperatura_corporal numeric(4,2),
+    alerta_salud boolean DEFAULT false,
+    mensaje_alerta character varying(255),
+    timestamp timestamp without time zone DEFAULT now()
+);
+
+--
+-- Name: biometria_facial; Type: TABLE; Schema: public
+--
+CREATE TABLE IF NOT EXISTS public.biometria_facial (
+    id SERIAL PRIMARY KEY,
+    persona_tipo character varying(50) NOT NULL, -- CLIENTE, EMPLEADO, VISITANTE
+    persona_id bigint NOT NULL,
+    embedding_128d text NOT NULL,
+    foto_referencia text,
+    calidad_deteccion numeric(5,2),
+    created_at timestamp without time zone DEFAULT now()
+);
+
 

@@ -1,22 +1,46 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "dispositivos")
 public class Dispositivo extends AbstractEntity {
 
+    @Column(name = "descripcion")
+    private String descripcion;
+
+    @Column(name = "entrada_salida")
+    private Integer entradaSalida;
+
+    @Column(name = "ip")
     private String ip;
-    private String nombre;
-    private String tipo; // TORNIQUETE, PUERTA_ACCESO, LECTOR_FACIAL, LECTOR_HUELLA
-    private String ubicacion;
-    private Boolean estadoConexion = true;
+
+    @Column(name = "ping")
+    private Boolean ping = true;
+
+    @Column(name = "port")
+    private Integer port = 80;
 
     @ManyToOne
-    private Sede sede;
+    @JoinColumn(name = "piso_id")
+    private Piso piso;
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public Integer getEntradaSalida() {
+        return entradaSalida;
+    }
+
+    public void setEntradaSalida(Integer entradaSalida) {
+        this.entradaSalida = entradaSalida;
+    }
 
     public String getIp() {
         return ip;
@@ -26,43 +50,57 @@ public class Dispositivo extends AbstractEntity {
         this.ip = ip;
     }
 
+    public Boolean getPing() {
+        return ping;
+    }
+
+    public void setPing(Boolean ping) {
+        this.ping = ping;
+    }
+
+    public Integer getPort() {
+        return port;
+    }
+
+    public void setPort(Integer port) {
+        this.port = port;
+    }
+
+    public Piso getPiso() {
+        return piso;
+    }
+
+    public void setPiso(Piso piso) {
+        this.piso = piso;
+    }
+
     public String getNombre() {
-        return nombre;
+        return descripcion;
     }
 
     public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
-    public void setUbicacion(String ubicacion) {
-        this.ubicacion = ubicacion;
+        this.descripcion = nombre;
     }
 
     public Boolean getEstadoConexion() {
-        return estadoConexion;
+        return ping;
     }
 
     public void setEstadoConexion(Boolean estadoConexion) {
-        this.estadoConexion = estadoConexion;
+        this.ping = estadoConexion;
     }
 
-    public Sede getSede() {
-        return sede;
+    public String getTipo() {
+        return "TORNIQUETE";
     }
 
-    public void setSede(Sede sede) {
-        this.sede = sede;
+    public void setTipo(String tipo) {
+    }
+
+    public String getUbicacion() {
+        return piso != null ? piso.getPiso() : "General";
+    }
+
+    public void setUbicacion(String ubicacion) {
     }
 }

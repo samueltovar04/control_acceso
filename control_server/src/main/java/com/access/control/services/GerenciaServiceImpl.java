@@ -35,8 +35,7 @@ public class GerenciaServiceImpl implements GerenciaService {
     public Gerencia updateGerencia(Gerencia gerencia, Long id) {
         Gerencia g = gerenciaRepository.findById(id);
         if (g != null) {
-            g.setNombre(gerencia.getNombre());
-            g.setCodigo(gerencia.getCodigo());
+            g.setGerencia(gerencia.getGerencia() != null ? gerencia.getGerencia() : gerencia.getNombre());
         }
         return g;
     }

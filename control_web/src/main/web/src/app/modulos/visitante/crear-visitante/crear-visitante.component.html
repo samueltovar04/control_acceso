@@ -54,12 +54,17 @@
       </section>
     </div>
 
-    <div class="form-group">
-      <label for="name">Celular</label>
-      <input type="number" class="form-control" id="telephone" required [(ngModel)]="visita.telephone" name="telephone">
+    <div class="form-group mb-3">
+      <label for="empleadoAVisitar" class="form-label fw-bold">Empleado a Visitar (Anfitrion):</label>
+      <select class="form-select" id="empleadoAVisitar" [(ngModel)]="visita.empleadoAVisitar" name="empleadoAVisitar">
+        <option [ngValue]="null">Seleccione un Empleado...</option>
+        <option *ngFor="let emp of empleadosList" [ngValue]="emp">
+          {{ emp.name || emp.nombre }} {{ emp.lastName || emp.apellido }} - {{ emp.gerencia?.gerencia || 'Personal' }}
+        </option>
+      </select>
     </div>
 
-    <button type="submit" class="btn btn-success">Submit</button>
+    <button type="submit" class="btn btn-success">Guardar Visitante</button>
     </div>
 </div>
   </form>

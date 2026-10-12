@@ -28,11 +28,16 @@ public class VisitasServiceImpl implements VisitasService {
     @Transactional
     public Visita addVisita(VisitaDto dto) {
         Visita v = new Visita();
-        v.setNombre(dto.getNombre());
-        v.setApellido(dto.getApellido());
+        v.setName(dto.getNombre());
+        v.setLastName(dto.getApellido());
         v.setDocumento(dto.getDocumento());
         v.setEmail(dto.getEmail());
         v.setTelefono(dto.getTelefono());
+        v.setSex(dto.getSexo());
+        v.setVisitDate(dto.getFechaIngreso() != null ? dto.getFechaIngreso() : new java.util.Date());
+        if (dto.getEmpleadoId() != null) {
+            v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+        }
         visitaRepository.persist(v);
         return v;
     }
@@ -42,10 +47,19 @@ public class VisitasServiceImpl implements VisitasService {
     public Visita updateVisita(VisitaDto dto, Long id) {
         Visita v = visitaRepository.findById(id);
         if (v != null) {
-            v.setNombre(dto.getNombre());
-            v.setApellido(dto.getApellido());
+            v.setName(dto.getNombre());
+            v.setLastName(dto.getApellido());
             v.setEmail(dto.getEmail());
             v.setTelefono(dto.getTelefono());
+            if (dto.getDocumento() != null) {
+                v.setDocumento(dto.getDocumento());
+            }
+            if (dto.getSexo() != null) {
+                v.setSex(dto.getSexo());
+            }
+            if (dto.getEmpleadoId() != null) {
+                v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+            }
         }
         return v;
     }

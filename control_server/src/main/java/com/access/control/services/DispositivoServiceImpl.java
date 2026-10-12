@@ -35,11 +35,23 @@ public class DispositivoServiceImpl implements DispositivoService {
     public Dispositivo updateDispositivo(Dispositivo dispositivo, Long id) {
         Dispositivo d = dispositivoRepository.findById(id);
         if (d != null) {
-            d.setNombre(dispositivo.getNombre());
+            d.setDescripcion(dispositivo.getDescripcion() != null ? dispositivo.getDescripcion() : dispositivo.getNombre());
             d.setIp(dispositivo.getIp());
-            d.setTipo(dispositivo.getTipo());
-            d.setUbicacion(dispositivo.getUbicacion());
-            d.setEstadoConexion(dispositivo.getEstadoConexion());
+            if (dispositivo.getPort() != null) {
+                d.setPort(dispositivo.getPort());
+            }
+            if (dispositivo.getEntradaSalida() != null) {
+                d.setEntradaSalida(dispositivo.getEntradaSalida());
+            }
+            if (dispositivo.getPing() != null) {
+                d.setPing(dispositivo.getPing());
+            }
+            if (dispositivo.getPiso() != null) {
+                d.setPiso(dispositivo.getPiso());
+            }
+            if (dispositivo.getState() != null) {
+                d.setState(dispositivo.getState());
+            }
         }
         return d;
     }

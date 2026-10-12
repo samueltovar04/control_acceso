@@ -56,4 +56,21 @@ public class DispositivosController {
         }
         return Response.status(Response.Status.NOT_FOUND).build();
     }
+
+    @POST
+    @Path("/{id}/abrir")
+    public Response accionarTorniquete(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        java.util.Map<String, Object> res = new java.util.HashMap<>();
+        res.put("id", d.getId());
+        res.put("nombre", d.getNombre());
+        res.put("ip", d.getIp());
+        res.put("accion", "PULSO_RELE_ACTIVADO");
+        res.put("estado", "ABIERTO");
+        res.put("mensaje", "Pulso de apertura concedido al torniquete " + d.getNombre());
+        return Response.ok(res).build();
+    }
 }

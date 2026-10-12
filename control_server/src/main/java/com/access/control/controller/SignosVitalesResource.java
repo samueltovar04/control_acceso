@@ -40,25 +40,42 @@ public class SignosVitalesResource {
         return signosRepository.findAlertasActivas();
     }
 
+    @Inject
+    com.access.control.component.VitalSignsWebSocketEndpoint vitalWs;
+
+    @Inject
+    com.access.control.component.NotificacionesWebSocketEndpoint notifWs;
+
     @POST
     @Path("/signos-vitales")
     @Transactional
     public Response registrarTelemetria(SignosVitales signos) {
         signos.setTimestamp(new Date());
 
-        // Evaluar reglas de alertas automáticas
         if (signos.getRitmocardiacoBpm() != null && (signos.getRitmocardiacoBpm() > 150 || signos.getRitmocardiacoBpm() < 45)) {
             signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Ritmo cardíaco anómalo: " + signos.getRitmocardiacoBpm() + " BPM");
+            signos.setMensajeAlerta("Ritmo cardiaco anomalo: " + signos.getRitmocardiacoBpm() + " BPM");
         } else if (signos.getSaturacionOxigenoSpo2() != null && signos.getSaturacionOxigenoSpo2() < 90) {
             signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Nivel crítico de SpO2: " + signos.getSaturacionOxigenoSpo2() + "%");
+            signos.setMensajeAlerta("Nivel critico de SpO2: " + signos.getSaturacionOxigenoSpo2() + "%");
         } else if (signos.getTemperaturaCorporal() != null && signos.getTemperaturaCorporal() > 38.3) {
             signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Elevada temperatura corporal: " + signos.getTemperaturaCorporal() + "°C");
+            signos.setMensajeAlerta("Elevada temperatura corporal: " + signos.getTemperaturaCorporal() + " C");
         }
 
         signosRepository.persist(signos);
+
+        // Notificacion push y broadcast en tiempo real
+        String payloadJson = "{\"tipo\":\"TELEMETRIA\",\"bpm\":" + signos.getRitmocardiacoBpm() + 
+                ",\"spo2\":" + signos.getSaturacionOxigenoSpo2() + 
+                ",\"temp\":" + signos.getTemperaturaCorporal() + 
+                ",\"alerta\":" + signos.getAlertaSalud() + 
+                ",\"mensaje\":\"" + (signos.getMensajeAlerta() != null ? signos.getMensajeAlerta() : "Normal") + "\"}";
+        vitalWs.broadcast(payloadJson);
+        if (Boolean.TRUE.equals(signos.getAlertaSalud())) {
+            notifWs.broadcast("{\"alerta\":true,\"tipo\":\"EMERGENCIA_MEDICA\",\"mensaje\":\"" + signos.getMensajeAlerta() + "\"}");
+        }
+
         return Response.status(Response.Status.CREATED).entity(signos).build();
     }
 }
