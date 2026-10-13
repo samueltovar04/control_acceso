@@ -76,6 +76,64 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
                     <option value="F">Femenino</option>
                   </select>
                 </div>
+
+                <!-- PREVISUALIZACION DE FOTO ACTUAL Y HUELLAS PREEXISTENTES EN BD (LADO IZQUIERDO) -->
+                <div class="col-12 mt-3">
+                  <label class="form-label small fw-bold d-block text-secondary">
+                    <i class="bi bi-camera-fill me-1 text-primary"></i> Fotograma Facial Registrado en BD:
+                  </label>
+                  <div class="border rounded p-2 text-center bg-light position-relative d-flex flex-column align-items-center justify-content-center" style="min-height: 140px;">
+                    <div *ngIf="cliente.foto" class="d-flex flex-column align-items-center">
+                      <img [src]="cliente.foto" alt="Fotograma Facial" class="img-thumbnail shadow-sm rounded-circle mb-2" style="width: 110px; height: 110px; object-fit: cover; border: 3px solid #0d6efd;" />
+                      <span class="badge bg-success-subtle text-success border border-success-subtle small">
+                        <i class="bi bi-check-circle-fill me-1"></i> Fotograma Facial en BD
+                      </span>
+                    </div>
+                    <div *ngIf="!cliente.foto" class="text-muted small py-3">
+                      <i class="bi bi-person-bounding-box fs-1 d-block mb-1 text-secondary opacity-50"></i>
+                      <span>Sin fotograma facial previo en BD</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- INDICADOR DE HUELLAS DACTILARES PREEXISTENTES EN BD -->
+                <div class="col-12 mt-2">
+                  <label class="form-label small fw-bold d-block text-secondary">
+                    <i class="bi bi-fingerprint me-1 text-primary"></i> Huellas Dactilares Registradas en BD:
+                  </label>
+                  <div class="border rounded p-2 bg-light">
+                    <div class="d-flex flex-column gap-2">
+                      <div class="d-flex align-items-center justify-content-between p-2 rounded border bg-white">
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-fingerprint fs-4 me-2" [ngClass]="cliente.huella1 ? 'text-success' : 'text-muted'"></i>
+                          <div>
+                            <span class="fw-bold small d-block">Dedo Índice</span>
+                            <span class="small text-muted" *ngIf="cliente.huella1">Suprema 384B Registrada</span>
+                            <span class="small text-danger" *ngIf="!cliente.huella1">No registrado</span>
+                          </div>
+                        </div>
+                        <span class="badge" [ngClass]="cliente.huella1 ? 'bg-success text-white' : 'bg-secondary'">
+                          {{ cliente.huella1 ? 'EN BASE DE DATOS' : 'PENDIENTE' }}
+                        </span>
+                      </div>
+
+                      <div class="d-flex align-items-center justify-content-between p-2 rounded border bg-white">
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-fingerprint fs-4 me-2" [ngClass]="cliente.huella2 ? 'text-success' : 'text-muted'"></i>
+                          <div>
+                            <span class="fw-bold small d-block">Dedo Pulgar</span>
+                            <span class="small text-muted" *ngIf="cliente.huella2">Suprema 384B Registrada</span>
+                            <span class="small text-danger" *ngIf="!cliente.huella2">No registrado</span>
+                          </div>
+                        </div>
+                        <span class="badge" [ngClass]="cliente.huella2 ? 'bg-success text-white' : 'bg-secondary'">
+                          {{ cliente.huella2 ? 'EN BASE DE DATOS' : 'PENDIENTE' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="col-md-12">
                   <label class="form-label small fw-bold">Sede Afiliada</label>
                   <select class="form-select" [(ngModel)]="cliente.sede" name="sede" [compareWith]="compararSedes">
@@ -92,6 +150,8 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
             <app-biometric-capture
               titulo="Actualizacion Biometrica del Cliente"
               [fotoExistente]="cliente.foto || ''"
+              [huella1Existente]="cliente.huella1 || ''"
+              [huella2Existente]="cliente.huella2 || ''"
               (biometricDataChange)="onBiometricData($event)">
             </app-biometric-capture>
 
@@ -124,6 +184,12 @@ export class EditarClienteComponent implements OnInit {
     huella1: '',
     huella2: ''
   };
+
+  // Rastreo de cambios explicitos
+  private nuevaFoto?: string;
+  private nuevoFaceVector?: string;
+  private nuevaHuella1?: string;
+  private nuevaHuella2?: string;
 
   sedesList: Sede[] = [];
   guardando: boolean = false;
@@ -160,15 +226,29 @@ export class EditarClienteComponent implements OnInit {
   }
 
   onBiometricData(data: { fotoUrl?: string; faceVector?: string; huella1?: string; huella2?: string }): void {
-    if (data.fotoUrl) this.cliente.foto = data.fotoUrl;
-    if (data.faceVector) this.cliente.faceVector = data.faceVector;
-    if (data.huella1) this.cliente.huella1 = data.huella1;
-    if (data.huella2) this.cliente.huella2 = data.huella2;
+    if (data.fotoUrl) {
+      this.nuevaFoto = data.fotoUrl;
+      this.cliente.foto = data.fotoUrl;
+    }
+    if (data.faceVector) {
+      this.nuevoFaceVector = data.faceVector;
+      this.cliente.faceVector = data.faceVector;
+    }
+    if (data.huella1) {
+      this.nuevaHuella1 = data.huella1;
+      this.cliente.huella1 = data.huella1;
+    }
+    if (data.huella2) {
+      this.nuevaHuella2 = data.huella2;
+      this.cliente.huella2 = data.huella2;
+    }
   }
 
   guardarCambios(): void {
     if (!this.cliente || !this.cliente.id) return;
     this.guardando = true;
+
+    // Solo si el usuario capturo nuevos datos se sobrescriben, de lo contrario se envian los que ya existian en BD
     this.clienteService.updateCliente(this.cliente.id, this.cliente).subscribe({
       next: () => {
         this.guardando = false;

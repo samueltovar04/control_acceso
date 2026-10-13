@@ -22,9 +22,27 @@ public class Dispositivo extends AbstractEntity {
     @Column(name = "port")
     private Integer port = 80;
 
+    @Column(name = "tipo_dispositivo")
+    private String tipoDispositivo;
+
+    @Column(name = "sistema_operativo")
+    private String sistemaOperativo;
+
     @ManyToOne
     @JoinColumn(name = "piso_id")
     private Piso piso;
+
+    @Transient
+    private Long pisoId;
+
+    public Long getPisoId() {
+        if (pisoId != null) return pisoId;
+        return (piso != null) ? piso.getId() : null;
+    }
+
+    public void setPisoId(Long pisoId) {
+        this.pisoId = pisoId;
+    }
 
     public String getDescripcion() {
         return descripcion;
@@ -90,11 +108,28 @@ public class Dispositivo extends AbstractEntity {
         this.ping = estadoConexion;
     }
 
+    public String getTipoDispositivo() {
+        return tipoDispositivo;
+    }
+
+    public void setTipoDispositivo(String tipoDispositivo) {
+        this.tipoDispositivo = tipoDispositivo;
+    }
+
+    public String getSistemaOperativo() {
+        return sistemaOperativo;
+    }
+
+    public void setSistemaOperativo(String sistemaOperativo) {
+        this.sistemaOperativo = sistemaOperativo;
+    }
+
     public String getTipo() {
-        return "TORNIQUETE";
+        return tipoDispositivo != null ? tipoDispositivo : "TORNIQUETE";
     }
 
     public void setTipo(String tipo) {
+        this.tipoDispositivo = tipo;
     }
 
     public String getUbicacion() {
@@ -102,5 +137,9 @@ public class Dispositivo extends AbstractEntity {
     }
 
     public void setUbicacion(String ubicacion) {
+    }
+
+    public String getColor() {
+        return (ping != null && ping) ? "verde" : "rojo";
     }
 }

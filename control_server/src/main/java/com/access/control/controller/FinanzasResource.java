@@ -33,6 +33,46 @@ public class FinanzasResource {
     @Inject
     SuscripcionClienteRepository suscripcionRepository;
 
+    @Inject
+    NotificacionPagoRepository notificacionPagoRepository;
+
+    @POST
+    @Path("/notificacion-pago")
+    @Transactional
+    public Response notificarPago(com.access.control.dto.NotificacionPagoDTO dto) {
+        if (dto == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Payload inválido").build();
+        }
+
+        Pago pago = new Pago();
+        if (dto.getClienteId() != null) {
+            Cliente cliente = clienteRepository.findById(dto.getClienteId());
+            if (cliente != null) {
+                pago.setCliente(cliente);
+                cliente.setEstadoSuscripcion("ACTIVA");
+            }
+        }
+        pago.setMonto(dto.getMonto() != null ? dto.getMonto() : new BigDecimal("50.00"));
+        pago.setFechaPago(new Date());
+        pago.setMetodoPago(dto.getBanco() != null ? "PAGO_MOVIL - " + dto.getBanco() : "TRANSFERENCIA");
+        pago.setOrigenPago("APP_MOBILE");
+        pago.setNumeroReferencia(dto.getNumeroReferencia());
+        pago.setRegistradoPor("CELULAR: " + (dto.getCelular() != null ? dto.getCelular() : "") + " | CEDULA: " + (dto.getCedula() != null ? dto.getCedula() : ""));
+        pago.setEstadoPago("PENDIENTE_CONCILIACION");
+
+        pagoRepository.persist(pago);
+
+        com.access.control.model.NotificacionPago notif = new com.access.control.model.NotificacionPago();
+        notif.setCliente(pago.getCliente());
+        notif.setTitulo("Notificación de Pago Recibido");
+        notif.setMensaje("Pago enviado por " + dto.getMonto() + " desde " + dto.getBanco() + " (Ref: " + dto.getNumeroReferencia() + ", Cédula: " + dto.getCedula() + ", Celular: " + dto.getCelular() + ")");
+        notif.setTipo("CONFIRMACION_PAGO");
+        notif.setFechaEnvio(new Date());
+        notificacionPagoRepository.persist(notif);
+
+        return Response.status(Response.Status.CREATED).entity(pago).build();
+    }
+
     // --- COBROS / PAGOS ---
     @GET
     @Path("/pagos")

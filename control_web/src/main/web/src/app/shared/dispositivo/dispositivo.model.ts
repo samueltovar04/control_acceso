@@ -12,4 +12,6 @@ export class Dispositivo
     public piso?: any;
     public nombre?: string;
     public estadoConexion?: boolean;
+    public tipoDispositivo?: string;
+    public sistemaOperativo?: string;
 }

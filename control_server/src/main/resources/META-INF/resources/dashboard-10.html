@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioTrack Pro - Dashboard 10 Pulseras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        @keyframes alert-pulse {
+            0%, 100% { border-color: rgba(239, 68, 68, 1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+            50% { border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 5px rgba(239, 68, 68, 0.1); }
+        }
+        .card-alerta {
+            animation: alert-pulse 1.2s infinite ease-in-out;
+            background: rgba(88, 28, 28, 0.25) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-5 flex flex-col gap-6 selection:bg-rose-500">
+
+    <!-- Header -->
+    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 via-pink-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-rose-950/40">
+                BT
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    BioTrack Enterprise: Panel de Telemetría Multiusuario
+                    <span class="text-xs px-2.5 py-0.5 rounded-full font-mono bg-slate-900 border border-slate-700 text-slate-300">
+                        Quarkus 3.x + MongoDB + WebSockets
+                    </span>
+                </h1>
+                <p class="text-xs text-slate-400">Monitoreo simultáneo y autónomo de 10 brazaletes ESP32</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                <span id="ws-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span id="ws-txt" class="text-slate-300 font-medium">Conectando...</span>
+            </div>
+
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                <span class="text-slate-400">Alertas Activas:</span>
+                <span id="alert-counter" class="text-emerald-400 font-bold font-mono">0</span>
+            </div>
+
+            <button id="btn-emu" onclick="toggleEmulador()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/50 transition">
+                ▶ Iniciar Emulador (10 Pulseras)
+            </button>
+        </div>
+    </header>
+
+    <!-- Grid de 10 Tarjetas -->
+    <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- Renderizado dinamicamente por JS -->
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const PULSERAS = Array.from({ length: 10 }, (_, i) => `PULSERA_${String(i + 1).padStart(3, '0')}`);
+        const state = {};
+        const charts = {};
+        let emuInterval = null;
+        let ws;
+
+        // Inicializar estado de las 10 tarjetas
+        PULSERAS.forEach(id => {
+            state[id] = {
+                id_pulsera: id,
+                bpm: 72,
+                spo2: 98,
+                temp: 36.5,
+                alerta: 0,
+                historial: [70, 72, 71, 74, 73, 72, 75]
+            };
+        });
+
+        function renderGrid() {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+
+            PULSERAS.forEach(id => {
+                const p = state[id];
+                const card = document.createElement('div');
+                card.id = `card-${id}`;
+                card.className = `rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between bg-slate-900/80 border ${
+                    p.alerta === 1 ? 'border-rose-500 card-alerta' : 'border-slate-800'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            ${p.id_pulsera}
+                        </span>
+                        <span id="badge-${id}" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                            p.alerta === 1 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }">
+                            ${p.alerta === 1 ? 'ALERTA' : 'NORMAL'}
+                        </span>
+                    </div>
+
+                    <div class="flex items-baseline justify-between mt-1 mb-2">
+                        <div>
+                            <span id="bpm-${id}" class="text-3xl font-extrabold font-mono text-rose-400">${p.bpm}</span>
+                            <span class="text-[10px] font-semibold text-slate-400 ml-1">BPM</span>
+                        </div>
+                        <div class="text-right text-xs">
+                            <div id="spo2-${id}" class="text-cyan-400 font-bold">${p.spo2}% <span class="text-slate-500 font-normal">SpO2</span></div>
+                            <div id="temp-${id}" class="text-amber-400 font-bold">${p.temp.toFixed(1)}°C</div>
+                        </div>
+                    </div>
+
+                    <div class="h-16 w-full mt-2">
+                        <canvas id="chart-${id}"></canvas>
+                    </div>
+
+                    <div class="mt-2 pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                        <span id="sync-${id}">Sync: OK</span>
+                        <span>ESP-NOW</span>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+                initCardChart(id);
+            });
+        }
+
+        function initCardChart(id) {
+            const ctx = document.getElementById(`chart-${id}`).getContext('2d');
+            charts[id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: state[id].historial.map((_, i) => `${i}s`),
+                    datasets: [{
+                        data: state[id].historial,
+                        borderColor: state[id].alerta === 1 ? '#ef4444' : '#f43f5e',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+
+        function actualizarTarjeta(item) {
+            const id = item.id_pulsera;
+            if (!state[id]) return;
+
+            state[id].bpm = item.bpm;
+            state[id].spo2 = item.spo2;
+            state[id].temp = item.temp;
+            state[id].alerta = item.alerta;
+            state[id].historial.push(item.bpm);
+            if (state[id].historial.length > 15) state[id].historial.shift();
+
+            document.getElementById(`bpm-${id}`).textContent = item.bpm;
+            document.getElementById(`spo2-${id}`).innerHTML = `${item.spo2}% <span class="text-slate-500 font-normal">SpO2</span>`;
+            document.getElementById(`temp-${id}`).textContent = `${Number(item.temp).toFixed(1)}°C`;
+            document.getElementById(`sync-${id}`).textContent = new Date().toTimeString().split(' ')[0];
+
+            const card = document.getElementById(`card-${id}`);
+            const badge = document.getElementById(`badge-${id}`);
+
+            if (item.alerta === 1) {
+                card.className = 'rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between border-2 border-rose-500 card-alerta';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/40';
+                badge.textContent = 'ALERTA';
+            } else {
+                card.className = 'rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between bg-slate-900/80 border border-slate-800';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                badge.textContent = 'NORMAL';
+            }
+
+            if (charts[id]) {
+                charts[id].data.datasets[0].borderColor = item.alerta === 1 ? '#ef4444' : '#f43f5e';
+                charts[id].data.datasets[0].data = state[id].historial;
+                charts[id].data.labels = state[id].historial.map((_, i) => `${i}s`);
+                charts[id].update('none');
+            }
+
+            const totalAlertas = Object.values(state).filter(p => p.alerta === 1).length;
+            const counter = document.getElementById('alert-counter');
+            counter.textContent = totalAlertas;
+            counter.className = totalAlertas > 0 ? 'text-rose-400 font-bold font-mono' : 'text-emerald-400 font-bold font-mono';
+        }
+
+        // Conexion WebSocket reactiva con token JWT
+        function initWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || 'localhost:8080';
+            ws = new WebSocket(`${proto}//${host}/ws/vital-signs?token=DEMO_TOKEN_CLIENT`);
+
+            ws.onopen = () => {
+                document.getElementById('ws-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+                document.getElementById('ws-txt').textContent = 'WebSocket Activo';
+            };
+
+            ws.onclose = () => {
+                document.getElementById('ws-dot').className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+                document.getElementById('ws-txt').textContent = 'Desconectado';
+                setTimeout(initWebSocket, 3000);
+            };
+
+            ws.onmessage = (e) => {
+                try {
+                    const item = JSON.parse(e.data);
+                    actualizarTarjeta(item);
+                } catch(err) {}
+            };
+        }
+
+        // Emulador local para enviar ráfagas JSON mediante fetch POST al backend
+        function toggleEmulador() {
+            const btn = document.getElementById('btn-emu');
+            if (emuInterval) {
+                clearInterval(emuInterval);
+                emuInterval = null;
+                btn.textContent = '▶ Iniciar Emulador (10 Pulseras)';
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition';
+            } else {
+                btn.textContent = '⏸ Detener Emulador';
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg transition';
+                emuInterval = setInterval(async () => {
+                    const id = PULSERAS[Math.floor(Math.random() * PULSERAS.length)];
+                    const rnd = Math.random();
+                    let bpm = Math.floor(68 + Math.random() * 20);
+                    let spo2 = Math.floor(96 + Math.random() * 4);
+                    let temp = parseFloat((36.2 + Math.random() * 0.7).toFixed(2));
+                    let alerta = 0;
+
+                    if (rnd < 0.15) {
+                        bpm = 156;
+                        alerta = 1;
+                    } else if (rnd < 0.25) {
+                        spo2 = 88;
+                        alerta = 1;
+                    }
+
+                    const payload = { id_pulsera: id, bpm, spo2, temp, alerta };
+
+                    try {
+                        await fetch('/api/v1/telemetria/vitales', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    } catch {
+                        actualizarTarjeta(payload);
+                    }
+                }, 900);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            initWebSocket();
+        });
+    </script>
+</body>
+</html>

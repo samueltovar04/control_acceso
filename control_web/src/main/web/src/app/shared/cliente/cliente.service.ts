@@ -47,4 +47,22 @@ export class ClienteService {
   actualizarBiometria(id: number, biometria: { huella1?: string; huella2?: string; faceVector?: string }): Observable<any> {
     return this.http.put(`${this.baseUrl}/${id}/biometria`, biometria);
   }
+
+  actualizarMembresia(cliente: Cliente, estadoSuscripcion: string): Observable<Cliente> {
+    const payload: Cliente = {
+      ...cliente,
+      pisosPermitidos: cliente.pisosPermitidos || [],
+      estadoSuscripcion
+    };
+    return this.http.put<Cliente>(`${this.baseUrl}/${cliente.id}`, payload);
+  }
+
+  asignarPulsera(cliente: Cliente, codigoInsignia: string): Observable<Cliente> {
+    const payload: Cliente = {
+      ...cliente,
+      pisosPermitidos: cliente.pisosPermitidos || [],
+      codigoInsignia
+    };
+    return this.http.put<Cliente>(`${this.baseUrl}/${cliente.id}`, payload);
+  }
 }

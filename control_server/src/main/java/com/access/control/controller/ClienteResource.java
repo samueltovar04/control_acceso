@@ -53,36 +53,59 @@ public class ClienteResource {
     @Path("/{id}")
     @Transactional
     public Response updateCliente(@PathParam("id") Long id, Cliente clienteDetails) {
-        Cliente cliente = clienteRepository.findById(id);
-        if (cliente == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try {
+            Cliente cliente = clienteRepository.findById(id);
+            if (cliente == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            if (clienteDetails.getNombre() != null) {
+                cliente.setNombre(clienteDetails.getNombre());
+            }
+            if (clienteDetails.getApellido() != null) {
+                cliente.setApellido(clienteDetails.getApellido());
+            }
+            if (clienteDetails.getDocumento() != null) {
+                cliente.setDocumento(clienteDetails.getDocumento());
+            }
+            if (clienteDetails.getCodigoInsignia() != null) {
+                cliente.setCodigoInsignia(clienteDetails.getCodigoInsignia());
+            }
+            if (clienteDetails.getEmail() != null) {
+                cliente.setEmail(clienteDetails.getEmail());
+            }
+            if (clienteDetails.getTelefono() != null) {
+                cliente.setTelefono(clienteDetails.getTelefono());
+            }
+            if (clienteDetails.getFoto() != null) {
+                cliente.setFoto(clienteDetails.getFoto());
+            }
+            if (clienteDetails.getSexo() != null) {
+                cliente.setSexo(clienteDetails.getSexo());
+            }
+            if (clienteDetails.getFechaNacimiento() != null) {
+                cliente.setFechaNacimiento(clienteDetails.getFechaNacimiento());
+            }
+            if (clienteDetails.getEstadoSuscripcion() != null) {
+                cliente.setEstadoSuscripcion(clienteDetails.getEstadoSuscripcion());
+            }
+            if (clienteDetails.getHuella1() != null) cliente.setHuella1(clienteDetails.getHuella1());
+            if (clienteDetails.getHuella2() != null) cliente.setHuella2(clienteDetails.getHuella2());
+            if (clienteDetails.getFaceVector() != null) cliente.setFaceVector(clienteDetails.getFaceVector());
+            if (clienteDetails.getSede() != null) {
+                cliente.setSede(clienteDetails.getSede());
+            }
+            if (clienteDetails.getPisosPermitidos() != null) {
+                cliente.setPisosPermitidos(clienteDetails.getPisosPermitidos());
+            }
+            clienteRepository.persist(cliente);
+            return Response.ok(cliente).build();
+        } catch (Exception e) {
+            System.err.println("[ClienteResource] Error en updateCliente: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\":\"" + e.getMessage() + "\"}")
+                .build();
         }
-        cliente.setNombre(clienteDetails.getNombre());
-        cliente.setApellido(clienteDetails.getApellido());
-        if (clienteDetails.getDocumento() != null) {
-            cliente.setDocumento(clienteDetails.getDocumento());
-        }
-        if (clienteDetails.getCodigoInsignia() != null) {
-            cliente.setCodigoInsignia(clienteDetails.getCodigoInsignia());
-        }
-        cliente.setEmail(clienteDetails.getEmail());
-        cliente.setTelefono(clienteDetails.getTelefono());
-        cliente.setFoto(clienteDetails.getFoto());
-        cliente.setSexo(clienteDetails.getSexo());
-        cliente.setFechaNacimiento(clienteDetails.getFechaNacimiento());
-        if (clienteDetails.getEstadoSuscripcion() != null) {
-            cliente.setEstadoSuscripcion(clienteDetails.getEstadoSuscripcion());
-        }
-        if (clienteDetails.getHuella1() != null) cliente.setHuella1(clienteDetails.getHuella1());
-        if (clienteDetails.getHuella2() != null) cliente.setHuella2(clienteDetails.getHuella2());
-        if (clienteDetails.getFaceVector() != null) cliente.setFaceVector(clienteDetails.getFaceVector());
-        if (clienteDetails.getSede() != null) {
-            cliente.setSede(clienteDetails.getSede());
-        }
-        if (clienteDetails.getPisosPermitidos() != null) {
-            cliente.setPisosPermitidos(clienteDetails.getPisosPermitidos());
-        }
-        return Response.ok(cliente).build();
     }
 
     @PUT

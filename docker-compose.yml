@@ -31,9 +31,29 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: adminpassword
       QUARKUS_HTTP_PORT: 8080
       QUARKUS_HTTP_CORS_ORIGINS: "*"
+      QUARKUS_MONGODB_CONNECTION_STRING: mongodb://biotrack_user:biotrack_secret123@biotrack_mongo:27017/biotrack_db?authSource=admin
+      QUARKUS_MONGODB_DATABASE: biotrack_db
+      QUARKUS_SMALLRYE_JWT_ENABLED: "false"
+    volumes:
+      - /tmp:/host_tmp:ro
     depends_on:
       access_control_db:
         condition: service_healthy
+      biotrack_mongo:
+        condition: service_started
+
+  biotrack_mongo:
+    image: mongo:6.0
+    container_name: biotrack_mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: biotrack_user
+      MONGO_INITDB_ROOT_PASSWORD: biotrack_secret123
+      MONGO_INITDB_DATABASE: biotrack_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
 
   access_control_frontend:
     build:
@@ -48,3 +68,4 @@ services:
 
 volumes:
   postgres_data:
+  mongodb_data:

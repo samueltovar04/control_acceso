@@ -1,4 +1,4 @@
-<div class="container-fluid p-4">
+<div class="container-fluid p-4 position-relative">
   <div class="row g-4">
     <!-- PANEL PRINCIPAL DE CÁMARA Y RECONOCIMIENTO -->
     <div class="col-lg-7">
@@ -8,18 +8,18 @@
             <i class="bi bi-camera-video-fill text-primary me-2"></i>Terminal de Visión y Torniquetes en Vivo
           </h4>
           <span class="badge" [ngClass]="estadoTorniquete === 'ABIERTO' ? 'bg-success' : 'bg-secondary'">
-            {{ estadoTorniquete === 'ABIERTO' ? 'PASO ABIERTO (' + tiempoPulsoRestante + 's)' : 'TORNICUETE BLOQUEADO' }}
+            {{ estadoTorniquete === 'ABIERTO' ? 'PASO ABIERTO (' + tiempoPulsoRestante + 's)' : 'TORNIQUETE BLOQUEADO' }}
           </span>
         </div>
-        <p class="text-muted small mb-3">Enfoque de visión artificial para detección de clientes y apertura automática del relé del torniquete.</p>
+        <p class="text-muted small mb-3">Identificación biométrica multi-factor (Facial 128D y Huella USB Suprema) para control de paso y apertura automática de relé.</p>
 
         <!-- SELECTOR DE DISPOSITIVO TORNIQUETE -->
         <div class="input-group mb-3">
           <span class="input-group-text bg-light fw-bold text-secondary">
-            <i class="bi bi-hdd-network-fill me-2"></i> Torniquete Asignado:
+            <i class="bi bi-hdd-network-fill me-2 text-primary"></i> Torniquete Asignado:
           </span>
           <select class="form-select fw-bold" [(ngModel)]="dispositivoSeleccionadoId">
-            <option *ngFor="let dispo of dispositivos" [value]="dispo.id">
+            <option *ngFor="let dispo of torniquetesDisponibles" [value]="dispo.id">
               {{ dispo.nombre }} — IP: {{ dispo.ip }} ({{ dispo.tipo }})
             </option>
           </select>
@@ -28,81 +28,215 @@
           </button>
         </div>
 
-        <!-- VENTANA DE VISIÓN DE CÁMARA -->
-        <div class="camera-wrapper border rounded-3 bg-dark p-2 mb-3 position-relative text-center" style="min-height: 280px;">
-          <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)"></webcam>
+        <!-- COMPONENTE REUTILIZABLE UNIFICADO DE FOTOGRAMAS BIOMETRICOS -->
+        <div class="position-relative mb-3">
+          <app-biometric-capture #biometricCapture
+                                 [soloFacial]="true"
+                                 [mostrarBotonCaptura]="false"
+                                 [alturaCamaraPx]="300"
+                                 [titulo]="''"
+                                 (fotogramaCapturado)="onFotogramaCapturado($event)">
+          </app-biometric-capture>
 
           <!-- OVERLAY DE APERTURA -->
-          <div *ngIf="estadoTorniquete === 'ABIERTO'" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-success bg-opacity-75 text-white" style="z-index: 10;">
+          <div *ngIf="estadoTorniquete === 'ABIERTO'" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-success bg-opacity-75 text-white rounded-3" style="z-index: 10;">
             <i class="bi bi-check-circle-fill display-3 mb-2 animate__animated animate__bounceIn"></i>
-            <h2 class="fw-bold">¡ADELANTE!</h2>
+            <h2 class="fw-bold">¡PASO CONCEDIDO!</h2>
             <p class="fs-5 m-0">{{ mensajeTorniquete }}</p>
             <span class="badge bg-light text-success fs-6 mt-2">Cierre automático en {{ tiempoPulsoRestante }}s</span>
           </div>
         </div>
 
-        <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" (click)="capturarRostro()" [disabled]="procesando">
-          <i class="bi bi-person-bounding-box me-2"></i>
-          {{ procesando ? 'Analizando rasgos faciales...' : 'Identificar Rostro y Abrir Torniquete' }}
-        </button>
+        <!-- BOTONES DE ACCIÓN: ROSTRO Y HUELLAS (ÍNDICE Y PULGAR) -->
+        <div class="row g-2 mb-3">
+          <div class="col-12">
+            <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center" (click)="capturarRostro()" [disabled]="procesando || escaneandoHuella">
+              <i class="bi bi-person-bounding-box me-2 fs-5"></i>
+              <span>{{ procesando ? 'Comparando vectores...' : 'Identificar Rostro y Abrir' }}</span>
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-dark btn-lg w-100 fw-bold shadow-sm border-secondary d-flex align-items-center justify-content-center" (click)="capturarHuellaTerminal(1)" [disabled]="escaneandoHuella || procesando">
+              <i class="bi bi-fingerprint text-info me-2 fs-5"></i>
+              <span>{{ escaneandoHuella ? 'Leyendo sensor...' : 'Escanear Índice (Dedo 1)' }}</span>
+            </button>
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-dark btn-lg w-100 fw-bold shadow-sm border-secondary d-flex align-items-center justify-content-center" (click)="capturarHuellaTerminal(2)" [disabled]="escaneandoHuella || procesando">
+              <i class="bi bi-fingerprint text-warning me-2 fs-5"></i>
+              <span>{{ escaneandoHuella ? 'Leyendo sensor...' : 'Escanear Pulgar (Dedo 2)' }}</span>
+            </button>
+          </div>
+        </div>
 
-        <!-- RESULTADO DE LA VERIFICACIÓN -->
-        <div *ngIf="resultadoVerificacion" class="mt-3">
-          <div *ngIf="resultadoVerificacion.match" class="alert alert-success d-flex align-items-center mb-0">
-            <i class="bi bi-check-circle-fill fs-3 me-3 text-success"></i>
-            <div>
-              <div class="fw-bold fs-5">ACCESO AUTORIZADO</div>
-              <div>{{ resultadoVerificacion.persona?.nombre }} {{ resultadoVerificacion.persona?.apellido }} — Tipo: {{ resultadoVerificacion.tipo }}</div>
-              <small class="text-muted">Similitud Vectorial: {{ (resultadoVerificacion.similitud * 100) | number:'1.2-2' }}%</small>
+        <!-- INDICADOR DE ESTADO DE HUELLA -->
+        <div *ngIf="mensajeHuella" class="alert alert-info py-2 px-3 small d-flex align-items-center mb-3">
+          <i class="bi bi-info-circle-fill me-2 fs-5 text-primary"></i>
+          <span class="fw-semibold">{{ mensajeHuella }}</span>
+        </div>
+
+        <!-- RESULTADO DE LA VERIFICACIÓN (DESAPARECE EN 40 SEGUNDOS) -->
+        <div *ngIf="resultadoVerificacion" class="mt-2" [class.shake-error]="!resultadoVerificacion.match">
+          <div *ngIf="resultadoVerificacion.match" class="alert alert-success d-flex justify-content-between align-items-center mb-0 shadow-sm">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-check-circle-fill fs-3 me-3 text-success"></i>
+              <div>
+                <div class="fw-bold fs-5">ACCESO AUTORIZADO</div>
+                <div>{{ resultadoVerificacion.persona?.nombre || resultadoVerificacion.persona?.name }} {{ resultadoVerificacion.persona?.apellido || resultadoVerificacion.persona?.lastName }} — Tipo: {{ resultadoVerificacion.tipo }}</div>
+                <small class="text-muted">Similitud Vectorial: {{ (resultadoVerificacion.similitud * 100) | number:'1.2-2' }}%</small>
+              </div>
             </div>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success small" *ngIf="segundosRestantesResultado > 0">
+              Auto-cierre en {{ segundosRestantesResultado }}s
+            </span>
           </div>
 
-          <div *ngIf="!resultadoVerificacion.match" class="alert alert-danger d-flex align-items-center mb-0">
-            <i class="bi bi-x-circle-fill fs-3 me-3 text-danger"></i>
-            <div>
-              <div class="fw-bold fs-5">ACCESO DENEGADO</div>
-              <div>Rostro no identificado o estado de membresía irregular.</div>
+          <div *ngIf="!resultadoVerificacion.match" class="alert alert-danger d-flex justify-content-between align-items-center mb-0 shadow-sm">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-x-circle-fill fs-3 me-3 text-danger"></i>
+              <div>
+                <div class="fw-bold fs-5">ACCESO DENEGADO</div>
+                <div>Rostro no identificado o sin registro biométrico previo.</div>
+              </div>
             </div>
+            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger small" *ngIf="segundosRestantesResultado > 0">
+              {{ segundosRestantesResultado }}s
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PANEL LATERAL: ESTADO DE RED Y BITÁCORA EN VIVO -->
+    <!-- PANEL LATERAL: DISPOSITIVOS Y BITÁCORA -->
     <div class="col-lg-5">
-      <!-- TARJETA DEL TORNIQUETE SELECCIONADO -->
+      <!-- TARJETA DISPOSITIVOS / TORNIQUETES EN RED -->
       <div class="card shadow-sm border-0 rounded-3 p-3 bg-white mb-3">
-        <h5 class="fw-bold text-dark mb-2">
-          <i class="bi bi-router-fill text-primary me-2"></i>Dispositivos / Torniquetes en Red
-        </h5>
-        <div class="list-group list-group-flush small">
-          <div *ngFor="let dispo of dispositivos" class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-bold text-dark m-0">
+            <i class="bi bi-router-fill text-primary me-2"></i>Dispositivos / Torniquetes en Red
+          </h5>
+          <span class="badge bg-light text-primary border">{{ dispositivosRedFiltrados.length }} Filtrados</span>
+        </div>
+        <p class="text-muted small mb-2">Vista exclusiva de torniquetes, lectores biométricos y captahuellas.</p>
+        <div class="list-group list-group-flush small" style="max-height: 250px; overflow-y: auto;">
+          <div *ngFor="let dispo of dispositivosRedFiltrados" class="list-group-item d-flex justify-content-between align-items-center px-2 py-2 border-bottom">
             <div>
-              <div class="fw-bold">{{ dispo.nombre }}</div>
-              <span class="text-muted font-monospace">{{ dispo.ip }}</span>
+              <div class="fw-bold text-dark d-flex align-items-center">
+                <i [ngClass]="dispo.tipo.toLowerCase().includes('torniquete') ? 'bi-shield-check text-success' : 'bi-fingerprint text-info'" class="bi me-2"></i>
+                {{ dispo.nombre }}
+              </div>
+              <span class="text-muted font-monospace small">{{ dispo.ip }} · {{ dispo.tipo }}</span>
             </div>
-            <span class="badge" [ngClass]="dispo.id === dispositivoSeleccionadoId ? 'bg-primary' : 'bg-light text-secondary'">
-              {{ dispo.id === dispositivoSeleccionadoId ? 'ACTIVO' : 'EN ESPERA' }}
+            <span class="badge" [ngClass]="dispo.id === dispositivoSeleccionadoId ? 'bg-primary' : (dispo.estadoConexion ? 'bg-success bg-opacity-75' : 'bg-light text-secondary border')">
+              {{ dispo.id === dispositivoSeleccionadoId ? 'ASIGNADO' : (dispo.estadoConexion ? 'EN RED' : 'LISTO') }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- BITÁCORA DE APERTURAS EN TIEMPO REAL -->
-      <div class="card shadow-sm border-0 rounded-3 p-3 bg-white">
-        <h5 class="fw-bold text-dark mb-3">
-          <i class="bi bi-clock-history text-secondary me-2"></i>Bitácora de Eventos de Paso
-        </h5>
-        <div class="log-container" style="max-height: 250px; overflow-y: auto;">
+      <!-- BITÁCORA DE APERTURAS EN TIEMPO REAL (ÚLTIMO EVENTO ARRIBA) -->
+      <div class="card shadow-sm border-0 rounded-3 p-3 bg-white" [class.shake-error]="hayErrorActivo">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark m-0">
+            <i class="bi bi-clock-history text-secondary me-2"></i>Bitácora de Eventos de Paso
+          </h5>
+          <span class="badge bg-light text-dark border small" *ngIf="logEventos.length > 0">
+            Último: {{ logEventos[0]?.hora }}
+          </span>
+        </div>
+        <div class="log-container" style="max-height: 220px; overflow-y: auto;">
           <div *ngIf="logEventos.length === 0" class="text-center text-muted py-4 small">
-            Esperando detección de rostros o aperturas manuales...
+            Esperando detección de rostros o lecturas de huella...
           </div>
-          <div *ngFor="let log of logEventos" class="alert py-2 px-3 mb-2 small d-flex justify-content-between align-items-center" [ngClass]="'alert-' + log.tipo">
-            <span>{{ log.mensaje }}</span>
-            <span class="badge bg-secondary font-monospace">{{ log.hora }}</span>
+          <div *ngFor="let log of logEventos; let i = index" class="alert py-2 px-3 mb-2 small d-flex justify-content-between align-items-center" [ngClass]="['alert-' + log.tipo, (i === 0 && log.tipo === 'danger') ? 'shake-error border border-danger fw-bold' : '']">
+            <div class="d-flex align-items-center">
+              <span *ngIf="i === 0" class="badge bg-dark me-2">ÚLTIMO</span>
+              <span>{{ log.mensaje }}</span>
+            </div>
+            <span class="badge bg-secondary font-monospace ms-2">{{ log.hora }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- MODAL FLOTANTE DE PERSONA IDENTIFICADA (FOTO Y DATOS) -->
+  <div *ngIf="mostrarModalPersona && datosPersonaIdentificada" class="modal-backdrop-custom position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.65); z-index: 1050;">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden" style="max-width: 520px; width: 92%; animation: fadeIn 0.25s ease;">
+      <!-- CABECERA DEL MODAL -->
+      <div class="card-header bg-primary text-white py-3 px-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-person-check-fill fs-3 me-2 text-warning"></i>
+          <div>
+            <h5 class="m-0 fw-bold">Persona Identificada con Éxito</h5>
+            <small class="text-white-50">{{ datosPersonaIdentificada.metodoValidacion }}</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="cerrarModalPersona()"></button>
+      </div>
+
+      <!-- CUERPO DEL MODAL CON FOTO Y DATOS -->
+      <div class="card-body p-4 bg-light">
+        <div class="row align-items-center">
+          <!-- FOTO DEL CLIENTE / EMPLEADO -->
+          <div class="col-sm-5 text-center mb-3 mb-sm-0">
+            <div class="position-relative d-inline-block">
+              <img *ngIf="datosPersonaIdentificada.fotoUrl" [src]="datosPersonaIdentificada.fotoUrl" alt="Fotograma Registrado" class="img-thumbnail rounded-3 shadow-sm border-2 border-primary" style="width: 140px; height: 160px; object-fit: cover;">
+              <div *ngIf="!datosPersonaIdentificada.fotoUrl" class="rounded-3 bg-secondary bg-opacity-25 border d-flex flex-column align-items-center justify-content-center text-muted" style="width: 140px; height: 160px;">
+                <i class="bi bi-person-bounding-box display-4"></i>
+                <small class="mt-1">Sin Fotograma</small>
+              </div>
+              <span class="badge bg-success position-absolute bottom-0 start-50 translate-middle-x mb-1 shadow-sm">
+                {{ datosPersonaIdentificada.similitudPorcentaje }}% Match
+              </span>
+            </div>
+          </div>
+
+          <!-- DATOS DE LA PERSONA -->
+          <div class="col-sm-7">
+            <span class="badge mb-2 px-2 py-1" [ngClass]="datosPersonaIdentificada.tipoPersona === 'CLIENTE' ? 'bg-info text-dark' : 'bg-warning text-dark'">
+              <i [ngClass]="datosPersonaIdentificada.tipoPersona === 'CLIENTE' ? 'bi-person-badge' : 'bi-briefcase'" class="bi me-1"></i>
+              {{ datosPersonaIdentificada.tipoPersona }}
+            </span>
+
+            <h4 class="fw-bold text-dark mb-1">{{ datosPersonaIdentificada.nombreCompleto || 'Usuario Autorizado' }}</h4>
+            <div class="text-muted small mb-3">
+              <div><strong>Cédula/Doc:</strong> <span class="font-monospace text-dark">{{ datosPersonaIdentificada.documentoCompleto }}</span></div>
+              <div *ngIf="datosPersonaIdentificada.email"><strong>Email:</strong> {{ datosPersonaIdentificada.email }}</div>
+              <div *ngIf="datosPersonaIdentificada.telefono"><strong>Teléfono:</strong> {{ datosPersonaIdentificada.telefono }}</div>
+              
+              <!-- INFORMACION DE MEMBRESIA Y ESTADO PARA CLIENTES -->
+              <div *ngIf="datosPersonaIdentificada.tipoPersona === 'CLIENTE'" class="mt-1 p-2 bg-white rounded border">
+                <div><strong>Membresía:</strong> <span class="badge bg-primary ms-1">{{ datosPersonaIdentificada.membresiaNombre || 'Plan General / Acceso Total' }}</span></div>
+                <div class="mt-1">
+                  <strong>Estado Membresía:</strong> 
+                  <span class="badge ms-1" [ngClass]="datosPersonaIdentificada.membresiaEstado === 'ACTIVA' ? 'bg-success' : (datosPersonaIdentificada.membresiaEstado === 'POR_VENCER' ? 'bg-warning text-dark' : 'bg-danger')">
+                    {{ datosPersonaIdentificada.membresiaEstado || 'ACTIVA' }}
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="datosPersonaIdentificada.tipoPersona !== 'CLIENTE'"><strong>Estado:</strong> <span class="badge bg-success ms-1">{{ datosPersonaIdentificada.estado || 'ACTIVO' }}</span></div>
+            </div>
+
+            <div class="alert alert-success py-1 px-2 small mb-0 d-flex align-items-center">
+              <i class="bi bi-unlock-fill me-2 text-success"></i>
+              <span>Relé activado. Paso autorizado por torniquete.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIE DEL MODAL -->
+      <div class="card-footer bg-white p-3 d-flex justify-content-end gap-2 border-top">
+        <button class="btn btn-outline-secondary px-3" (click)="cerrarModalPersona()">
+          <i class="bi bi-x-circle me-1"></i> Cerrar
+        </button>
+        <button class="btn btn-success fw-bold px-3" (click)="enviarPulsoApertura('Re-apertura Manual'); cerrarModalPersona()">
+          <i class="bi bi-arrow-repeat me-1"></i> Pulsar Apertura Otra Vez
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+

@@ -33,4 +33,24 @@ constructor(private http: HttpClient) { }
   abrirDispositivo(id: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/${id}/abrir`, {});
   }
+
+  toggleState(id: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${id}/toggle-state`, {});
+  }
+
+  pingAll(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/ping-all`, {});
+  }
+
+  escanearDispositivo(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${id}/escanear`);
+  }
+
+  descubrirNoRegistrados(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/no-registrados`);
+  }
+
+  registrarLote(dispositivos: any[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/registrar-lote`, dispositivos);
+  }
 }

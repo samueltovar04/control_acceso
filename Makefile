@@ -1,4 +1,4 @@
-.PHONY: help build-all docker-build docker-up docker-down up down discover-devices mobile-build test-all clean
+.PHONY: help build-all docker-build docker-up docker-down up down discover-devices mobile-build test-all clean suprema-build suprema-up suprema-down
 
 help:
 	@echo "Control de Acceso - Comandos Disponibles:"
@@ -6,6 +6,9 @@ help:
 	@echo "  make docker-build     - Construye las imágenes de Docker"
 	@echo "  make docker-up        - Inicia los servicios con Docker Compose"
 	@echo "  make docker-down      - Detiene los servicios de Docker Compose"
+	@echo "  make suprema-build    - Prepara el entorno para el servicio Suprema USB Bridge"
+	@echo "  make suprema-up       - Inicia el servicio Suprema USB Bridge en puerto 8085"
+	@echo "  make suprema-down     - Detiene el servicio Suprema USB Bridge"
 	@echo "  make discover-devices - Detecta IPs de red Wi-Fi local y las registra como torniquetes"
 	@echo "  make mobile-build     - Configura e instala la App Mobile apuntando a localhost/IP local"
 	@echo "  make test-all         - Ejecuta la suite de pruebas integrales de todos los módulos"
@@ -30,9 +33,27 @@ docker-down:
 	@echo "==> Deteniendo servicios con Docker Compose..."
 	docker compose down -v
 
-up: docker-up
+up: docker-up suprema-up
 
-down: docker-down
+down: docker-down suprema-down
+
+suprema-build:
+	@echo "==> Verificando dependencias del servicio Suprema USB Bridge..."
+	@python3 -m pip install --quiet pyusb || true
+	@chmod +x scripts/suprema_usb_bridge.py
+	@echo "==> Suprema USB Bridge preparado."
+
+suprema-up: suprema-build
+	@echo "==> Iniciando servicio Suprema USB Bridge en background (puerto 8085)..."
+	@pkill -f "scripts/suprema_usb_bridge.py" 2>/dev/null || true
+	@nohup python3 scripts/suprema_usb_bridge.py > /tmp/suprema_usb_bridge.log 2>&1 &
+	@sleep 1
+	@echo "==> Suprema USB Bridge en línea en http://127.0.0.1:8085 (PID: $$(pgrep -f 'scripts/suprema_usb_bridge.py'))."
+
+suprema-down:
+	@echo "==> Deteniendo servicio Suprema USB Bridge..."
+	@pkill -f "scripts/suprema_usb_bridge.py" 2>/dev/null || true
+	@echo "==> Suprema USB Bridge detenido."
 
 discover-devices:
 	@echo "==> Escaneando IPs activas en red Wi-Fi y registrando dispositivos..."

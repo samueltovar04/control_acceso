@@ -1,40 +1,126 @@
 <div class="card p-3 border-0 shadow-sm bg-white rounded-3 mb-3">
-  <h5 class="fw-bold text-dark mb-3">
+  <h5 *ngIf="titulo" class="fw-bold text-dark mb-3">
     <i class="bi bi-shield-lock-fill text-primary me-2"></i>{{ titulo }}
   </h5>
 
   <div class="row g-3">
     <!-- PANEL 1: FOTOGRAMAS FACIALES -->
-    <div class="col-md-6 border-end">
+    <div [ngClass]="soloFacial ? 'col-12' : 'col-md-6 border-end'">
       <div class="p-2 text-center">
-        <h6 class="fw-bold text-secondary mb-2">1. Reconocimiento Facial (Embedding 128D)</h6>
-        
-        <div class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center" style="height: 190px; overflow: hidden;">
-          <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)"></webcam>
-          <div *ngIf="!webcamImage && fotoExistente" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark">
-            <img [src]="fotoExistente" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-          </div>
-          <div *ngIf="!webcamImage && !fotoExistente" class="position-absolute text-white small opacity-75">
-            <i class="bi bi-camera fs-2 d-block mb-1"></i>Enfoque el rostro
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold text-secondary mb-0">Reconocimiento Facial (Embedding 128D)</h6>
+          <div class="d-flex gap-1 align-items-center">
+            <button type="button" class="btn btn-outline-secondary btn-xs py-0 px-2" (click)="alternarEspejo()" title="Invertir espejo horizontal">
+              <i class="bi bi-symmetry-vertical me-1"></i>{{ esModoEspejo ? 'Espejo ON' : 'Espejo OFF' }}
+            </button>
+            <button *ngIf="dispositivosCamara.length > 1" type="button" class="btn btn-outline-primary btn-xs py-0 px-2" (click)="rotarSiguienteCamara()" title="Cambiar dispositivo de cámara">
+              <i class="bi bi-camera-reels me-1"></i>Cambiar
+            </button>
           </div>
         </div>
 
-        <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-bold mb-2" (click)="capturarFotograma()">
-          <i class="bi bi-camera-fill me-1"></i> Capturar Fotograma
-        </button>
+        <!-- SELECTOR DE CAMARAS EN CASO DE HABER MULTIPLES -->
+        <div *ngIf="dispositivosCamara.length > 1" class="mb-2">
+          <select class="form-select form-select-sm" [ngModel]="camaraIdActual" (ngModelChange)="cambiarCamara($event)">
+            <option *ngFor="let cam of dispositivosCamara; let idx = index" [value]="cam.deviceId">
+              {{ cam.label || ('Camara ' + (idx + 1)) }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center" [class.mirrored]="esModoEspejo" [style.height.px]="alturaCamaraPx" style="overflow: hidden;">
+          <webcam [trigger]="triggerObservable" 
+                  [switchCamera]="nextWebcamObservable"
+                  [videoOptions]="videoOptions"
+                  [allowCameraSwitch]="true"
+                  (cameraSwitched)="cameraSwitched($event)"
+                  (imageCapture)="handleImage($event)"></webcam>
 
-        <div *ngIf="faceVectorGenerado" class="alert alert-success py-1 px-2 small mb-0">
-          <i class="bi bi-check-circle-fill me-1"></i> Vector 128D generado ({{ fotogramasCapturados }} fotogramas)
+          <!-- RETICULA / GUIA LINEAL DE ENFOQUE FACIAL -->
+          <div class="face-target-guide position-absolute" pointer-events="none">
+            <div class="target-crosshair"></div>
+            <div class="target-oval"></div>
+          </div>
+
+          <!-- OVERLAY DE ASISTENTE DE MOVIMIENTO DE CABEZA / MULTI-ANGULO -->
+          <div *ngIf="asistenteActivo" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-between p-3" style="background: rgba(13, 17, 23, 0.65); z-index: 15;">
+            <div class="badge bg-primary fs-6 px-3 py-2 shadow-sm animate__animated animate__fadeInDown">
+              <i class="bi me-2" [ngClass]="poses[pasoPoseActualIndex]?.icono || 'bi-camera'"></i>
+              Paso {{ pasoPoseActualIndex + 1 }} de {{ poses.length }}: {{ poses[pasoPoseActualIndex]?.label }}
+            </div>
+
+            <div class="text-center text-white my-auto">
+              <div class="display-3 fw-bold text-warning mb-1">{{ cuentaRegresivaSegundos }}</div>
+              <p class="fs-6 fw-semibold m-0 bg-dark bg-opacity-75 px-3 py-1 rounded-pill border border-warning border-opacity-50">
+                {{ poses[pasoPoseActualIndex]?.instruccion }}
+              </p>
+            </div>
+
+            <button type="button" class="btn btn-outline-light btn-xs px-3" (click)="cancelarAsistente()">
+              <i class="bi bi-x-circle me-1"></i> Cancelar Asistente
+            </button>
+          </div>
+
+          <div *ngIf="!webcamImage && fotoExistente && !asistenteActivo" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark" style="z-index: 2;">
+            <img [src]="fotoExistente" style="height: 100%; width: 100%; object-fit: contain; object-position: center;" />
+          </div>
+          <div *ngIf="!webcamImage && !fotoExistente && !asistenteActivo" class="position-absolute text-white small opacity-75" style="z-index: 2; pointer-events: none;">
+            <i class="bi bi-person-bounding-box fs-2 d-block mb-1"></i>Alinee el rostro dentro del recuadro
+          </div>
+        </div>
+
+        <!-- BOTONES DE CAPTURA INDIVIDUAL Y ASISTENTE MULTI-ÁNGULO -->
+        <div *ngIf="mostrarBotonCaptura" class="d-flex flex-column gap-2 mb-2">
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm flex-grow-1 fw-bold" (click)="iniciarAsistenteMultiAngulo()" [disabled]="asistenteActivo">
+              <i class="bi bi-badge-ad me-1"></i> Auto-Captura 3D (Giro de Cabeza)
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" (click)="capturarFotograma()" [disabled]="asistenteActivo" title="Capturar fotograma manual individual">
+              <i class="bi bi-camera-fill me-1"></i> Manual
+            </button>
+          </div>
+        </div>
+
+        <!-- BANCO DE FOTOGRAMAS / POSES CAPTURADAS -->
+        <div *ngIf="fotogramasColeccion.length > 0" class="border rounded p-2 bg-light mb-2 text-start">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-bold text-secondary">
+              <i class="bi bi-images me-1 text-primary"></i>Fotogramas Registrados ({{ fotogramasColeccion.length }}/{{ poses.length }}):
+            </span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace" style="font-size: 0.65rem;">
+              Multi-Vector Activo
+            </span>
+          </div>
+          <div class="d-flex gap-2 overflow-auto py-1">
+            <div *ngFor="let item of fotogramasColeccion; let idx = index" class="position-relative border rounded bg-white p-1 text-center" style="min-width: 68px;">
+              <img [src]="item.fotoUrl" style="width: 58px; height: 58px; object-fit: cover;" class="rounded mb-1" />
+              <div class="badge bg-dark text-white p-0 px-1 d-block" style="font-size: 0.6rem;">{{ item.label }}</div>
+              <button type="button" class="btn btn-danger btn-xs position-absolute top-0 end-0 p-0 px-1 rounded-circle" style="transform: translate(25%, -25%); font-size: 0.55rem;" (click)="removerFotogramaColeccion(idx)" title="Eliminar pose">
+                &times;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="faceVectorGenerado && mostrarBotonCaptura && fotogramasColeccion.length === 0" class="alert alert-success py-1 px-2 small mb-0">
+          <i class="bi bi-check-circle-fill me-1"></i> Fotograma y Vector 128D generados correctamente
         </div>
       </div>
     </div>
 
     <!-- PANEL 2: DIGITALIZACION DE HUELLAS DACTILARES -->
-    <div class="col-md-6">
+    <div class="col-md-6" *ngIf="!soloFacial">
       <div class="p-2 text-center">
-        <h6 class="fw-bold text-secondary mb-2">2. Digitalización de Huellas Dactilares</h6>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold text-secondary mb-0">2. Digitalización de Huellas (Suprema USB)</h6>
+          <!-- BADGE DE SENSOR BIOMETRICO EN TIEMPO REAL -->
+          <span class="badge" [ngClass]="sensorConectado ? 'bg-success text-white' : 'bg-warning text-dark'" title="Estado del lector USB conectado">
+            <i class="bi bi-usb-symbol me-1"></i>
+            {{ sensorConectado ? 'Sensor Suprema Online' : 'Sensor Desconectado' }}
+          </span>
+        </div>
 
-        <div class="fingerprint-scanner border rounded p-3 mb-2 bg-light d-flex flex-column align-items-center justify-content-center" style="height: 190px;">
+        <div class="fingerprint-scanner border rounded p-3 mb-2 bg-light d-flex flex-column align-items-center justify-content-center position-relative" style="height: 200px;">
           <div class="scanner-icon mb-2 position-relative">
             <i class="bi bi-fingerprint fs-1" [ngClass]="{'text-primary': escaneandoHuella, 'text-success': huella1Generada || huella2Generada, 'text-muted': !huella1Generada && !huella2Generada}"></i>
             <div *ngIf="escaneandoHuella" class="spinner-border spinner-border-sm text-primary position-absolute top-50 start-50" style="margin-top:-8px; margin-left:-8px;"></div>
@@ -44,20 +130,58 @@
             <div class="progress" style="height: 6px;">
               <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" [style.width.%]="calidadHuella"></div>
             </div>
-            <span class="small text-muted mt-1 d-block">Escaneando crestas: {{ calidadHuella }}%</span>
+            <span class="small text-muted mt-1 d-block">Capturando minucias de crestas: {{ calidadHuella }}%</span>
           </div>
 
-          <div *ngIf="!escaneandoHuella" class="small text-muted">
-            Sensor biométrico listo para lectura.
+          <div *ngIf="!escaneandoHuella" class="small">
+            <div class="text-success fw-bold" *ngIf="sensorConectado">
+              <i class="bi bi-check2-circle me-1"></i>{{ nombreDispositivoSensor }}
+            </div>
+            <div class="text-muted" *ngIf="!sensorConectado">
+              Conecte el captahuellas Suprema en el puerto USB
+            </div>
+            <span class="text-muted small">Coloque el dedo en la ventana óptica y presione capturar</span>
+          </div>
+
+          <!-- ALERTA DE ERROR DE HUELLA -->
+          <div *ngIf="errorHuella" class="alert alert-danger py-1 px-2 small mb-2 text-start w-100">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ errorHuella }}
+          </div>
+
+          <!-- STATUS MINUCIAS CAPTURADAS O EXISTENTES EN BD -->
+          <div class="mt-2 w-100">
+            <div class="d-flex flex-column gap-1 text-start">
+              <!-- HUELLA 1 -->
+              <div *ngIf="huella1Generada" class="badge bg-success-subtle text-success border border-success-subtle p-1 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-fingerprint me-1"></i>Índice (Nueva): Suprema Nativo (384B / {{ totalMinucias1 }} crestas)</span>
+                <span class="text-secondary font-monospace" style="font-size: 0.65rem;">{{ huella1Generada.substring(0, 16) }}...</span>
+              </div>
+              <div *ngIf="!huella1Generada && huella1Existente" class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-1 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-fingerprint me-1 text-primary"></i>Índice: Registrada en BD (384B)</span>
+                <span class="text-muted font-monospace" style="font-size: 0.65rem;">{{ huella1Existente.substring(0, 16) }}...</span>
+              </div>
+
+              <!-- HUELLA 2 -->
+              <div *ngIf="huella2Generada" class="badge bg-success-subtle text-success border border-success-subtle p-1 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-fingerprint me-1"></i>Pulgar (Nueva): Suprema Nativo (384B / {{ totalMinucias2 }} crestas)</span>
+                <span class="text-secondary font-monospace" style="font-size: 0.65rem;">{{ huella2Generada.substring(0, 16) }}...</span>
+              </div>
+              <div *ngIf="!huella2Generada && huella2Existente" class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-1 d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-fingerprint me-1 text-primary"></i>Pulgar: Registrada en BD (384B)</span>
+                <span class="text-muted font-monospace" style="font-size: 0.65rem;">{{ huella2Existente.substring(0, 16) }}...</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="d-flex gap-2 justify-content-center">
-          <button type="button" class="btn btn-sm" [ngClass]="huella1Generada ? 'btn-success' : 'btn-outline-secondary'" (click)="iniciarEscaneoHuella(1)" [disabled]="escaneandoHuella">
-            <i class="bi bi-check-lg" *ngIf="huella1Generada"></i> Huella Principal (Índice)
+          <button type="button" class="btn btn-sm" [ngClass]="huella1Generada ? 'btn-success text-white' : (huella1Existente ? 'btn-outline-info' : 'btn-outline-primary')" (click)="iniciarEscaneoHuella(1)" [disabled]="escaneandoHuella || !sensorConectado">
+            <i class="bi bi-check-lg" *ngIf="huella1Generada"></i>
+            {{ huella1Generada ? 'Índice Actualizado' : (huella1Existente ? 'Re-escanear Índice' : 'Capturar Índice') }}
           </button>
-          <button type="button" class="btn btn-sm" [ngClass]="huella2Generada ? 'btn-success' : 'btn-outline-secondary'" (click)="iniciarEscaneoHuella(2)" [disabled]="escaneandoHuella">
-            <i class="bi bi-check-lg" *ngIf="huella2Generada"></i> Huella Auxiliar (Pulgar)
+          <button type="button" class="btn btn-sm" [ngClass]="huella2Generada ? 'btn-success text-white' : (huella2Existente ? 'btn-outline-info' : 'btn-outline-primary')" (click)="iniciarEscaneoHuella(2)" [disabled]="escaneandoHuella || !sensorConectado">
+            <i class="bi bi-check-lg" *ngIf="huella2Generada"></i>
+            {{ huella2Generada ? 'Pulgar Actualizado' : (huella2Existente ? 'Re-escanear Pulgar' : 'Capturar Pulgar') }}
           </button>
         </div>
       </div>

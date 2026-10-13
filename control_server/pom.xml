@@ -57,10 +57,27 @@
             <artifactId>quarkus-jdbc-h2</artifactId>
         </dependency>
 
+        <!-- MongoDB con Panache Reactivo -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mongodb-panache</artifactId>
+        </dependency>
+
         <!-- Seguridad y JWT (SmallRye JWT) -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt-build</artifactId>
+        </dependency>
+
+        <!-- Bcrypt para hasheo seguro de credenciales -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
         </dependency>
 
         <!-- WebSockets para tiempo real (Acceso, Signos Vitales, Notificaciones) -->

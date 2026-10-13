@@ -30,7 +30,7 @@ public class Cliente extends AbstractEntity {
     @Column(columnDefinition = "TEXT")
     private String faceVector;
 
-    private String estadoSuscripcion = "SIN_MEMBRESIA"; // ACTIVA, VENCIDA, POR_VENCER, SUSPENDIDA
+    private String estadoSuscripcion; // ACTIVA, VENCIDA, POR_VENCER, SUSPENDIDA, SIN_MEMBRESIA
 
     @ManyToOne
     private Sede sede;

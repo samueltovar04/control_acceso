@@ -52,42 +52,102 @@
                 <option value="F">Femenino</option>
               </select>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Legajo / Ficha</label>
-              <input type="text" class="form-control" [(ngModel)]="employee.legajo" name="legajo" placeholder="LEG-001">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Sede</label>
-              <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId">
-                <option [ngValue]="null">Seleccionar Sede...</option>
-                <option *ngFor="let s of sedesList" [value]="s.id">{{ s.sede }}</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Gerencia / Dpto.</label>
-              <select class="form-select" [(ngModel)]="employee.gerenciaId" name="gerenciaId">
-                <option [ngValue]="null">Seleccionar Gerencia...</option>
-                <option *ngFor="let g of gerenciasList" [value]="g.id">{{ g.gerencia }}</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Tipo de Contrato</label>
-              <select class="form-select" [(ngModel)]="employee.tipoContratoId" name="tipoContratoId">
-                <option [ngValue]="null">Seleccionar Contrato...</option>
-                <option *ngFor="let c of contratosList" [value]="c.id">{{ c.contrato }}</option>
-              </select>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Legajo / Ficha</label>
+                <input type="text" class="form-control" [(ngModel)]="employee.legajo" name="legajo" placeholder="LEG-001">
+              </div>
+
+              <!-- PREVISUALIZACION DE FOTO ACTUAL Y HUELLAS PREEXISTENTES EN BD (LADO IZQUIERDO) -->
+              <div class="col-12 mt-3">
+                <label class="form-label small fw-bold d-block text-secondary">
+                  <i class="bi bi-camera-fill me-1 text-primary"></i> Fotograma Facial Registrado en BD:
+                </label>
+                <div class="border rounded p-2 text-center bg-light position-relative d-flex flex-column align-items-center justify-content-center" style="min-height: 140px;">
+                  <div *ngIf="employee.foto" class="d-flex flex-column align-items-center">
+                    <img [src]="employee.foto" alt="Fotograma Facial" class="img-thumbnail shadow-sm rounded-circle mb-2" style="width: 110px; height: 110px; object-fit: cover; border: 3px solid #0d6efd;" />
+                    <span class="badge bg-success-subtle text-success border border-success-subtle small">
+                      <i class="bi bi-check-circle-fill me-1"></i> Fotograma Facial en BD
+                    </span>
+                  </div>
+                  <div *ngIf="!employee.foto" class="text-muted small py-3">
+                    <i class="bi bi-person-bounding-box fs-1 d-block mb-1 text-secondary opacity-50"></i>
+                    <span>Sin fotograma facial previo en BD</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- INDICADOR DE HUELLAS DACTILARES PREEXISTENTES EN BD -->
+              <div class="col-12 mt-2">
+                <label class="form-label small fw-bold d-block text-secondary">
+                  <i class="bi bi-fingerprint me-1 text-primary"></i> Huellas Dactilares Registradas en BD:
+                </label>
+                <div class="border rounded p-2 bg-light">
+                  <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded border bg-white">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-fingerprint fs-4 me-2" [ngClass]="employee.huella1 ? 'text-success' : 'text-muted'"></i>
+                        <div>
+                          <span class="fw-bold small d-block">Dedo Índice</span>
+                          <span class="small text-muted" *ngIf="employee.huella1">Suprema 384B Registrada</span>
+                          <span class="small text-danger" *ngIf="!employee.huella1">No registrado</span>
+                        </div>
+                      </div>
+                      <span class="badge" [ngClass]="employee.huella1 ? 'bg-success text-white' : 'bg-secondary'">
+                        {{ employee.huella1 ? 'EN BASE DE DATOS' : 'PENDIENTE' }}
+                      </span>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded border bg-white">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-fingerprint fs-4 me-2" [ngClass]="employee.huella2 ? 'text-success' : 'text-muted'"></i>
+                        <div>
+                          <span class="fw-bold small d-block">Dedo Pulgar</span>
+                          <span class="small text-muted" *ngIf="employee.huella2">Suprema 384B Registrada</span>
+                          <span class="small text-danger" *ngIf="!employee.huella2">No registrado</span>
+                        </div>
+                      </div>
+                      <span class="badge" [ngClass]="employee.huella2 ? 'bg-success text-white' : 'bg-secondary'">
+                        {{ employee.huella2 ? 'EN BASE DE DATOS' : 'PENDIENTE' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Sede</label>
+                <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId">
+                  <option [ngValue]="null">Seleccionar Sede...</option>
+                  <option *ngFor="let s of sedesList" [value]="s.id">{{ s.sede }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Gerencia / Dpto.</label>
+                <select class="form-select" [(ngModel)]="employee.gerenciaId" name="gerenciaId">
+                  <option [ngValue]="null">Seleccionar Gerencia...</option>
+                  <option *ngFor="let g of gerenciasList" [value]="g.id">{{ g.gerencia }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Tipo de Contrato</label>
+                <select class="form-select" [(ngModel)]="employee.tipoContratoId" name="tipoContratoId">
+                  <option [ngValue]="null">Seleccionar Contrato...</option>
+                  <option *ngFor="let c of contratosList" [value]="c.id">{{ c.contrato }}</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- COMPONENTE BIOMETRICO (FACIAL + HUELLAS) -->
-      <div class="col-lg-6">
-        <app-biometric-capture
-          titulo="Actualizacion Biometrica del Empleado"
-          [fotoExistente]="employee.foto"
-          (biometricDataChange)="onBiometricData($event)">
-        </app-biometric-capture>
+        <!-- COMPONENTE BIOMETRICO (FACIAL + HUELLAS) -->
+        <div class="col-lg-6">
+          <app-biometric-capture
+            titulo="Actualizacion Biometrica del Empleado"
+            [fotoExistente]="employee.foto"
+            [huella1Existente]="employee.huella1"
+            [huella2Existente]="employee.huella2"
+            (biometricDataChange)="onBiometricData($event)">
+          </app-biometric-capture>
 
         <div class="card p-3 border-0 shadow-sm rounded-3 bg-white text-end">
           <div class="d-flex justify-content-end gap-2">

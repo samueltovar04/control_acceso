@@ -16,29 +16,10 @@ import java.util.List;
 public class SignosVitalesResource {
 
     @Inject
-    SignosVitalesRepository signosRepository;
+    com.biotrack.repository.TelemetriaRepository telemetriaMongoRepo;
 
-    @GET
-    @Path("/cliente/{clienteId}")
-    public List<SignosVitales> getHistorialCliente(@PathParam("clienteId") Long clienteId) {
-        return signosRepository.findByCliente(clienteId);
-    }
-
-    @GET
-    @Path("/cliente/{clienteId}/ultimo")
-    public Response getUltimoCliente(@PathParam("clienteId") Long clienteId) {
-        SignosVitales ultimo = signosRepository.findUltimoPorCliente(clienteId);
-        if (ultimo == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(ultimo).build();
-    }
-
-    @GET
-    @Path("/alertas")
-    public List<SignosVitales> getAlertasSaludActivas() {
-        return signosRepository.findAlertasActivas();
-    }
+    @Inject
+    com.access.control.repository.ClienteRepository clienteRepository;
 
     @Inject
     com.access.control.component.VitalSignsWebSocketEndpoint vitalWs;
@@ -46,36 +27,97 @@ public class SignosVitalesResource {
     @Inject
     com.access.control.component.NotificacionesWebSocketEndpoint notifWs;
 
+    @GET
+    @Path("/cliente/{clienteId}")
+    public io.smallrye.mutiny.Uni<List<com.biotrack.entity.TelemetriaLectura>> getHistorialCliente(@PathParam("clienteId") Long clienteId) {
+        com.access.control.model.Cliente cliente = clienteRepository.findById(clienteId);
+        if (cliente == null || cliente.getCodigoInsignia() == null || cliente.getCodigoInsignia().isBlank()) {
+            return io.smallrye.mutiny.Uni.createFrom().item(java.util.Collections.emptyList());
+        }
+        return telemetriaMongoRepo.findUltimas50PorPulsera(cliente.getCodigoInsignia().trim().toUpperCase());
+    }
+
+    @GET
+    @Path("/cliente/{clienteId}/ultimo")
+    public io.smallrye.mutiny.Uni<Response> getUltimoCliente(@PathParam("clienteId") Long clienteId) {
+        com.access.control.model.Cliente cliente = clienteRepository.findById(clienteId);
+        if (cliente == null || cliente.getCodigoInsignia() == null || cliente.getCodigoInsignia().isBlank()) {
+            return io.smallrye.mutiny.Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());
+        }
+        return telemetriaMongoRepo.findUltimoPorPulsera(cliente.getCodigoInsignia().trim().toUpperCase())
+            .onItem().transform(lectura -> {
+                if (lectura == null) {
+                    return Response.status(Response.Status.NOT_FOUND).build();
+                }
+                return Response.ok(lectura).build();
+            });
+    }
+
+    @GET
+    @Path("/alertas")
+    public io.smallrye.mutiny.Uni<List<com.biotrack.entity.TelemetriaLectura>> getAlertasSaludActivas() {
+        return telemetriaMongoRepo.findAlertasActivas();
+    }
+
+    @POST
+    @Path("/gateway")
+    public io.smallrye.mutiny.Uni<Response> registrarGatewayTelemetria(com.access.control.dto.GatewayTelemetriaDTO dto) {
+        if (dto == null) {
+            return io.smallrye.mutiny.Uni.createFrom().item(Response.status(Response.Status.BAD_REQUEST).entity("Payload vacio").build());
+        }
+
+        String mac = dto.getId_pulsera() != null ? dto.getId_pulsera().trim().toUpperCase() : "ESP32-MAC-PICO";
+        int bpm = dto.getBpm() != null ? Math.round(dto.getBpm()) : 75;
+        int spo2 = dto.getSpo2() != null ? Math.round(dto.getSpo2()) : 98;
+        double temp = dto.getTemperatura() != null ? ((double) Math.round(dto.getTemperatura() * 100.0) / 100.0) : 36.5;
+        int alerta = (dto.getEstado_alerta() != null && dto.getEstado_alerta() == 1) ? 1 : 0;
+
+        if (bpm > 140 || bpm < 45 || spo2 < 90 || temp > 38.3 || temp < 34.5) {
+            alerta = 1;
+        }
+
+        final int alertaFinal = alerta;
+        final com.biotrack.entity.TelemetriaLectura lectura = new com.biotrack.entity.TelemetriaLectura(mac, bpm, spo2, temp, alertaFinal);
+
+        return io.smallrye.mutiny.Uni.createFrom().item(() -> {
+            telemetriaMongoRepo.persist(lectura);
+            return lectura;
+        })
+        .onItem().invoke(inserted -> {
+            com.access.control.model.Cliente cliente = null;
+            if (dto.getCliente_id() != null) {
+                cliente = clienteRepository.findById(dto.getCliente_id());
+            } else if (mac != null) {
+                cliente = clienteRepository.findByCodigoInsignia(mac);
+            }
+            String nombreCliente = (cliente != null) ? (cliente.getNombre() + " " + (cliente.getApellido() != null ? cliente.getApellido() : "")).trim() : "Cliente Dinamico";
+
+            String jsonWs = String.format(
+                "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"cliente_id\":%s,\"cliente_nombre\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"timestamp\":\"%s\"}",
+                mac,
+                (cliente != null ? cliente.getId() : "null"),
+                nombreCliente,
+                inserted.bpm,
+                inserted.spo2,
+                inserted.temp,
+                inserted.estado_alerta == 1,
+                inserted.estado_alerta,
+                inserted.timestamp.toString()
+            );
+            vitalWs.broadcast(jsonWs);
+
+            if (inserted.estado_alerta == 1) {
+                notifWs.broadcast(String.format("{\"alerta\":true,\"tipo\":\"EMERGENCIA_BIOMEDICA\",\"dispositivo\":\"%s\",\"mensaje\":\"Signos anomalos detectados (%s)\"}",
+                    mac, nombreCliente));
+            }
+        })
+        .onItem().transform(inserted -> Response.status(Response.Status.ACCEPTED).entity(inserted).build())
+        .onFailure().recoverWithItem(err -> Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(err.getMessage()).build());
+    }
+
     @POST
     @Path("/signos-vitales")
-    @Transactional
-    public Response registrarTelemetria(SignosVitales signos) {
-        signos.setTimestamp(new Date());
-
-        if (signos.getRitmocardiacoBpm() != null && (signos.getRitmocardiacoBpm() > 150 || signos.getRitmocardiacoBpm() < 45)) {
-            signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Ritmo cardiaco anomalo: " + signos.getRitmocardiacoBpm() + " BPM");
-        } else if (signos.getSaturacionOxigenoSpo2() != null && signos.getSaturacionOxigenoSpo2() < 90) {
-            signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Nivel critico de SpO2: " + signos.getSaturacionOxigenoSpo2() + "%");
-        } else if (signos.getTemperaturaCorporal() != null && signos.getTemperaturaCorporal() > 38.3) {
-            signos.setAlertaSalud(true);
-            signos.setMensajeAlerta("Elevada temperatura corporal: " + signos.getTemperaturaCorporal() + " C");
-        }
-
-        signosRepository.persist(signos);
-
-        // Notificacion push y broadcast en tiempo real
-        String payloadJson = "{\"tipo\":\"TELEMETRIA\",\"bpm\":" + signos.getRitmocardiacoBpm() + 
-                ",\"spo2\":" + signos.getSaturacionOxigenoSpo2() + 
-                ",\"temp\":" + signos.getTemperaturaCorporal() + 
-                ",\"alerta\":" + signos.getAlertaSalud() + 
-                ",\"mensaje\":\"" + (signos.getMensajeAlerta() != null ? signos.getMensajeAlerta() : "Normal") + "\"}";
-        vitalWs.broadcast(payloadJson);
-        if (Boolean.TRUE.equals(signos.getAlertaSalud())) {
-            notifWs.broadcast("{\"alerta\":true,\"tipo\":\"EMERGENCIA_MEDICA\",\"mensaje\":\"" + signos.getMensajeAlerta() + "\"}");
-        }
-
-        return Response.status(Response.Status.CREATED).entity(signos).build();
+    public io.smallrye.mutiny.Uni<Response> registrarTelemetria(com.access.control.dto.GatewayTelemetriaDTO dto) {
+        return registrarGatewayTelemetria(dto);
     }
 }

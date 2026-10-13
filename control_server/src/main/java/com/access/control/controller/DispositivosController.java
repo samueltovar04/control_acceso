@@ -57,6 +57,34 @@ public class DispositivosController {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    @PUT
+    @Path("/{id}/toggle-state")
+    public Response toggleState(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.toggleState(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(d).build();
+    }
+
+    @POST
+    @Path("/ping-all")
+    public Response pingAllDispositivos() {
+        List<Dispositivo> list = dispositivoService.pingAllDispositivos();
+        return Response.ok(list).build();
+    }
+
+    @POST
+    @Path("/{id}/ping")
+    public Response pingDispositivo(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        boolean ok = dispositivoService.checkPing(d);
+        return Response.ok(d).build();
+    }
+
     @POST
     @Path("/{id}/abrir")
     public Response accionarTorniquete(@PathParam("id") Long id) {
@@ -72,5 +100,29 @@ public class DispositivosController {
         res.put("estado", "ABIERTO");
         res.put("mensaje", "Pulso de apertura concedido al torniquete " + d.getNombre());
         return Response.ok(res).build();
+    }
+
+    @GET
+    @Path("/{id}/escanear")
+    public Response escanearDispositivo(@PathParam("id") Long id) {
+        com.access.control.dto.DispositivoEscaneoDTO info = dispositivoService.escanearDispositivo(id);
+        if (info == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(info).build();
+    }
+
+    @GET
+    @Path("/no-registrados")
+    public Response descubrirDispositivosNoRegistrados() {
+        List<com.access.control.dto.DispositivoDescubiertoDTO> list = dispositivoService.descubrirDispositivosNoRegistrados();
+        return Response.ok(list).build();
+    }
+
+    @POST
+    @Path("/registrar-lote")
+    public Response registrarLote(List<Dispositivo> dispositivos) {
+        List<Dispositivo> creados = dispositivoService.registrarLote(dispositivos);
+        return Response.status(Response.Status.CREATED).entity(creados).build();
     }
 }

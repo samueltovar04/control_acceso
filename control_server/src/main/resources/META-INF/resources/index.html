@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioTrack Pro - Monitor Biomedico IoT en Tiempo Real</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(51, 65, 85, 0.4);
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+        }
+        .animate-pulse-dot {
+            animation: pulse-dot 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 via-pink-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-rose-950/50">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">BioTrack Enterprise</h1>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">ESP-NOW IoT</span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Monitor de telemetria biomedica y asociacion dinamica MAC-Cliente</p>
+                </div>
+            </div>
+
+            <!-- WebSocket Status & Actions -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/60 text-xs font-medium">
+                    <span id="ws-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse-dot"></span>
+                    <span id="ws-status" class="text-slate-300">Conectando...</span>
+                </div>
+                <button id="btn-toggle-emulator" onclick="toggleEmulator()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-950/40 transition flex items-center gap-1.5">
+                    <span id="emu-btn-icon">▶</span>
+                    <span id="emu-btn-text">Iniciar Emulador Gateway</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col gap-6 w-full">
+
+        <!-- Device & Patient Banner -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 font-mono text-sm">
+                    ESP32
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Pulsera Vinculada:</span>
+                        <span id="val-mac" class="text-sm font-mono font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">24:6F:28:AA:BB:CC</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-slate-400">Paciente / Cliente:</span>
+                        <span id="val-paciente" class="text-sm font-semibold text-cyan-300">Carlos Mendoza (ID: 101)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <div class="text-[11px] text-slate-400">Ultima actualizacion</div>
+                    <div id="val-timestamp" class="text-xs font-mono text-slate-300">--:--:--</div>
+                </div>
+                <div id="badge-estado" class="px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span id="badge-estado-txt">ESTABLE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            <!-- Ritmo Cardiaco (BPM) -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden border-t-2 border-t-rose-500">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ritmo Cardiaco</span>
+                    <span class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="val-bpm" class="text-4xl sm:text-5xl font-extrabold font-mono text-rose-400 tracking-tight">--</span>
+                    <span class="text-xs text-slate-400 font-semibold">BPM</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">Rango clinico seguro: 50 - 140 BPM</p>
+            </div>
+
+            <!-- Saturacion de Oxigeno (SpO2) -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden border-t-2 border-t-cyan-500">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Oxigeno (SpO2)</span>
+                    <span class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.488 2.233a1 1 0 01-.832 1.556H3.13a1 1 0 01-.832-1.556l1.488-2.233-1.233-.616a1 1 0 11.894-1.79l1.599.8L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="val-spo2" class="text-4xl sm:text-5xl font-extrabold font-mono text-cyan-400 tracking-tight">--</span>
+                    <span class="text-xs text-slate-400 font-semibold">%</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">Objetivo optimo: &gt;= 95%</p>
+            </div>
+
+            <!-- Temperatura Corporal (MAX30205) -->
+            <div class="glass-card rounded-2xl p-5 relative overflow-hidden border-t-2 border-t-amber-500">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Temperatura Cutanea</span>
+                    <span class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a2 2 0 00-2 2v7.171A4 4 0 1012 11.17V4a2 2 0 00-2-2zm0 13a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="val-temp" class="text-4xl sm:text-5xl font-extrabold font-mono text-amber-400 tracking-tight">--</span>
+                    <span class="text-xs text-slate-400 font-semibold">°C</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">Sensor termico MAX30205 (+-0.1 °C)</p>
+            </div>
+        </div>
+
+        <!-- Real-Time Telemetry Chart & Log Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+            
+            <!-- Dynamic Graph -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-white tracking-tight">Traza Dinamica de Signos Vitales</h2>
+                        <p class="text-xs text-slate-400">Flujo de datos en tiempo real recibido desde WebSocket Quarkus</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-medium">
+                        <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> BPM</span>
+                        <span class="flex items-center gap-1.5 text-cyan-400"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> SpO2</span>
+                        <span class="flex items-center gap-1.5 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Temp</span>
+                    </div>
+                </div>
+
+                <div class="relative flex-1 min-h-[280px]">
+                    <canvas id="vitalSignsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gateway Emulator Controls & Inbound Log -->
+            <div class="glass-card rounded-2xl p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-white tracking-tight">Emulador ESP32 Gateway</h2>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">POST /gateway</span>
+                </div>
+
+                <!-- Simulation Settings -->
+                <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 text-xs flex flex-col gap-2.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Estado Simulado:</span>
+                        <select id="sim-status" class="bg-slate-800 border border-slate-700 text-white rounded px-2 py-1 text-xs outline-none">
+                            <option value="NORMAL">Normal / Estable</option>
+                            <option value="CARDIO_ALTO">Taquicardia (155 BPM)</option>
+                            <option value="HIPOXIA">Hipoxia (SpO2 88%)</option>
+                            <option value="FIEBRE">Fiebre (39.1 °C)</option>
+                            <option value="SUELTO">Brazalete Desprendido</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">Frecuencia Emision:</span>
+                        <span class="text-slate-200 font-mono">1 muestra / 1.5 seg</span>
+                    </div>
+                    <button onclick="enviarMuestraManual()" class="w-full mt-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition border border-slate-700">
+                        Enviar 1 Muestra HTTP Ahora
+                    </button>
+                </div>
+
+                <!-- Live Stream Feed -->
+                <div class="flex-1 flex flex-col min-h-[160px]">
+                    <span class="text-xs font-semibold text-slate-400 mb-2">Logs de Paquetes Recibidos</span>
+                    <div id="packet-log" class="flex-1 overflow-y-auto max-h-[200px] bg-slate-950/70 rounded-xl p-2.5 font-mono text-[11px] text-slate-400 space-y-1.5 border border-slate-800/80">
+                        <div class="text-slate-600">// Esperando transmisiones...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-800/80 py-3 text-center text-xs text-slate-500">
+        BioTrack IoT Suite - Arquitectura Reactiva con Quarkus & ESP32 ESP-NOW
+    </footer>
+
+    <!-- App Logic & Emulation Engine -->
+    <script>
+        // --- Variables y Estado ---
+        let ws;
+        let emulatorInterval = null;
+        let chart;
+        const maxPoints = 20;
+
+        // Historial para ChartJS
+        const chartData = {
+            labels: [],
+            datasets: [
+                {
+                    label: 'BPM',
+                    data: [],
+                    borderColor: '#f43f5e',
+                    backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'SpO2 %',
+                    data: [],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Temperatura °C',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    yAxisID: 'y2'
+                }
+            ]
+        };
+
+        // --- Inicializacion de Grafica ---
+        function initChart() {
+            const ctx = document.getElementById('vitalSignsChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 300 },
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            min: 40,
+                            max: 180,
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#f43f5e', font: { size: 10 } },
+                            title: { display: true, text: 'BPM', color: '#f43f5e', font: { size: 10 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            min: 80,
+                            max: 102,
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#06b6d4', font: { size: 10 } },
+                            title: { display: true, text: 'SpO2 %', color: '#06b6d4', font: { size: 10 } }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            min: 32,
+                            max: 42,
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#f59e0b', font: { size: 10 } },
+                            title: { display: true, text: 'Temp °C', color: '#f59e0b', font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- WebSocket Connection ---
+        function connectWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || 'localhost:8080';
+            const wsUrl = `${proto}//${host}/ws/signos-vitales`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                document.getElementById('ws-indicator').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+                document.getElementById('ws-status').textContent = 'Conectado a Quarkus';
+                logPacket('[WS] Canal reactivo abierto exitosamente');
+            };
+
+            ws.onclose = () => {
+                document.getElementById('ws-indicator').className = 'w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse-dot';
+                document.getElementById('ws-status').textContent = 'Desconectado (Reintentando...)';
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (err) => {
+                console.warn('WS error', err);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    renderTelemetry(data);
+                } catch (e) {
+                    console.error('Error parseando JSON de WS:', event.data);
+                }
+            };
+        }
+
+        // --- Actualizacion UI con datos reactivos ---
+        function renderTelemetry(data) {
+            const now = new Date();
+            const timeLabel = now.toTimeString().split(' ')[0];
+
+            if (data.id_pulsera) document.getElementById('val-mac').textContent = data.id_pulsera;
+            if (data.cliente_nombre) document.getElementById('val-paciente').textContent = data.cliente_nombre;
+            document.getElementById('val-timestamp').textContent = timeLabel;
+
+            const bpm = data.bpm !== undefined ? data.bpm : data.ritmocardiacoBpm;
+            const spo2 = data.spo2 !== undefined ? data.spo2 : data.saturacionOxigenoSpo2;
+            const temp = data.temperatura !== undefined ? data.temperatura : (data.temp !== undefined ? data.temp : data.temperaturaCorporal);
+
+            document.getElementById('val-bpm').textContent = (bpm !== undefined && bpm > 0) ? bpm : '--';
+            document.getElementById('val-spo2').textContent = (spo2 !== undefined && spo2 > 0) ? spo2 : '--';
+            document.getElementById('val-temp').textContent = (temp !== undefined && temp > 0) ? Number(temp).toFixed(1) : '--';
+
+            // Alerta visual
+            const badge = document.getElementById('badge-estado');
+            const badgeTxt = document.getElementById('badge-estado-txt');
+
+            if (data.estado_alerta === 1 || data.mensaje?.includes('desprendido')) {
+                badge.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1.5';
+                badgeTxt.textContent = 'SUELTO / CONTACTO PERDIDO';
+            } else if (data.alerta || data.estado_alerta === 2) {
+                badge.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1.5 animate-pulse';
+                badgeTxt.textContent = 'CRITICO / ALERTA MEDICA';
+            } else {
+                badge.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5';
+                badgeTxt.textContent = 'ESTABLE';
+            }
+
+            // Actualizar Chart
+            chartData.labels.push(timeLabel);
+            chartData.datasets[0].data.push(bpm || null);
+            chartData.datasets[1].data.push(spo2 || null);
+            chartData.datasets[2].data.push(temp || null);
+
+            if (chartData.labels.length > maxPoints) {
+                chartData.labels.shift();
+                chartData.datasets.forEach(ds => ds.data.shift());
+            }
+            chart.update();
+
+            logPacket(`[RX] BPM:${bpm} | SpO2:${spo2}% | Temp:${temp}°C | MAC:${data.id_pulsera || 'N/A'}`);
+        }
+
+        function logPacket(msg) {
+            const container = document.getElementById('packet-log');
+            const div = document.createElement('div');
+            div.textContent = msg;
+            container.appendChild(div);
+            if (container.children.length > 30) container.removeChild(container.firstChild);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // --- Generador de Datos Emulados de Gateway ESP-NOW -> HTTP ---
+        function generarPayloadEmulado() {
+            const modo = document.getElementById('sim-status').value;
+            let bpm = 72 + Math.floor(Math.random() * 8);
+            let spo2 = 98 + Math.floor(Math.random() * 2);
+            let temp = 36.5 + (Math.random() * 0.4);
+            let estado = 0;
+
+            if (modo === 'CARDIO_ALTO') {
+                bpm = 155 + Math.floor(Math.random() * 10);
+                estado = 2;
+            } else if (modo === 'HIPOXIA') {
+                spo2 = 88;
+                estado = 2;
+            } else if (modo === 'FIEBRE') {
+                temp = 39.2;
+                estado = 2;
+            } else if (modo === 'SUELTO') {
+                bpm = 0;
+                spo2 = 0;
+                temp = 32.1;
+                estado = 1;
+            }
+
+            return {
+                id_pulsera: "24:6F:28:AA:BB:CC",
+                cliente_id: 1,
+                bpm: bpm,
+                spo2: spo2,
+                temperatura: Math.round(temp * 10) / 10,
+                estado_alerta: estado
+            };
+        }
+
+        async function enviarMuestraManual() {
+            const payload = generarPayloadEmulado();
+            try {
+                const res = await fetch('/api/v1/telemetria/gateway', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    logPacket(`[TX GATEWAY] -> POST 202 Accepted: ${payload.bpm} BPM`);
+                }
+            } catch (err) {
+                logPacket(`[TX ERROR] Fallo envio HTTP: ${err.message}`);
+            }
+        }
+
+        function toggleEmulator() {
+            const btnText = document.getElementById('emu-btn-text');
+            const btnIcon = document.getElementById('emu-btn-icon');
+            const btn = document.getElementById('btn-toggle-emulator');
+
+            if (emulatorInterval) {
+                clearInterval(emulatorInterval);
+                emulatorInterval = null;
+                btnText.textContent = 'Iniciar Emulador Gateway';
+                btnIcon.textContent = '▶';
+                btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md transition flex items-center gap-1.5';
+                logPacket('[EMULADOR] Detenido');
+            } else {
+                emulatorInterval = setInterval(enviarMuestraManual, 1500);
+                btnText.textContent = 'Detener Emulador';
+                btnIcon.textContent = '⏸';
+                btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white shadow-md transition flex items-center gap-1.5';
+                logPacket('[EMULADOR] Iniciado: Emitiendo cada 1500 ms');
+                enviarMuestraManual();
+            }
+        }
+
+        // On Load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html>
