@@ -27,13 +27,32 @@ public class Pago extends AbstractEntity {
 
     private String origenPago; // WEB_ADMIN, WEB_CLIENTE, APP_MOBILE
 
-    private String registradoPor; // Nombre/usuario del cajero o cliente
+    @Column(columnDefinition = "TEXT")
+    private String registradoPor;
 
     private String numeroReferencia;
 
+    @Column(columnDefinition = "TEXT")
     private String comprobanteUrl;
 
-    private String estadoPago; // COMPLETADO, PENDIENTE_CONCILIACION, RECHAZADO
+    private String estadoPago; // COMPLETADO, PENDIENTE_CONCILIACION, RECHAZADO, PENDIENTE_CONCILIAR, CONCILIADO
+
+    private String monedaDeclarada = "USD";
+
+    @Column(precision = 14, scale = 4)
+    private BigDecimal tasaBcvAplicada = new BigDecimal("1.0000");
+
+    @Column(precision = 14, scale = 2)
+    private BigDecimal montoEquivalenteVes = BigDecimal.ZERO;
+
+    private String comprobanteSha256;
+
+    private Long usuarioConciliaId;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date fechaConciliacion;
+
+    private String motivoRechazo;
 
     public Cliente getCliente() {
         return cliente;
@@ -121,5 +140,61 @@ public class Pago extends AbstractEntity {
 
     public void setEstadoPago(String estadoPago) {
         this.estadoPago = estadoPago;
+    }
+
+    public String getMonedaDeclarada() {
+        return monedaDeclarada;
+    }
+
+    public void setMonedaDeclarada(String monedaDeclarada) {
+        this.monedaDeclarada = monedaDeclarada;
+    }
+
+    public BigDecimal getTasaBcvAplicada() {
+        return tasaBcvAplicada;
+    }
+
+    public void setTasaBcvAplicada(BigDecimal tasaBcvAplicada) {
+        this.tasaBcvAplicada = tasaBcvAplicada;
+    }
+
+    public BigDecimal getMontoEquivalenteVes() {
+        return montoEquivalenteVes;
+    }
+
+    public void setMontoEquivalenteVes(BigDecimal montoEquivalenteVes) {
+        this.montoEquivalenteVes = montoEquivalenteVes;
+    }
+
+    public String getComprobanteSha256() {
+        return comprobanteSha256;
+    }
+
+    public void setComprobanteSha256(String comprobanteSha256) {
+        this.comprobanteSha256 = comprobanteSha256;
+    }
+
+    public Long getUsuarioConciliaId() {
+        return usuarioConciliaId;
+    }
+
+    public void setUsuarioConciliaId(Long usuarioConciliaId) {
+        this.usuarioConciliaId = usuarioConciliaId;
+    }
+
+    public Date getFechaConciliacion() {
+        return fechaConciliacion;
+    }
+
+    public void setFechaConciliacion(Date fechaConciliacion) {
+        this.fechaConciliacion = fechaConciliacion;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
     }
 }

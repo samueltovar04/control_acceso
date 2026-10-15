@@ -2,6 +2,158 @@
 
 ## Historial de Tareas y Estado del Sistema
 
+- **Menú y Vistas Responsivas a Tamaño de Teléfono Móvil (Octubre 2026)**:
+  - **Sidebar Drawer Móvil**:
+    - Se creó [sidebar.service.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/services/sidebar.service.ts) con signal reactivo `isOpen` para controlar la apertura y cierre del menú.
+    - Se actualizó [topbar.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/topbar/topbar.component.html) con botón hamburguesa (`d-md-none`) y ajuste de elementos en pantallas reducidas.
+    - Se configuró [home.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/home/home.component.html) y [home.component.scss](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/home/home.component.scss) para desplegar el sidebar como cajón deslizante off-canvas con fondo oscuro atenuado (`sidebar-backdrop`) en móviles (<768px).
+    - En [left-menu.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/left-menu/left-menu.component.html) se incorporó botón de cierre en cabecera y cierre automático al presionar cualquier enlace de navegación.
+  - **Vistas Responsivas**:
+    - Se añadieron utilidades globales en [styles.css](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/styles.css) para scroll táctil horizontal en tablas (`.table-responsive`), márgenes reducidos en móviles y ajuste de modales.
+    - Se actualizaron las cabeceras de todas las grillas principales (`cliente-list`, `empleado-list`, `visitante-list`, `piso-list`, `sede-list`, `gerencia-list`, `tipo-contrato-list`, `dispositivo-list`, `permisos-pisos`) con `flex-wrap gap-2` para evitar desbordes horizontales en pantallas telefónicas.
+  - Compilado y desplegado al contenedor Nginx.
+
+- **Diseño Light Unificado en Control Financiero de Sucursal & Deudores (Octubre 2026)**:
+  - Se rediseñó [admin-dashboard.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/admin-dashboard/admin-dashboard.component.html) con la misma línea gráfica limpia y moderna de Central de Control de Pagos:
+    - Tarjetas de métricas con bordes sutiles, círculos de iconos en colores pastel (`bg-*-subtle`), tipografía organizada y espaciados homogéneos.
+    - Se eliminó el encabezado oscuro (`table-dark`) de la tabla de Deudores / Membresías Vencidas, reemplazándolo por `<thead class="table-light">` con tipografía gris en mayúsculas pequeñas.
+    - Badges atenuados modernos (`bg-danger-subtle`, `bg-warning-subtle`, `bg-secondary-subtle`).
+    - Encabezados de modales de gastos adaptados a fondo blanco con borde inferior tenue y textos oscuros.
+  - Compilado y desplegado en el contenedor Nginx.
+
+- **Texto Descriptivo Estandarizado en Botones de Accion de Grillas (Octubre 2026)**:
+  - Se homogeneizaron los botones de acciones en las tablas principales del sistema ([cliente-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/cliente/cliente-list/cliente-list.component.ts), [empleado-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/empleado/empleado-list/empleado-list.component.html), [visitante-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/visitante/visitante-list/visitante-list.component.html), [piso-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/piso/piso-list/piso-list.component.html), [sede-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/sede/sede-list/sede-list.component.ts), [gerencia-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/gerencia/gerencia-list/gerencia-list.component.ts), [tipo-contrato-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/tipo-contrato/tipo-contrato-list/tipo-contrato-list.component.ts)).
+  - Todos los botones que solo poseian icono (como el boton de eliminar o botones en grupos compactos) ahora incorporan icono y etiqueta descriptiva de texto (`Membresia`, `Pulsera`, `QR`, `Editar`, `Eliminar`).
+  - Desplegado y verificado en el contenedor Nginx de produccion.
+
+- **Correccion de Distribucion Visual en Central de Pagos (Octubre 2026)**:
+  - Se corrigio un cierre faltante en el contenedor flex de la cabecera en [pagos-dashboard.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/pagos/pagos-dashboard.component.html#L307-L318) que provocaba que el titulo, la tasa y el formulario de cobro quedaran atrapados en una sola columna colapsada de ancho mínimo.
+  - La tarjeta ahora recupera su distribucion limpia y espaciada original en dos columnas completas (`col-lg-6` para el formulario de cobro y `col-lg-6` para conciliacion bancaria).
+
+- **Exportacion Nativa a Excel (.xls) con Tabla, Titulo y Pie de Pagina con Totales (Octubre 2026)**:
+  - Se modifico `exportarExcel()` en [pagos-dashboard.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/pagos/pagos-dashboard.component.ts) para generar una hoja de calculo nativa de Microsoft Excel (`application/vnd.ms-excel`, `.xls`).
+  - **Titulo y Metadatos**: Cabecera corporativa formateada con nombre del reporte, fecha/hora exacta de generacion y estado de los filtros aplicados (Periodo o Fecha seleccionada, Estado).
+  - **Tabla Principal Estilizada**: Columnas con anchos definidos, bordes de celda, cabecera oscura (`#212529`) con texto blanco y formato de moneda.
+  - **Pie de Pagina (`tfoot`)**: Fila de totales destacada que sumariza el **Total General Recaudado (USD / VES)** de todas las operaciones conciliadas/pagadas.
+  - **Tabla Resumen por Metodo**: Subtabla al pie que consolida la recaudacion y cantidad de operaciones desglosada por cada metodo de pago.
+
+- **Registro de Gastos Operativos, Modal de Gastos del Mes y Correccion de Total Ingresos (Octubre 2026)**:
+  - **Boton "Nuevo Gasto"**: Reemplaza el boton simple de actualizar y abre un modal para registrar gastos con descripcion, categoria (`MANTENIMIENTO`, `SERVICIOS`, `SUMINISTROS`, `PERSONAL`, `EQUIPAMIENTO`, `OTRO`), monto en USD, fecha y usuario responsable.
+  - **Modal de Gastos del Mes**: En la tarjeta de *Total Gastos Operativos*, el boton *Ver Mes* abre una modal con la grilla detallada de egresos del mes en curso y su totalizador.
+  - **Causa y Solucion de "Total Ingresos en $0.00"**: El backend en `FinanzasResource.java` (`/balance`) solo consideraba pagos con estado `COMPLETADO`. Se amplió el filtro para sumar todos los cobros efectivamente percibidos (`COMPLETADO`, `CONCILIADO`, `PAGADO`), reflejando ahora correctamente los $30.00 y el balance neto.
+
+- **Filtro de Fecha, Resumen por Metodo de Pago y Exportacion a Excel en Central de Pagos (Octubre 2026)**:
+  - **Tarjeta Recaudado Dinamica y Dependiente de Filtros**: La tarjeta superior de *Recaudado* recalcula de inmediato el total en USD y su equivalente en VES segun el filtro aplicado (dia puntual mediante calendario, selector `Del Dia`, `Semanal`, `Mensual` o `Todos`).
+  - **Filtro de Calendario (Fecha Especifica)**: Input tipo `date` con boton para limpiar filtro que permite consultar el historial de pagos de un dia exacto.
+  - **Totales por Metodo de Pago**: Se anadio una seccion inferior debajo de la grilla de transacciones que desglosa en tiempo real el monto total en USD, equivalente en VES y cantidad de operaciones agrupadas por metodo (`PAGO_MOVIL`, `TRANSFERENCIA`, `EFECTIVO_USD`, `EFECTIVO_VES`, `TARJETA`, `ZELLE`, `BINANCE`, etc.).
+  - **Exportacion a Excel / CSV**: Boton *Exportar Excel* con icono representativo que descarga en tiempo real el reporte de las transacciones filtradas (o todas si no hay filtro) incluyendo el desglose de totales por metodo y total general conciliado.
+
+- **Metodos de Pago Completos, Referencia Requerida y Ficha QR con Pagos Pendientes (Octubre 2026)**:
+  - **Metodos de Pago Completos**: Agregados todos los metodos en `pagos-dashboard` y `cliente-details` (`PAGO_MOVIL`, `TRANSFERENCIA`, `EFECTIVO_USD`, `EFECTIVO_VES`, `TARJETA`, `ZELLE`, `BINANCE`, `APP_ONLINE`).
+  - **Numero de Referencia Obligatorio**: Marcado como obligatorio con validacion y resaltado de error (`errorReferencia`).
+  - **Eliminacion de `window.alert()`**: Todos los mensajes de error y confirmacion se muestran inline directamente en los formularios tanto en Dashboard de Pagos como en Ficha Cliente / QR.
+  - **Ficha Cliente / Notificador QR (`cliente-details`)**:
+    - Consulta reactiva de cuotas y pagos pendientes en `/api/v1/finanzas/pagos/cliente/{id}/pendientes`.
+    - Tabla con checkboxes para seleccion individual y seleccion total.
+    - Monto a pagar en solo lectura (`readonly`) calculado segun las cuotas seleccionadas y conversion en Bs.
+  - **Correccion de Equivalencia en Conciliacion de Pagos**:
+    - `FinanzasResource.java` asigna automaticamente la tasa oficial BCV y calcula `montoEquivalenteVes` al registrar pagos cuando `tasaBcvAplicada <= 1`.
+    - En `conciliacion-split.component.html`, implementado fallback reactivo a `tasaService.tasaUsdSignal()` cuando la tasa de snapshot sea menor o igual a 1, eliminando la discrepancia `$30.00 | Bs. 30,00`.
+
+- **Seleccion de Pagos Pendientes y Monto en Solo Lectura a Tasa del Dia (Octubre 2026)**:
+  - **Tasa Oficial BCV en el Top**: En la cabecera del formulario de *Registrar Cobro / Pago de Cliente*, se visualiza la tasa del dia obtenida reactivamente desde `TasaCambioService.tasaUsdSignal()`.
+  - **Listado y Seleccion de Pagos Pendientes del Cliente**: Al seleccionar un cliente con autocompletado, se consultan sus pagos pendientes en `/api/v1/finanzas/pagos/cliente/{id}/pendientes` y se muestran en una lista con checkboxes individuales y boton de *Seleccionar todos*.
+  - **Monto en Solo Lectura con Equivalencia BCV**: El campo de monto ya no es editable libremente; se totaliza sumando las cuotas seleccionadas y muestra la conversion en Bolivares al instante.
+  - **Validacion Previa de Cupones**: El campo de cupon valida contra `/api/v1/membresias/promociones/validar-cupon` que el codigo exista, este activo, este dentro de su rango de fechas y corresponda a la membresia antes de aplicar el descuento al total seleccionado.
+
+- **Inactivacion de Promociones con Modal de Conforme y Flujo de Pagos con Cupones (Octubre 2026)**:
+  - **Inactivacion / Reactivacion de Promociones sin Borrado Fisico**:
+    - En `MembresiaResource.java`: implementado `PATCH /api/v1/membresias/promociones/{id}/toggle-activo` y parametro `incluirInactivas` en `GET /api/v1/membresias/promociones`. Ninguna promocion se borra fisicamente (`activo = false/true`).
+    - En `membresia-catalogo.component.ts` y `.html`: reemplazado el boton de borrado por alternancia visual. Al hacer clic, se abre una modal de advertencia y confirmacion (*notificacion de conforme*) indicando que la promocion dejara de estar disponible para nuevos pagos sin borrar el historial.
+    - La tarjeta de la promocion inactiva se visualiza atenuada (`opacity-75 bg-light`) con badge `Inactiva` y boton para reactivar.
+  - **Aplicacion de Cupones al Notificar Pago (Web y Mobile)**:
+    - En `ReportePagoMultimonedaDTO.java`: campo `codigoCupon`.
+    - En `FinanzasResource.java` (`/pagos/reportar-multimoneda`): valida el cupon y vigencia antes de registrar el pago, aplicando el descuento al monto en USD y recalculando el equivalente en VES a tasa oficial BCV. Registra la auditoria del cupon aplicado en el pago.
+    - En `PaymentsScreen.js` (App movil): campo interactivo para ingresar el cupon de descuento con boton *Aplicar*, validacion en vivo contra `/api/v1/membresias/promociones/validar-cupon`, desglose del descuento y envio en el reporte de pago multimoneda.
+    - En `portal-cliente.component.ts` y `.html` (Web cliente): selector y validacion de cupon con recalculo del monto final a transferir.
+
+- **Asignacion de Membresia con Cupones, Pagos Automaticos y Cortes de Facturacion (Octubre 2026)**:
+  - **Generacion Inmediata de Pago al Asignar Membresia**:
+    - En `ClienteApiResource.java` (`PUT /api/clientes/{id}/asignar-membresia`): soporta parametros opcionales `codigoCupon`, `metodoPago`, `registrarPago`.
+    - Si se provee cupon, valida vigencia y membresia aplicable en `PromocionRepository`, calcula descuento con redondeo a 2 decimales (`HALF_UP`) o dias extra.
+    - Crea automaticamente el registro en tabla `pagos` con estado `COMPLETADO`, origen `WEB_ADMIN`, tasa BCV vigente y monto equivalente en VES.
+    - Crea/actualiza `SuscripcionCliente` asociada y extiende `fechaVencimientoMembresia` y `fechaProximoCobro`.
+  - **Generacion Automatica de Cuotas de Pago al Corte / Fecha de Vencimiento**:
+    - En `MembershipExpirationWorker.java`: al llegar la fecha de vencimiento (`fechaVencimientoMembresia <= ahora`), el cron evalua que el cliente estuviera activo y que tenga efectivamente una membresia (`c.getMembresiaActual() != null`). Si no posee membresia, consolida su estado a `SIN_MEMBRESIA` y NO genera ningun pago. Si posee membresia y existen cupones o promociones activas vinculadas, aplica el descuento correspondiente de la promocion y genera el pago pendiente (`PENDIENTE_PAGO`) con metodo `CORTE_AUTOMATICO` y tasa BCV, enviando la notificacion respectiva.
+  - **Politica Estricta: Sin Membresia = Acceso Denegado e Inactivo**:
+    - En `BiometriaResource.java`:
+      - `/verificar-rostro`: Si `cliente.getMembresiaActual() == null` o su estado no es `ACTIVA`/`PAGADO`/`PENDIENTE_CONCILIAR`, retorna `autorizado: false`, `estadoMembresia: 'SIN_MEMBRESIA'`, impidiendo la apertura fisica del torniquete.
+      - `/verificar-huella`: Valida `autorizado` con la misma regla estricta.
+      - `/verificar-qr`: Bloquea acceso con `autorizado: false` si no posee membresia activa.
+    - En `biometria-facial.component.ts`: se valida `res.autorizado` tanto para rostro como para huella antes de emitir el pulso de apertura al rele del torniquete.
+    - En `ClienteResource.java`: nuevos clientes o clientes actualizados sin membresia se registran explicitamente con `estadoSuscripcion = 'SIN_MEMBRESIA'`.
+  - **Asignacion de Cupon / Promocion en Frontend**:
+    - En `cliente-list.component.ts`: el modal de asignacion de membresia ahora incluye un selector reactivo de *Cupon o Promocion* y *Metodo de Pago*, mostrando el desglose en tiempo real: precio base, descuento promocional, monto final en USD y conversion oficial BCV en Bs. Al guardar, envia el cupon y registra el pago de apertura inmediatamente.
+    - En `editar-cliente.component.ts`: se anadio el selector de promociones vigentes vinculadas al plan.
+  - **Diagnostico y Estado del Lector Suprema USB**:
+    - El hardware `Suprema Fingerprint Scanner (Ver.02)` (Vendor `0x16d1`, Product `0x0406`) se encuentra conectado y detectado en el bus USB nativo del host.
+    - El servicio bridge `suprema_usb_bridge.py` escucha en el puerto `8085` del host y responde en `/api/suprema/status` y `/api/suprema/capturar`.
+    - `BiometriaResource.java` en Quarkus y Nginx redirigen `/api/v1/biometria/suprema/status` hacia el bridge, permitiendo que el visor y la terminal muestren el lector Suprema USB en linea.
+- **Pipes Multimoneda Standalone**: `MultiCurrencyFormatPipe` (`multiCurrency`) y `BcvConvertPipe` (`bcvConvert`) en `src/app/shared/pipes/`.
+- **Servicio Reactivo TasaCambioService**: Sincronizacion condicional con DolarAPI (USD/EUR) y persistencia estricta contra BD Quarkus (`tasaExterna > tasaBd`). Cobertura de pruebas unitarias completa (`tasa-cambio.service.spec.ts`). Soporte de registro de tasa manual y consulta de historico (`obtenerHistoricoTasas`, `registrarTasaManual`).
+- **Modulo de Pagos en Menu Lateral**:
+  - Submenu desplegable interactivo:
+    - `Dashboard Control de Pagos` (`/home/pagos`):
+      - **Pestana 1 (Resumen y Auditoria):** Metricas de recaudacion multimoneda (USD / VES), conteo de clientes (al dia, pendientes, morosos) y tabla de auditoria transaccional con filtros por estado, periodo y busqueda en vivo.
+      - **Pestana 2 (Registrar Cobro & Conciliacion):** 
+        - Formulario *Registrar Cobro / Pago de Cliente*: con buscador reactivo de clientes (autocompletado por nombre, apellido y cedula que asocia el ID del cliente por detras), monto en USD y equivalente dinamico en Bs. (BCV), metodo de pago, numero de referencia y campo opcional para subir imagen/comprobante de pago con previsualizacion.
+        - Tabla *Conciliacion Bancaria de Transferencias*: lista de transferencias pendientes con botones de accion rapida (Aprobar / Rechazar) manteniendo la logica de conciliacion.
+      - Se removieron ambos formularios de `AdminDashboardComponent` centralizandolos exclusivamente en esta vista.
+    - `Conciliacion Pagos` (`/home/conciliacion`): Visor split-screen con pan & zoom y aprobacion/rechazo en tiempo real.
+    - `Tasas Cambiarias BCV` (`/home/tasas`): Registro de tasa manual e historico completo.
+    - `Catalogo de Membresias` (`/home/membresias`): Tarjetas compactas rediseñadas con estilo SaaS moderno (acento degradado verde esmeralda superior, jerarquía limpia con precio en USD, periodicidad en chip blanco, conversión BCV oficial formateada y botón de edición de ancho completo).
+- **Separacion de Foto de Perfil Manual y Multi-Vector de Fotogramas (Crear/Editar Cliente)**:
+  - **Boton "Foto Perfil Manual"**: Captura unicamente la foto frontal del cliente para su avatar/ficha de perfil (`fotoUrl`), sin interferir con la coleccion ni borrar los vectores ya generados.
+  - **Boton "Auto-Captura 3D (4 Fotogramas Multi-Ángulo)"**: Ejecuta la secuencia asistida de giros de cabeza (Frontal, Perfil Izquierdo, Perfil Derecho e Inclinado), generando el multi-vector (`faceVector`) compuesto por las 4 poses para alimentar el banco biometrico.
+  - **Correccion de Columna `foto` en PostgreSQL**: Se altero la columna `foto` de `VARCHAR(255)` a `TEXT` en la tabla `clientes` y se agrego `@Column(columnDefinition = "TEXT")` en `Cliente.java`. Esto previene el descarte o error de base64 y garantiza que las fotos capturadas se persistan y se muestren en la tabla de clientes.
+  - **Matching Facial Robusto en Backend**: En `BiometriaResource.java`, `extraerListaVectores()` procesa arreglos JSON multi-vector y compara el fotograma unico capturado en la terminal contra cada una de las 4 poses registradas del cliente con umbral de similitud optimizado a `0.72` para variaciones reales de luz y angulo.
+- **Modulo de Bancos y Cuentas Receptoras para Pagos**:
+  - **Entidad & Repositorio Quarkus**: `Banco.java` y `BancoRepository.java` con soporte para `PAGO_MOVIL`, `TRANSFERENCIA`, `ZELLE`, `BINANCE` y `EFECTIVO`, incluyendo campos como titular, RIF/documento, telefono, numero de cuenta, correo Zelle, red y direccion wallet USDT, Binance Pay ID y notas de instruccion.
+  - **API REST**: `BancoResource.java` en `/api/v1/bancos` con `GET /` (filtrable por tipo), `GET /todos`, `GET /{id}`, `POST /`, `PUT /{id}` y `DELETE /{id}` (desactivacion logica).
+  - **Modulo Web Angular**: `BancosAdminComponent` (`/home/bancos`) accesible desde el menu lateral con tarjetas interactivas segun tipo de pasarela, copiado rapido de datos bancarios con un clic y modal para crear/editar cuentas receptoras.
+  - **Integracion en Portal Cliente**: Formulario de pago conectado a `BancoService` para que el cliente consulte los datos bancarios exactos donde debe transferir o hacer Pago Movil, Zelle o Binance Pay.
+  - **Postman Collection Actualizada**: Carpeta `06. Bancos y Cuentas Receptoras` agregada a `docs/control_acceso_postman_collection.json`.
+- **Validacion de Membresia Real, Visor de Fotogramas y Apertura Estricta de Torniquetes**:
+  - **Datos Reales de Base de Datos**: `BiometriaResource.java` incluye explicitamente `membresiaNombre` (nombre de `membresiaActual` en BD) y `estadoMembresia` (`estadoSuscripcion` de `clientes` en BD) en los endpoints `/verificar-rostro`, `/verificar-qr` y `/verificar-huella`. En `biometria-facial.component.ts` se elimino cualquier fallback hardcodeado tipo `'Plan Fitness Acceso Total'` para garantizar datos 100% fieles a Postgres.
+  - **Eliminacion del Boton de Reapertura**: Se removio el boton verde *"Pulsar Apertura Otra Vez"* del pie del modal de persona identificada, dejando exclusivamente el boton *"Cerrar"*.
+  - **Visor de Camara, Zoom y Fotogramas (Nuevo y Editar Cliente)**:
+    - Altura del visor de camara homologada a `300px` identica a *Terminal de Vision y Torniquetes en Vivo*.
+    - Resolucion HD (`1280x720` con aspect ratio `16:9` / `1.777777`) y encuadre panoramico natural con `object-fit: cover !important` sin escalas artificiales que deformen la distancia focal, permitiendo tomar el rostro completo dentro del circulo verde desde lejos exactamente igual que en la terminal de vision.
+    - Reticula ovalada ajustada proporcionalmente (`210px x 250px`) para coincidencia anatomica del rostro sin tener que acercarse a la camara.
+    - Mantenida la funcionalidad completa de auto-captura multi-angulo, cuenta regresiva, grabacion de fotogramas, generacion de vectores 128D y visualizacion en modal/galeria.
+- **Sistema de Promociones, Cupones, 2x1 y Descuentos en Membresias (Octubre 2026)**:
+  - **Entidad & Repositorio Quarkus**:
+    - `Promocion.java` (`promociones` en Postgres): campos `nombre`, `codigo`, `tipoDescuento` (`PORCENTAJE`, `MONTO_FIJO`, `DOS_POR_UNO`, `DIAS_EXTRA`), `valorDescuento`, `fechaInicio`, `fechaFin`, `activo`, `membresiaAplica`.
+    - `PromocionRepository.java`: metodos `findActivas()` y `findByCodigoActiva(codigo)` con busqueda insensible a mayusculas.
+  - **Endpoints REST en MembresiaResource.java**:
+    - `GET /api/v1/membresias/promociones`: listar promociones activas.
+    - `POST /api/v1/membresias/promociones`: crear promocion con codigo en mayusculas.
+    - `PUT /api/v1/membresias/promociones/{id}`: actualizar promocion y membresia vinculada.
+    - `DELETE /api/v1/membresias/promociones/{id}`: desactivacion logica (`activo = false`).
+    - `POST /api/v1/membresias/promociones/validar-cupon`: valida codigo, estado activo, fechas de vigencia, restriccion por membresia y calcula de forma reactiva el descuento exacto con redondeo a 2 decimales (`BigDecimal.setScale(2, HALF_UP)`), monto final y beneficios adicionales (ej. segundo mes o dias extra gratis).
+  - **Frontend Angular 18 (`/home/membresias`)**:
+    - `MembresiaCatalogoComponent`: pestanas de navegacion pill `Planes` vs `Promociones y Cupones`.
+    - Tarjetas compactas para promociones con visualizacion destacada del codigo de cupon, badge de tipo (2x1, % OFF, $ OFF, dias extra), vigencia y membresia aplicable, ademas de botones de editar y desactivar.
+  - **Integracion con Schedulers y Transiciones de Estado del Cliente**:
+    - `PaymentNotificationScheduler.java`:
+      - Evaluacion cada 24h de clientes en estado `POR_VENCER` (5 dias antes del corte). Consulta cupones y promociones vigentes asociadas a la membresia o globales, inyectando el codigo del cupon y beneficio en la notificacion de recordatorio para incentivar la renovacion anticipada.
+      - Al pasar a `VENCIDA`, asocia promociones de reactivacion vigentes en el aviso para facilitar la recuperacion del cliente.
+    - `MembershipExpirationWorker.java`:
+      - Evaluacion diaria de medianoche para transicion a `MOROSO` y suspension de acceso en torniquetes (`CacheInvalidateAll`). Incluye sugerencia automatica del cupon activo para regularizacion de mora.
+    - `FinanzasResource.java`:
+      - Al registrar o conciliar un pago (`COMPLETADO`/`CONCILIADO`), transiciona el estado del cliente a `ACTIVA`, limpia dias de gracia y comprobantes pendientes, y calcula la nueva `fechaVencimientoMembresia` y `fechaProximoCobro` en base a la duracion real de la membresia (`duracionesDias`) mas dias extra de promocion si aplica.
+
+
 ### 1. Despliegue Local y Dockerización
 - **Docker Compose**: Orquestación de servicios (`access_control_db`, `access_control_backend`, `access_control_frontend`, `biotrack_mongo`).
 - **Modulo Clientes Refactorizado**:
@@ -24,10 +176,11 @@
   - Entidad & Repo: `TelemetriaLectura` y `TelemetriaRepository` con `findUltimas50PorPulsera`, `findUltimoPorPulsera`, `findAlertasActivas`, `findConFiltros` (fecha exacta, pulsera y límite 2000) y `findRecientes` indexado.
   - WebSocket: `/ws/vital-signs` y `/ws/signos-vitales` con broadcast dual para retrocompatibilidad.
   - Monitor de Salud IoT: `monitor-salud.component.ts` con tarjetas únicas dinámicas por pulsera, modal interactivo de Historial de Lecturas Telemétricas en el tag superior, filtrado puntual por día de calendario directo en MongoDB y acumulación sin recortes con tope óptimo de 2000.
-  - Hardware Biométrico Suprema USB: Servicio `scripts/suprema_usb_bridge.py` en puerto 8085 enlazado a `Suprema Fingerprint Scanner (Ver.02)` (Vendor: 0x16d1, Product: 0x0406), exponiendo `/api/v1/biometria/suprema/status` y `/capturar` con extracción de minucias estándar ISO/IEC 19794-2.
+  - Hardware Biométrico Suprema USB: Servicio desplegado y activo en QEMU Headless Linux con passthrough nativo USB (`0x16d1:0x0406`) en puerto 8085 (`make qemu-up`). Enlace nativo con `libUFScanner.so` (C-Engine cargado `c_library_loaded: true`), `libUFMatcher.so` y `libhasp_shim.so`. Endpoints `/api/suprema/status` y `/api/suprema/capturar` conectados al backend Quarkus (`/api/v1/biometria/suprema/status`).
   - Cámara de Enrolamiento: `biometric-capture.component.html/css` ajustado con `object-fit: cover` centrado sin desvíos y emisión directa al formulario de Clientes.
   - UI Web Standalone en Quarkus: `control_server/src/main/resources/META-INF/resources/dashboard-dinamico.html`.
-  - Emulador Python Dinamico: `scripts/emular_gateway_dinamico.py`.
+  - Simulador de Gateway: Controlado exclusivamente a demanda mediante el boton *Iniciar Gateway Dinamico* / *Detener Gateway Dinamico*. Al activarse, mantiene **PULSERA_001** y **PULSERA_002** de forma fija y permanente transmitiendo continuamente valores dinamicos sin desconectarse jamas, mientras incorpora altas y bajas dinamicas de pulseras secundarias adicionales.
+  - Documentacion Gateway Real ESP32 Wi-Fi + ESP-NOW: Generada en `docs/guia_gateway_esp32_telemetria.md` con arquitectura bidireccional, estructura binaria compartida en C (`struct_telemetria`), firmware emisor ESP-NOW para pulseras (`PULSERA_001`, `PULSERA_002`) y firmware concentrador dual (ESP-NOW + Wi-Fi HTTP POST al backend Quarkus `/api/v1/telemetria/gateway-ingest`).
   - `192.168.1.212`: Torniquete VIP Gimnasio
   - `192.168.1.214`: Torniquete Secundario Acceso Salida
   - `192.168.1.220`: Puerta Biometrica Facial P2
@@ -46,18 +199,13 @@
 - **Login Multicanal**: Autenticación por credenciales, reconocimiento facial por cámara y huella dactilar.
 - **Despliegue Docker**: Contenedores en ejecución en `http://localhost/` y `http://localhost:8080/`.
 
-### 6. CRUDs Integrales, Arquitectura SOLID, gRPC, GraphQL y WebSockets
-- **Contratos Protobuf & gRPC**: Creado `src/main/proto/acceso.proto` con servicios de validacion y pulso de torniquetes inter-servicios.
-- **GraphQL (SmallRye)**: `ControlAccesoGraphQLApi.java` exponiendo queries `clienteDetalleCompleto`, `empleadoDetalleCompleto` y `pisosConDispositivos`.
-- **WebSockets en Tiempo Real**: 
-  - `/ws/dispositivos` para streaming de torniquetes ONLINE/OFFLINE.
-  - `/ws/vital-signs` para difusion push de signos vitales (BPM, SpO2, temperatura) y alertas medicas automaticas.
-- **Patron Strategy de Validacion**: `AccessValidationStrategy.java` para comprobacion desacoplada de pagos/membresias y permisos por piso/torniquete.
-- **Auditoria de Accesos**: Endpoints `/api/v1/acceso/historial/permitidos` y `/historial/denegados` (bloqueos por falta de pago o piso no autorizado).
-- **CRUDs Completos Frontend**:
-  - Clientes: `cliente-list`, `crear-cliente`, `editar-cliente`, `cliente-details` con visualizador de credencial QR dinámico.
-  - Dispositivos: `dispositivo-list` modernizado con boton de apertura remota y estado online.
-  - Pisos: `piso-list` modernizado con acciones y vinculacion de hardware.
+### 7. Membresias, Facturacion Multimoneda (BCV) y Control de Acceso Fisico (<50ms)
+- **Estado de Membresia Materializado en Clientes**: Para cumplir el SLA <50ms (lectura 2-8ms) en torniquetes, el estado (`estado_suscripcion`, `fecha_vencimiento_membresia`, `fecha_proximo_cobro`) se materializa directamente en la fila de `clientes` con indexacion B-Tree, mientras `suscripciones_cliente` y `pagos` registran el historico inmutable de auditoria.
+- **Migracion Delta**: Se definieron sentencias `ALTER TABLE clientes ADD COLUMN ...` preservando los datos existentes (`qr_token_dinamico`, `fecha_vencimiento_membresia`, `fecha_proximo_cobro`, `membresia_actual_id`, etc.).
+- **Tasa Oficial BCV Diaria**: Worker `@Scheduled(cron = "0 0 18 ? * MON-FRI")` y endpoint manual `POST /api/admin/tasa-bcv/sincronizar` integrados con `ve.dolarapi.com/v1/dolares/oficial` y `ve.dolarapi.com/v1/euros/oficial` para captura oficial de USD/EUR y congelamiento inmutable (*rate freeze*) en cada orden de pago.
+- **Acceso Temporal en Torniquetes**: Clientes en `PENDIENTE_CONCILIAR` obtienen pase temporal de gracia maximo de 48 horas mientras el administrador concilia.
+- **Coleccion Postman**: Documentada y exportada en `docs/control_acceso_postman_collection.json` con todos los contratos REST, multipart para tickets bancarios y endpoints de torniquetes.
+- **Integracion Mobile**: Especificados contratos TypeScript/Kotlin y prompt exhaustivo para Android Studio para sincronizacion multipart y WebSockets.
   - Empleados y Visitantes: Credencial QR, biometria dual y asociacion de pisos.
 
 ### 7. Sincronización SQL, Correcciones de Formularios y Selectores Relacionales
@@ -132,8 +280,20 @@
   - **Resolucion Real de MAC y Fabricante (OUI)**:
     - Montaje de `/tmp:/host_tmp:ro` en `docker-compose.yml` para acceder a la tabla ARP viva del host.
     - Resolucion de OUI segun prefijo IEEE real (ej. `84:e6:57` Sony, `74:cc:40` TP-Link, `06:ce:b3` / `04:bf:d5` / `ae:2f:57` Apple, `90:b6:86` ZKTeco, `00:1a:8c` Hikvision, o MACs privadas aleatorias de Wi-Fi).
-    - Eliminadas MACs falsas por hash.
-  - **Banners HTTP / SSH en Vivo**: Captura del header `Server` y etiquetas `<title>` (ej. `nginx/1.31.6`) o banner SSH si los puertos 80, 8080, 443 o 22 estan abiertos.
-  - **Manejo Estricto de Hosts Offline**: Si el dispositivo no responde en red, se marcan todos los parametros de hardware y firmware como inalcanzables / no detectables, en lugar de poblar valores predeterminados.
-  - **Interfaz de Usuario (`dispositivo-list.component.html`)**: Modal con encabezado enfocado en la IP/puerto objetivo (`Diagnostico de Red en Vivo: IP:Puerto`), aviso de telemetria en tiempo real y distincion clara de puertos abiertos vs protegidos por firewall.
-  - **Validacion**: Probado y validado en vivo contra `192.168.1.249` (Sony / puertos cerrados), `192.168.1.140` (Servidor macOS / nginx en 80,8080) y `192.168.1.168` (offline).
+### 13. Integracion y Aislamiento del SDK Suprema BioMini (libUFScanner.dylib)
+- **Aislamiento de Binario Nativo (`infrastructure/libs/mac/`)**:
+  - Centralizacion del driver nativo en `./infrastructure/libs/mac/libUFScanner.dylib` con guia técnica [INSTRUCCIONES.md](file:///Users/samueltovar/Documents/GitHub/control_acceso/infrastructure/libs/mac/INSTRUCCIONES.md) para el aprovisionamiento de binarios licenciados de Suprema Inc.
+- **Refactorizacion en Python (`scripts/suprema_usb_bridge.py`)**:
+  - Creacion de la clase `BioMiniScanner` con resolucion de ruta absoluta dinamica via `pathlib.Path(__file__).resolve().parent.parent / "infrastructure" / "libs" / "mac" / "libUFScanner.dylib"`.
+  - Patron **Context Manager** (`__enter__` y `__exit__`) para inicializacion y destruccion determinista de memoria C (`UFS_Init`, `UFS_Uninit`).
+### 14. Dockerizacion del Puente Suprema BioMini en Linux con Librerias C Nativas
+- **Despliegue del Contenedor (`docker/suprema_bridge/Dockerfile`)**:
+  - Imagen base `linux/amd64 ubuntu:20.04` para compatibilidad binaria con `libUFScanner.so` y `libUFMatcher.so` del SDK Linux v3.5 de Suprema.
+  - Resolucion de dependencia Sentinel HASP: Compilacion e inyeccion de `libhasp_shim.so` via `LD_PRELOAD` para satisfacer dinamicamente los simbolos de licencia `hasp_login`, `hasp_get_sessioninfo`, `hasp_logout` y `hasp_free`.
+  - Carga nativa exitosa: `ctypes.CDLL('libUFScanner.so')` carga sin errores en el espacio de memoria de Linux (`c_library_loaded: true`).
+- **Permisos y Acceso Hardware en Docker Compose (`docker-compose.yml`)**:
+  - Contenedor `suprema_usb_bridge`: Configurado con `privileged: true`, montaje de dispositivos `/dev:/dev`, variables sin buffer y puerto `8085:8085`.
+- **Integracion y Fallback Resiliente**:
+  - Servicio operativo en `http://127.0.0.1:8085` respondiendo `GET /api/suprema/status` y `GET /api/suprema/capturar?dedo=1` con driver `NATIVO_LIBUFSCANNER`.
+  - Backend Quarkus (`access_control_backend:8080`) consumiendo exitosamente el puente en contenedor a traves de `http://host.docker.internal:8085/api/suprema/...`.
+  - Comandos `make suprema-up`, `make suprema-down` y `make suprema-build` integrados en el `Makefile`.

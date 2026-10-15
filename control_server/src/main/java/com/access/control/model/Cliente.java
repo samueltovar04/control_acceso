@@ -15,7 +15,10 @@ public class Cliente extends AbstractEntity {
     private String apellido;
     private String email;
     private String telefono;
+
+    @Column(columnDefinition = "TEXT")
     private String foto;
+
     private String sexo;
 
     @Temporal(TemporalType.DATE)
@@ -30,7 +33,27 @@ public class Cliente extends AbstractEntity {
     @Column(columnDefinition = "TEXT")
     private String faceVector;
 
-    private String estadoSuscripcion; // ACTIVA, VENCIDA, POR_VENCER, SUSPENDIDA, SIN_MEMBRESIA
+    private String estadoSuscripcion; // ACTIVA, VENCIDA, POR_VENCER, SUSPENDIDA, SIN_MEMBRESIA, PENDIENTE_CONCILIAR, MOROSO, CONGELADA, CANCELACION_PROGRAMADA
+
+    private Boolean autoRenovar = true;
+
+    private String qrTokenDinamico;
+
+    @Temporal(TemporalType.DATE)
+    private Date fechaVencimientoMembresia;
+
+    @Temporal(TemporalType.DATE)
+    private Date fechaProximoCobro;
+
+    @ManyToOne
+    private Membresia membresiaActual;
+
+    private Long comprobantePendienteId;
+
+    private Integer diasGraciaUsados = 0;
+
+    @Temporal(TemporalType.DATE)
+    private Date congeladoHasta;
 
     @ManyToOne
     private Sede sede;
@@ -167,5 +190,69 @@ public class Cliente extends AbstractEntity {
 
     public void setPisosPermitidos(List<Piso> pisosPermitidos) {
         this.pisosPermitidos = pisosPermitidos;
+    }
+
+    public String getQrTokenDinamico() {
+        return qrTokenDinamico;
+    }
+
+    public void setQrTokenDinamico(String qrTokenDinamico) {
+        this.qrTokenDinamico = qrTokenDinamico;
+    }
+
+    public Date getFechaVencimientoMembresia() {
+        return fechaVencimientoMembresia;
+    }
+
+    public void setFechaVencimientoMembresia(Date fechaVencimientoMembresia) {
+        this.fechaVencimientoMembresia = fechaVencimientoMembresia;
+    }
+
+    public Date getFechaProximoCobro() {
+        return fechaProximoCobro;
+    }
+
+    public void setFechaProximoCobro(Date fechaProximoCobro) {
+        this.fechaProximoCobro = fechaProximoCobro;
+    }
+
+    public Membresia getMembresiaActual() {
+        return membresiaActual;
+    }
+
+    public void setMembresiaActual(Membresia membresiaActual) {
+        this.membresiaActual = membresiaActual;
+    }
+
+    public Long getComprobantePendienteId() {
+        return comprobantePendienteId;
+    }
+
+    public void setComprobantePendienteId(Long comprobantePendienteId) {
+        this.comprobantePendienteId = comprobantePendienteId;
+    }
+
+    public Integer getDiasGraciaUsados() {
+        return diasGraciaUsados;
+    }
+
+    public void setDiasGraciaUsados(Integer diasGraciaUsados) {
+        this.diasGraciaUsados = diasGraciaUsados;
+    }
+
+    public Boolean getAutoRenovar() {
+        return autoRenovar != null ? autoRenovar : true;
+    }
+
+    public void setAutoRenovar(Boolean autoRenovar) {
+        this.autoRenovar = autoRenovar;
+    }
+
+    public Date getCongeladoHasta() {
+        return congeladoHasta;
+    }
+
+    public void setCongeladoHasta(Date congeladoHasta) {
+        this.congeladoHasta = congeladoHasta;
     }
 }

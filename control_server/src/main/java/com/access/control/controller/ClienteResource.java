@@ -8,6 +8,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Path("/api/v1/clientes")
 @Produces(MediaType.APPLICATION_JSON)
@@ -45,6 +47,11 @@ public class ClienteResource {
     @POST
     @Transactional
     public Response createCliente(Cliente cliente) {
+        if (cliente.getMembresiaActual() == null) {
+            cliente.setEstadoSuscripcion("SIN_MEMBRESIA");
+        } else if (cliente.getEstadoSuscripcion() == null || cliente.getEstadoSuscripcion().trim().isEmpty()) {
+            cliente.setEstadoSuscripcion("ACTIVA");
+        }
         clienteRepository.persist(cliente);
         return Response.status(Response.Status.CREATED).entity(cliente).build();
     }
@@ -97,6 +104,25 @@ public class ClienteResource {
             if (clienteDetails.getPisosPermitidos() != null) {
                 cliente.setPisosPermitidos(clienteDetails.getPisosPermitidos());
             }
+            if (clienteDetails.getMembresiaActual() != null) {
+                cliente.setMembresiaActual(clienteDetails.getMembresiaActual());
+                if (cliente.getFechaVencimientoMembresia() == null) {
+                    int dias = (clienteDetails.getMembresiaActual().getDuracionDias() != null && clienteDetails.getMembresiaActual().getDuracionDias() > 0)
+                            ? clienteDetails.getMembresiaActual().getDuracionDias() : 30;
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    cal.add(java.util.Calendar.DAY_OF_MONTH, dias);
+                    cliente.setFechaVencimientoMembresia(cal.getTime());
+                    cliente.setFechaProximoCobro(cal.getTime());
+                }
+            } else if (cliente.getMembresiaActual() == null) {
+                cliente.setEstadoSuscripcion("SIN_MEMBRESIA");
+            }
+            if (clienteDetails.getFechaVencimientoMembresia() != null) {
+                cliente.setFechaVencimientoMembresia(clienteDetails.getFechaVencimientoMembresia());
+            }
+            if (clienteDetails.getFechaProximoCobro() != null) {
+                cliente.setFechaProximoCobro(clienteDetails.getFechaProximoCobro());
+            }
             clienteRepository.persist(cliente);
             return Response.ok(cliente).build();
         } catch (Exception e) {
@@ -141,6 +167,53 @@ public class ClienteResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(cliente).build();
+    }
+
+    @POST
+    @Path("/{id}/cancelar-renovacion")
+    @Transactional
+    public Response cancelarRenovacion(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
+            cliente = clienteRepository.listAll().get(0);
+        }
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
+        }
+        cliente.setAutoRenovar(false);
+        cliente.setEstadoSuscripcion("CANCELACION_PROGRAMADA");
+        clienteRepository.persist(cliente);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("clienteId", cliente.getId());
+        res.put("estadoSuscripcion", "CANCELACION_PROGRAMADA");
+        res.put("autoRenovar", false);
+        res.put("fechaVencimientoMembresia", cliente.getFechaVencimientoMembresia());
+        res.put("mensaje", "Renovación automática desactivada. Acceso garantizado hasta la fecha de vencimiento.");
+        return Response.ok(res).build();
+    }
+
+    @POST
+    @Path("/{id}/reactivar-renovacion")
+    @Transactional
+    public Response reactivarRenovacion(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
+            cliente = clienteRepository.listAll().get(0);
+        }
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
+        }
+        cliente.setAutoRenovar(true);
+        cliente.setEstadoSuscripcion("ACTIVA");
+        clienteRepository.persist(cliente);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("clienteId", cliente.getId());
+        res.put("estadoSuscripcion", "ACTIVA");
+        res.put("autoRenovar", true);
+        res.put("mensaje", "Renovación automática reactivada exitosamente.");
+        return Response.ok(res).build();
     }
 
     @GET

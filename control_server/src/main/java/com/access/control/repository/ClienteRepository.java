@@ -23,4 +23,21 @@ public class ClienteRepository implements PanacheRepository<Cliente> {
     public List<Cliente> findByEstadoSuscripcion(String estado) {
         return list("estadoSuscripcion", estado);
     }
+
+    public Cliente findByIdentificadorRapido(String identificador) {
+        return find("documento = ?1 or codigoInsignia = ?1 or qrTokenDinamico = ?1", identificador)
+                .firstResult();
+    }
+
+    public List<Cliente> findVencidosParaMora(java.util.Date fechaCorte) {
+        return list("fechaVencimientoMembresia < ?1 and estadoSuscripcion in ('ACTIVA', 'POR_VENCER', 'PENDIENTE_PAGO')", fechaCorte);
+    }
+
+    public List<Cliente> findPendientesConciliacion() {
+        return list("estadoSuscripcion", "PENDIENTE_CONCILIAR");
+    }
+
+    public List<Cliente> findCancelacionesProgramadasVencidas(java.util.Date fechaCorte) {
+        return list("estadoSuscripcion = 'CANCELACION_PROGRAMADA' and fechaVencimientoMembresia <= ?1", fechaCorte);
+    }
 }

@@ -98,6 +98,12 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
 
+        <!-- Cache en memoria de alta velocidad para validación de torniquetes (<50ms) -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-cache</artifactId>
+        </dependency>
+
         <!-- Resiliencia y Tolerancia a Fallos (Circuit Breaker, Retry) -->
         <dependency>
             <groupId>io.quarkus</groupId>

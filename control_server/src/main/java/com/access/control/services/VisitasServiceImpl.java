@@ -14,6 +14,9 @@ public class VisitasServiceImpl implements VisitasService {
     @Inject
     VisitaRepository visitaRepository;
 
+    @Inject
+    com.access.control.repository.PisoRepository pisoRepository;
+
     @Override
     public List<Visita> getListVisitas() {
         return visitaRepository.listAll();
@@ -34,9 +37,15 @@ public class VisitasServiceImpl implements VisitasService {
         v.setEmail(dto.getEmail());
         v.setTelefono(dto.getTelefono());
         v.setSex(dto.getSexo());
+        if (dto.getFoto() != null) {
+            v.setFoto(dto.getFoto());
+        }
         v.setVisitDate(dto.getFechaIngreso() != null ? dto.getFechaIngreso() : new java.util.Date());
         if (dto.getEmpleadoId() != null) {
             v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+        }
+        if (dto.getPisoIds() != null && !dto.getPisoIds().isEmpty()) {
+            v.setPisosPermitidos(pisoRepository.list("id in ?1", dto.getPisoIds()));
         }
         visitaRepository.persist(v);
         return v;
@@ -57,8 +66,18 @@ public class VisitasServiceImpl implements VisitasService {
             if (dto.getSexo() != null) {
                 v.setSex(dto.getSexo());
             }
+            if (dto.getFoto() != null) {
+                v.setFoto(dto.getFoto());
+            }
             if (dto.getEmpleadoId() != null) {
                 v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+            }
+            if (dto.getPisoIds() != null) {
+                if (dto.getPisoIds().isEmpty()) {
+                    v.setPisosPermitidos(new java.util.ArrayList<>());
+                } else {
+                    v.setPisosPermitidos(pisoRepository.list("id in ?1", dto.getPisoIds()));
+                }
             }
         }
         return v;

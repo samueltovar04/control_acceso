@@ -51,6 +51,14 @@ public class Membresia extends AbstractEntity {
         this.duracionesDias = duracionesDias;
     }
 
+    public Integer getDuracionDias() {
+        return duracionesDias;
+    }
+
+    public void setDuracionDias(Integer duracionDias) {
+        this.duracionesDias = duracionDias;
+    }
+
     public BigDecimal getPrecio() {
         return precio;
     }

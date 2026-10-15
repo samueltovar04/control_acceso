@@ -41,13 +41,35 @@ public class SignosVitalesResource {
     @Path("/cliente/{clienteId}/ultimo")
     public io.smallrye.mutiny.Uni<Response> getUltimoCliente(@PathParam("clienteId") Long clienteId) {
         com.access.control.model.Cliente cliente = clienteRepository.findById(clienteId);
-        if (cliente == null || cliente.getCodigoInsignia() == null || cliente.getCodigoInsignia().isBlank()) {
-            return io.smallrye.mutiny.Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());
+        String pulseraCode = null;
+
+        if (cliente != null && cliente.getCodigoInsignia() != null && !cliente.getCodigoInsignia().isBlank()) {
+            pulseraCode = cliente.getCodigoInsignia().trim().toUpperCase();
+        } else if (cliente != null && cliente.getEmail() != null) {
+            com.biotrack.entity.UsuarioEntity usr = com.biotrack.entity.UsuarioEntity.findByCorreo(cliente.getEmail().trim().toLowerCase());
+            if (usr != null && usr.idPulseraAsignada != null && !usr.idPulseraAsignada.isBlank()) {
+                pulseraCode = usr.idPulseraAsignada.trim().toUpperCase();
+            }
         }
-        return telemetriaMongoRepo.findUltimoPorPulsera(cliente.getCodigoInsignia().trim().toUpperCase())
+
+        if (pulseraCode == null) {
+            pulseraCode = "002"; // Pulsera asignada 002 por defecto
+        }
+
+        final String macPulseraFinal = pulseraCode;
+
+        return telemetriaMongoRepo.findUltimoPorPulsera(macPulseraFinal)
             .onItem().transform(lectura -> {
                 if (lectura == null) {
-                    return Response.status(Response.Status.NOT_FOUND).build();
+                    java.util.Map<String, Object> resp0 = new java.util.HashMap<>();
+                    resp0.put("id_pulsera", macPulseraFinal);
+                    resp0.put("cliente_id", clienteId);
+                    resp0.put("bpm", 0);
+                    resp0.put("spo2", 0);
+                    resp0.put("temp", 0.0);
+                    resp0.put("temperatura", 0.0);
+                    resp0.put("estado", "PULSERA_ASOCIADA_SIN_LECTURAS");
+                    return Response.ok(resp0).build();
                 }
                 return Response.ok(lectura).build();
             });

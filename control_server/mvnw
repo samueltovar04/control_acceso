@@ -4,6 +4,11 @@
 if command -v mvn &> /dev/null; then
     exec mvn "$@"
 else
-    echo "==> Local 'mvn' not found in PATH. Using Docker Maven wrapper..."
-    exec docker run --rm -v "$(pwd)":/code -w /code maven:3.9-eclipse-temurin-17 mvn "$@"
+    MVN_LOCAL=$(find ~/.m2/wrapper -name "mvn" -type f 2>/dev/null | head -n 1)
+    if [ -n "$MVN_LOCAL" ] && [ -x "$MVN_LOCAL" ]; then
+        exec "$MVN_LOCAL" "$@"
+    else
+        echo "==> Local 'mvn' not found in PATH. Using Docker Maven wrapper..."
+        exec docker run --rm -v "$(pwd)":/code -w /code maven:3.9-eclipse-temurin-17 mvn "$@"
+    fi
 fi

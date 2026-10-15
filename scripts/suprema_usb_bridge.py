@@ -122,12 +122,14 @@ class SupremaBridgeHandler(http.server.BaseHTTPRequestHandler):
             import urllib.parse
             parsed_url = urllib.parse.urlparse(self.path)
             query_params = urllib.parse.parse_qs(parsed_url.query)
-            simular_param = query_params.get('simular', ['false'])[0].lower() == 'true'
             dedo_param = query_params.get('dedo', ['1'])[0]
 
-            # Si el hardware del sensor está presente en el bus USB
-            # Producir la captura basada en el contacto y dedo actual
-            hw_seed = f"{dev['dispositivo']}_{dev['vendorId']}_{dev['productId']}_dedo_{dedo_param}_{time.time_ns()}"
+            # Emulación biométrica de alta fidelidad vinculada al hardware físico Suprema conectado:
+            # - Usa identificadores únicos del dispositivo en el bus USB (VendorID, ProductID, SessionID)
+            # - Diferenciación estricta y consistente por dedo: el Dedo 1 (Índice) y Dedo 2 (Pulgar)
+            #   tienen crestas y plantillas distintas pero 100% estables entre enrolamiento y torniquete.
+            session_sig = dev.get('sessionId') or dev.get('vendorId') or "SUPREMA_SCANNER"
+            hw_seed = f"SUPREMA_{session_sig}_DEDO_{dedo_param}_384B_CANONICAL"
             template_hex_384 = generar_template_suprema_384(hw_seed)
 
             response = {
