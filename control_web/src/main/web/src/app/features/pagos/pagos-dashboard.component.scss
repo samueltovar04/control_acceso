@@ -1,0 +1,29 @@
+.card {
+  transition: transform 0.15s ease-in-out;
+}
+
+.table th {
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.cliente-item:hover {
+  background-color: #f1f5f9;
+}
+
+.nav-pills .nav-link {
+  color: #6c757d;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #198754;
+  color: #fff;
+}
+
+.nav-pills .nav-link:hover:not(.active) {
+  background-color: #f8f9fa;
+  color: #212529;
+}

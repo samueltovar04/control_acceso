@@ -1,12 +1,22 @@
-<div class="top-navbar bg-white border-bottom px-4 py-2 d-flex justify-content-between align-items-center shadow-sm">
+<div class="top-navbar bg-white border-bottom px-2 px-md-4 py-2 d-flex justify-content-between align-items-center shadow-sm">
   <!-- LOGO Y BRANDING -->
   <div class="d-flex align-items-center">
+    <!-- BOTON HAMBURGUESA MOVIL -->
+    <button 
+      class="btn btn-sm btn-light border d-md-none me-2 text-dark shadow-sm px-2 py-1" 
+      (click)="sidebarService.toggle()" 
+      type="button" 
+      title="Alternar Menú"
+      aria-label="Alternar Menú">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+
     <div class="brand-badge bg-primary text-white rounded p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
       <i class="bi bi-shield-check fs-5"></i>
     </div>
     <div>
-      <h6 class="m-0 fw-bold text-dark">{{ branding?.nombreEmpresa || 'Control de Acceso' }}</h6>
-      <small class="text-muted font-monospace" style="font-size: 0.75rem;">V.2.0 • Sistema Centralizado</small>
+      <h6 class="m-0 fw-bold text-dark text-truncate" style="max-width: 140px;">{{ branding?.nombreEmpresa || 'Control de Acceso' }}</h6>
+      <small class="text-muted font-monospace d-none d-sm-inline" style="font-size: 0.75rem;">V.2.0 • Sistema Centralizado</small>
     </div>
   </div>
 
@@ -18,9 +28,43 @@
       <span class="small text-secondary fw-semibold">Torniquetes Online (Wi-Fi Activo)</span>
     </div>
 
+    <!-- WIDGET BCV MULTIMONEDA -->
+    <div class="d-none d-lg-flex align-items-center bg-light border rounded-pill px-3 py-1 shadow-sm gap-2">
+      <div class="btn-group btn-group-sm p-0" role="group">
+        <button type="button" class="btn btn-sm px-2 py-0 fw-bold" 
+                [class.btn-primary]="monedaActiva === 'USD'" 
+                [class.btn-outline-secondary]="monedaActiva !== 'USD'"
+                (click)="monedaActiva = 'USD'">USD</button>
+        <button type="button" class="btn btn-sm px-2 py-0 fw-bold" 
+                [class.btn-primary]="monedaActiva === 'EUR'" 
+                [class.btn-outline-secondary]="monedaActiva !== 'EUR'"
+                (click)="monedaActiva = 'EUR'">EUR</button>
+      </div>
+
+      <span class="fw-bold text-dark font-monospace" style="font-size: 0.85rem;">
+        {{ monedaActiva === 'USD' ? (tasaService.tasaUsdSignal() || '---') : (tasaService.tasaEurSignal() || '---') }}
+        <small class="text-muted">VES</small>
+      </span>
+
+      <span class="badge rounded-circle p-1" 
+            [class.bg-success]="tasaService.esTasaVigenteHoy()" 
+            [class.bg-warning]="!tasaService.esTasaVigenteHoy()" 
+            [title]="tasaService.esTasaVigenteHoy() ? 'Cotizacion Oficial al dia' : 'Cotizacion pendiente de sincronizar'">
+        <i class="bi bi-clock-history text-white" style="font-size: 0.65rem;"></i>
+      </span>
+
+      <button class="btn btn-link btn-sm p-0 text-primary" 
+              [disabled]="tasaService.cargandoSignal()" 
+              (click)="tasaService.sincronizarMoneda(monedaActiva)" 
+              title="Consultar DolarAPI y sincronizar">
+        <i class="bi bi-arrow-repeat fs-6" [class.spin-animation]="tasaService.cargandoSignal()"></i>
+      </button>
+    </div>
+
     <!-- TERMINAL RÁPIDA -->
-    <a routerLink="/home/biometria-facial" class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
-      <i class="bi bi-camera-video me-1"></i> Terminal Visión
+    <a routerLink="/home/biometria-facial" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-2 px-sm-3">
+      <i class="bi bi-camera-video me-sm-1"></i>
+      <span class="d-none d-sm-inline">Terminal Visión</span>
     </a>
 
     <!-- PERFIL Y SALIR -->

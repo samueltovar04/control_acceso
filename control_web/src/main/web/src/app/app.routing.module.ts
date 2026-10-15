@@ -73,7 +73,31 @@ const routes: Routes = [
       { path: 'sedes', component: SedeListComponent },
       { path: 'gerencias', component: GerenciaListComponent },
       { path: 'tipo-contratos', component: TipoContratoListComponent },
-      { path: 'permisos-pisos', component: PermisosPisosComponent }
+      { path: 'permisos-pisos', component: PermisosPisosComponent },
+      { 
+        path: 'conciliacion', 
+        loadComponent: () => import('./features/conciliacion/conciliacion-split.component').then(m => m.ConciliacionSplitComponent) 
+      },
+      { 
+        path: 'pagos', 
+        loadComponent: () => import('./features/pagos/pagos-dashboard.component').then(m => m.PagosDashboardComponent) 
+      },
+      { 
+        path: 'membresias', 
+        loadComponent: () => import('./features/membresias/membresia-catalogo.component').then(m => m.MembresiaCatalogoComponent) 
+      },
+      { 
+        path: 'acceso-torniquetes', 
+        loadComponent: () => import('./features/acceso-torniquete/torniquetes-hub.component').then(m => m.TorniquetesHubComponent) 
+      },
+      { 
+        path: 'tasas', 
+        loadComponent: () => import('./features/tasas/tasa-cambio-admin.component').then(m => m.TasaCambioAdminComponent) 
+      },
+      { 
+        path: 'bancos', 
+        loadComponent: () => import('./features/bancos/bancos-admin.component').then(m => m.BancosAdminComponent) 
+      }
     ]
   }
 ];

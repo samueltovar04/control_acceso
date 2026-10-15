@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-tipo-contrato-list',
@@ -10,7 +11,7 @@ import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container-fluid mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="mb-1 text-primary"><i class="bi bi-file-earmark-text-fill me-2"></i>Gestion de Tipos de Contrato</h2>
           <p class="text-muted mb-0">Modalidades contractuales y condiciones laborales para el personal</p>
@@ -45,7 +46,7 @@ import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato
 
       <!-- TABLA DE TIPOS DE CONTRATO -->
       <div class="card shadow-sm border-0">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
@@ -61,12 +62,12 @@ import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato
                   <span class="fw-bold text-dark">{{ c.contrato }}</span>
                 </td>
                 <td class="text-end">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="abrirModalEditar(c)" title="Editar">
-                      <i class="bi bi-pencil"></i>
+                  <div class="d-flex flex-wrap justify-content-end gap-1">
+                    <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center px-2 py-1" (click)="abrirModalEditar(c)" title="Editar">
+                      <i class="bi bi-pencil me-1"></i>Editar
                     </button>
-                    <button class="btn btn-outline-danger" (click)="eliminarContrato(c)" title="Eliminar">
-                      <i class="bi bi-trash"></i>
+                    <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center px-2 py-1" (click)="eliminarContrato(c)" title="Eliminar">
+                      <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                   </div>
                 </td>
@@ -79,6 +80,30 @@ import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- VISTA TARJETAS MOVIL (< 768px) -->
+        <div class="d-md-none p-3 d-flex flex-column gap-3">
+          <div *ngFor="let c of itemsPaginados" class="card shadow-sm border-0 rounded-3 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <span class="badge bg-light text-dark border mb-1">#{{ c.id }}</span>
+                <div class="fw-bold fs-6 text-dark">{{ c.contrato }}</div>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="abrirModalEditar(c)">
+                <i class="bi bi-pencil me-1"></i>Editar
+              </button>
+              <button class="btn btn-sm btn-outline-danger flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="eliminarContrato(c)">
+                <i class="bi bi-trash me-1"></i>Eliminar
+              </button>
+            </div>
+          </div>
+          <div *ngIf="itemsPaginados.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            No se encontraron tipos de contrato registrados.
+          </div>
         </div>
 
         <!-- PAGINACION -->
@@ -151,7 +176,10 @@ export class TipoContratoListComponent implements OnInit {
   editando: boolean = false;
   contratoActual: TipoContrato = { contrato: '' };
 
-  constructor(private tipoContratoService: TipoContratoService) {}
+  constructor(
+    private tipoContratoService: TipoContratoService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.cargarContratos();
@@ -233,9 +261,15 @@ export class TipoContratoListComponent implements OnInit {
     }
   }
 
-  eliminarContrato(c: TipoContrato): void {
+  async eliminarContrato(c: TipoContrato): Promise<void> {
     if (!c.id) return;
-    if (confirm(`Desea eliminar el tipo de contrato "${c.contrato}"?`)) {
+    const confirmado = await this.alertModal.confirm(
+      `Desea eliminar el tipo de contrato "${c.contrato}"?`,
+      'Eliminar Contrato',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.tipoContratoService.deleteTipoContrato(c.id).subscribe({
         next: () => this.cargarContratos(),
         error: (err) => console.error('Error al eliminar tipo contrato:', err)

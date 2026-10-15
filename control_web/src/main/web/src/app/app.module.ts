@@ -49,6 +49,8 @@ import { CameraComponent } from './camera/camera.component';
 import { DataTablesModule } from './shared/datatables/datatables.module';
 import { WebcamModule } from 'ngx-webcam';
 
+import { AlertModalComponent } from './shared/components/alert-modal/alert-modal.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -57,7 +59,6 @@ import { WebcamModule } from 'ngx-webcam';
     EmpleadoListComponent,
     EmpleadoDetailsComponent,
     VisitanteListComponent,
-    CrearVisitanteComponent,
     EditarVisitanteComponent,
     VisitanteDetailsComponent,
     DispositivoListComponent,
@@ -84,6 +85,8 @@ import { WebcamModule } from 'ngx-webcam';
     TopbarComponent,
     CrearEmpleadoComponent,
     EditarEmpleadoComponent,
+    CrearVisitanteComponent,
+    AlertModalComponent,
     MatIconModule,
     MatButtonModule,
     MatCardModule,

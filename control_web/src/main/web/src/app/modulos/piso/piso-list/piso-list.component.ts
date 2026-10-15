@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { PisoService } from '../../../shared/piso/piso.service';
+import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { Piso } from '../../../shared/piso/piso.model';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-piso-list',
@@ -17,10 +20,32 @@ export class PisoListComponent implements OnInit {
   totalPaginas: number = 1;
   paginasArray: number[] = [];
 
-  constructor(private pisoService: PisoService) {}
+  // Sedes y modal emergente de Piso (Nuevo / Editar)
+  sedesList: any[] = [];
+  mostrarModalPiso: boolean = false;
+  esEdicion: boolean = false;
+  guardandoPiso: boolean = false;
+  mensajeExito: string = '';
+  errorModal: string = '';
+
+  pisoForm: Piso = new Piso();
+
+  constructor(
+    private pisoService: PisoService,
+    private sedeService: SedeService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.reloadData();
+    this.cargarSedes();
+  }
+
+  cargarSedes(): void {
+    this.sedeService.getListSedes().subscribe({
+      next: (data) => this.sedesList = data || [],
+      error: (err) => console.error('Error cargando sedes:', err)
+    });
   }
 
   reloadData(): void {
@@ -64,8 +89,91 @@ export class PisoListComponent implements OnInit {
     }
   }
 
-  deletePiso(id: number): void {
-    if (confirm('Desea eliminar este piso?')) {
+  abrirModalNuevo(): void {
+    this.esEdicion = false;
+    this.mensajeExito = '';
+    this.errorModal = '';
+    this.pisoForm = new Piso();
+    this.pisoForm.piso = '';
+    this.pisoForm.descripcion = '';
+    this.pisoForm.area = '';
+    this.pisoForm.sede_id = this.sedesList.length > 0 ? this.sedesList[0].id : null;
+    this.mostrarModalPiso = true;
+  }
+
+  abrirModalEditar(p: any): void {
+    this.esEdicion = true;
+    this.mensajeExito = '';
+    this.errorModal = '';
+    this.pisoForm = new Piso();
+    this.pisoForm.id = p.id;
+    // Si piso esta vacio en la base de datos preexistente, autocompletar con descripcion para evitar campos en blanco
+    this.pisoForm.piso = p.piso || p.numeroPiso || p.descripcion || '';
+    this.pisoForm.descripcion = p.descripcion || '';
+    this.pisoForm.area = p.area || '';
+    this.pisoForm.sede_id = p.sede?.id || p.sedeId || null;
+    this.mostrarModalPiso = true;
+  }
+
+  cerrarModal(): void {
+    this.mostrarModalPiso = false;
+  }
+
+  guardarPiso(): void {
+    this.errorModal = '';
+    this.mensajeExito = '';
+
+    if (!this.pisoForm.piso || !this.pisoForm.piso.trim()) {
+      this.errorModal = 'El numero o nombre de piso es requerido.';
+      return;
+    }
+    if (!this.pisoForm.descripcion || !this.pisoForm.descripcion.trim()) {
+      this.errorModal = 'La descripcion del piso es requerida.';
+      return;
+    }
+
+    if (this.pisoForm.sede_id) {
+      this.pisoForm.sedeId = this.pisoForm.sede_id;
+    }
+
+    this.guardandoPiso = true;
+    if (this.esEdicion && this.pisoForm.id) {
+      this.pisoService.updatePiso(this.pisoForm.id, this.pisoForm).subscribe({
+        next: () => {
+          this.mensajeExito = 'Piso actualizado exitosamente.';
+          this.guardandoPiso = false;
+          this.reloadData();
+          setTimeout(() => this.cerrarModal(), 900);
+        },
+        error: (err) => {
+          this.errorModal = 'Error al actualizar el piso.';
+          this.guardandoPiso = false;
+        }
+      });
+    } else {
+      this.pisoService.createPiso(this.pisoForm).subscribe({
+        next: () => {
+          this.mensajeExito = 'Piso registrado exitosamente.';
+          this.guardandoPiso = false;
+          this.reloadData();
+          setTimeout(() => this.cerrarModal(), 900);
+        },
+        error: (err) => {
+          this.errorModal = 'Error al registrar el piso.';
+          this.guardandoPiso = false;
+        }
+      });
+    }
+  }
+
+  async deletePiso(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este piso del sistema?',
+      'Eliminar Piso',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.pisoService.deletePiso(id).subscribe({
         next: () => this.reloadData(),
         error: (err) => console.log(err)

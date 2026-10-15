@@ -1,5 +1,5 @@
 <div class="container-fluid mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
       <h2 class="mb-1 text-primary"><i class="bi bi-person-badge-fill me-2"></i>Gestion de Empleados</h2>
       <p class="text-muted mb-0">Control de personal, asignacion de sedes, gerencias y credenciales biometricas</p>
@@ -47,7 +47,8 @@
 
   <!-- TABLA DE EMPLEADOS -->
   <div class="card shadow-sm border-0">
-    <div class="table-responsive">
+    <!-- VISTA TABLA (DESKTOP >= 768px) -->
+    <div class="table-responsive d-none d-md-block">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
@@ -82,15 +83,15 @@
               <span class="badge bg-info text-dark">{{ employee.tipoContrato?.contrato || 'Fijo' }}</span>
             </td>
             <td class="text-end">
-              <div class="btn-group btn-group-sm">
-                <a [routerLink]="['/home/empleado', employee.id]" class="btn btn-outline-info" title="Detalle y QR">
-                  <i class="bi bi-qr-code"></i>
+              <div class="d-flex flex-wrap justify-content-end gap-1">
+                <a [routerLink]="['/home/empleado', employee.id]" class="btn btn-sm btn-outline-info d-inline-flex align-items-center px-2 py-1" title="Detalle y QR">
+                  <i class="bi bi-qr-code me-1"></i>QR
                 </a>
-                <a [routerLink]="['/home/empleado-edit', employee.id]" class="btn btn-outline-primary" title="Editar">
-                  <i class="bi bi-pencil"></i>
+                <a [routerLink]="['/home/empleado-edit', employee.id]" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center px-2 py-1" title="Editar">
+                  <i class="bi bi-pencil me-1"></i>Editar
                 </a>
-                <button class="btn btn-outline-danger" (click)="deleteEmployee(employee.id)" title="Borrar">
-                  <i class="bi bi-trash"></i>
+                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center px-2 py-1" (click)="deleteEmployee(employee.id)" title="Borrar">
+                  <i class="bi bi-trash me-1"></i>Eliminar
                 </button>
               </div>
             </td>
@@ -103,6 +104,57 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- VISTA TARJETAS (MOVIL < 768px) -->
+    <div class="d-md-none p-3 d-flex flex-column gap-3">
+      <div *ngFor="let employee of itemsPaginados" class="card shadow-sm border rounded-3 p-3 bg-white">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <div class="fw-bold text-dark fs-6">{{ employee.name || employee.nombre }} {{ employee.lastName || employee.apellido }}</div>
+            <small class="text-muted fw-bold">DOC: {{ employee.document || employee.documento }}</small>
+          </div>
+          <span class="badge bg-dark font-monospace">{{ employee.badgeAccess || employee.badge_access || 'N/A' }}</span>
+        </div>
+
+        <div class="bg-light rounded p-2 mb-3 small">
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-white">
+            <span class="text-muted">Contacto:</span>
+            <span class="text-dark text-truncate text-end ms-2" style="max-width: 200px;">
+              {{ employee.telephone || employee.telefono || employee.email || 'N/A' }}
+            </span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-white">
+            <span class="text-muted">Gerencia / Sede:</span>
+            <span>
+              <span class="badge bg-secondary me-1">{{ employee.gerencia?.gerencia || 'General' }}</span>
+              <small class="text-muted">{{ employee.sede?.sede || 'Sede Principal' }}</small>
+            </span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pt-1">
+            <span class="text-muted">Contrato:</span>
+            <span class="badge bg-info text-dark">{{ employee.tipoContrato?.contrato || 'Fijo' }}</span>
+          </div>
+        </div>
+
+        <!-- ACCIONES MÓVIL -->
+        <div class="d-flex flex-wrap gap-2">
+          <a [routerLink]="['/home/empleado', employee.id]" class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1" title="Detalle y QR">
+            <i class="bi bi-qr-code me-1"></i>QR
+          </a>
+          <a [routerLink]="['/home/empleado-edit', employee.id]" class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center py-1" title="Editar">
+            <i class="bi bi-pencil me-1"></i>Editar
+          </a>
+          <button class="btn btn-sm btn-outline-danger flex-fill d-inline-flex align-items-center justify-content-center py-1" (click)="deleteEmployee(employee.id)" title="Borrar">
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="itemsPaginados.length === 0" class="text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+        No se encontraron empleados con el criterio de busqueda.
+      </div>
     </div>
 
     <!-- CONTROLES DE PAGINACION -->

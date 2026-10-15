@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-gerencia-list',
@@ -10,7 +11,7 @@ import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.ser
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container-fluid mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="mb-1 text-primary"><i class="bi bi-briefcase-fill me-2"></i>Gestion de Gerencias y Departamentos</h2>
           <p class="text-muted mb-0">Estructura organizativa y areas de distribucion del personal</p>
@@ -45,7 +46,7 @@ import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.ser
 
       <!-- TABLA DE GERENCIAS -->
       <div class="card shadow-sm border-0">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
@@ -61,12 +62,12 @@ import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.ser
                   <span class="fw-bold text-dark">{{ g.gerencia }}</span>
                 </td>
                 <td class="text-end">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="abrirModalEditar(g)" title="Editar">
-                      <i class="bi bi-pencil"></i>
+                  <div class="d-flex flex-wrap justify-content-end gap-1">
+                    <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center px-2 py-1" (click)="abrirModalEditar(g)" title="Editar">
+                      <i class="bi bi-pencil me-1"></i>Editar
                     </button>
-                    <button class="btn btn-outline-danger" (click)="eliminarGerencia(g)" title="Eliminar">
-                      <i class="bi bi-trash"></i>
+                    <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center px-2 py-1" (click)="eliminarGerencia(g)" title="Eliminar">
+                      <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                   </div>
                 </td>
@@ -79,6 +80,30 @@ import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.ser
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- VISTA TARJETAS MOVIL (< 768px) -->
+        <div class="d-md-none p-3 d-flex flex-column gap-3">
+          <div *ngFor="let g of itemsPaginados" class="card shadow-sm border-0 rounded-3 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <span class="badge bg-light text-dark border mb-1">#{{ g.id }}</span>
+                <div class="fw-bold fs-6 text-dark">{{ g.gerencia }}</div>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="abrirModalEditar(g)">
+                <i class="bi bi-pencil me-1"></i>Editar
+              </button>
+              <button class="btn btn-sm btn-outline-danger flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="eliminarGerencia(g)">
+                <i class="bi bi-trash me-1"></i>Eliminar
+              </button>
+            </div>
+          </div>
+          <div *ngIf="itemsPaginados.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            No se encontraron gerencias registradas.
+          </div>
         </div>
 
         <!-- PAGINACION -->
@@ -150,8 +175,10 @@ export class GerenciaListComponent implements OnInit {
   mostrarModal: boolean = false;
   editando: boolean = false;
   gerenciaActual: Gerencia = { gerencia: '' };
-
-  constructor(private gerenciaService: GerenciaService) {}
+  constructor(
+    private gerenciaService: GerenciaService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.cargarGerencias();
@@ -233,9 +260,15 @@ export class GerenciaListComponent implements OnInit {
     }
   }
 
-  eliminarGerencia(g: Gerencia): void {
+  async eliminarGerencia(g: Gerencia): Promise<void> {
     if (!g.id) return;
-    if (confirm(`Desea eliminar la gerencia "${g.gerencia}"?`)) {
+    const confirmado = await this.alertModal.confirm(
+      `Desea eliminar la gerencia "${g.gerencia}"?`,
+      'Eliminar Gerencia',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.gerenciaService.deleteGerencia(g.id).subscribe({
         next: () => this.cargarGerencias(),
         error: (err) => console.error('Error al eliminar gerencia:', err)

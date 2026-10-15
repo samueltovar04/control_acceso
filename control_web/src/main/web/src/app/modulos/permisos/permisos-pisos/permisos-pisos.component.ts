@@ -8,6 +8,7 @@ import { VisitanteService } from '../../../shared/visitante/visitante.service';
 import { PisoService } from '../../../shared/piso/piso.service';
 import { PermisosService } from '../../../shared/permisos/permisos.service';
 import { Piso } from '../../../shared/piso/piso.model';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-permisos-pisos',
@@ -15,7 +16,7 @@ import { Piso } from '../../../shared/piso/piso.model';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container-fluid mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="mb-1 text-primary"><i class="bi bi-shield-check me-2"></i>Administracion de Permisos por Pisos</h2>
           <p class="text-muted mb-0">Control granular de acceso a niveles y torniquetes para Empleados, Clientes y Visitantes</p>
@@ -243,7 +244,8 @@ export class PermisosPisosComponent implements OnInit {
     private clienteService: ClienteService,
     private visitanteService: VisitanteService,
     private pisoService: PisoService,
-    private permisosService: PermisosService
+    private permisosService: PermisosService,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -392,7 +394,7 @@ export class PermisosPisosComponent implements OnInit {
         this.guardando = false;
         this.personaActual.pisosPermitidos = nuevosPisos;
         this.cerrarModal();
-        alert('Permisos de pisos actualizados exitosamente.');
+        this.alertModal.success('Permisos de pisos actualizados exitosamente.', 'Permisos Guardados');
       },
       error: (err) => {
         this.guardando = false;
@@ -400,7 +402,7 @@ export class PermisosPisosComponent implements OnInit {
         // Actualizar referencia local
         this.personaActual.pisosPermitidos = this.pisosTotales.filter((p) => p.id && this.pisosSeleccionadosIds.has(p.id));
         this.cerrarModal();
-        alert('Permisos asignados localmente.');
+        this.alertModal.info('Permisos asignados localmente.', 'Modo Local');
       }
     });
   }

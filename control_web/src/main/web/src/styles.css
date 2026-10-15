@@ -37,3 +37,42 @@ button {
     padding-top: 10px;
     font-size: 12px;
 }
+
+/* RESPONSIVE UTILITIES FOR MOBILE PHONES */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .container-fluid {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    .card {
+        border-radius: 0.75rem !important;
+    }
+
+    .card.p-4 {
+        padding: 1rem !important;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+
+    h2, .h2 {
+        font-size: 1.35rem !important;
+    }
+
+    h3, .h3 {
+        font-size: 1.2rem !important;
+    }
+
+    .btn-group {
+        flex-wrap: wrap;
+    }
+}

@@ -13,6 +13,8 @@ out/
 # Node & Frontend
 node_modules/
 **/node_modules/
+node/
+**/node/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -63,3 +65,16 @@ HELP.md
 
 # Maven Wrapper Keep
 !.mvn/wrapper/maven-wrapper.jar
+
+# Binarios pesados, ISOs, imagenes de disco y VMs
+*.iso
+*.qcow2
+*.img
+*.vmdk
+control_suprema/qemu_suprema/*.iso
+control_suprema/qemu_suprema/*.qcow2
+
+*.iso
+*.qcow2
+*.iso
+*.qcow2

@@ -40,15 +40,19 @@ try:
                 pulseras_activas.append(nueva)
                 print(f"\n[+] NUEVA CONEXION: {nueva} ingreso al rango del Gateway (Total activas: {len(pulseras_activas)})")
 
-        # Evento aleatorio: Salida / desconexion de pulsera
+        # Evento aleatorio: Salida / desconexion de pulsera (excepto PULSERA_001 y PULSERA_002)
         if random.random() < 0.18 and len(pulseras_activas) > 2:
-            desconectada = pulseras_activas.pop(random.randint(0, len(pulseras_activas) - 1))
-            if desconectada in dispositivos_estado:
-                del dispositivos_estado[desconectada]
-            print(f"\n[-] DESCONEXION: {desconectada} fuera de rango o apagada (Total activas: {len(pulseras_activas)})")
+            removibles = [p for p in pulseras_activas if p not in ("PULSERA_001", "PULSERA_002")]
+            if removibles:
+                desconectada = random.choice(removibles)
+                pulseras_activas.remove(desconectada)
+                if desconectada in dispositivos_estado:
+                    del dispositivos_estado[desconectada]
+                print(f"\n[-] DESCONEXION: {desconectada} fuera de rango o apagada (Total activas: {len(pulseras_activas)})")
 
-        # Emitir lecturas de 1 o 2 pulseras del pool activo
-        seleccionadas = random.sample(pulseras_activas, k=min(len(pulseras_activas), random.randint(1, 3)))
+        # Emitir lecturas: siempre incluir PULSERA_001 o PULSERA_002 + aleatorias
+        pulseras_fijas = ["PULSERA_001", "PULSERA_002"]
+        seleccionadas = list(set([random.choice(pulseras_fijas)] + random.sample(pulseras_activas, k=min(len(pulseras_activas), 2))))
 
         for id_p in seleccionadas:
             st = get_estado(id_p)

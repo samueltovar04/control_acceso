@@ -11,7 +11,7 @@
             {{ estadoTorniquete === 'ABIERTO' ? 'PASO ABIERTO (' + tiempoPulsoRestante + 's)' : 'TORNIQUETE BLOQUEADO' }}
           </span>
         </div>
-        <p class="text-muted small mb-3">Identificación biométrica multi-factor (Facial 128D y Huella USB Suprema) para control de paso y apertura automática de relé.</p>
+        <p class="text-muted small mb-3">Identificacion automatica multi-factor: Rostro Facial 128D, Escaneo de Codigo QR (Cedula) o Huella USB Suprema para control de paso y apertura automatica de rele.</p>
 
         <!-- SELECTOR DE DISPOSITIVO TORNIQUETE -->
         <div class="input-group mb-3">
@@ -33,6 +33,7 @@
           <app-biometric-capture #biometricCapture
                                  [soloFacial]="true"
                                  [mostrarBotonCaptura]="false"
+                                 [modoIdentificacion]="true"
                                  [alturaCamaraPx]="300"
                                  [titulo]="''"
                                  (fotogramaCapturado)="onFotogramaCapturado($event)">
@@ -43,16 +44,16 @@
             <i class="bi bi-check-circle-fill display-3 mb-2 animate__animated animate__bounceIn"></i>
             <h2 class="fw-bold">¡PASO CONCEDIDO!</h2>
             <p class="fs-5 m-0">{{ mensajeTorniquete }}</p>
-            <span class="badge bg-light text-success fs-6 mt-2">Cierre automático en {{ tiempoPulsoRestante }}s</span>
+            <span class="badge bg-light text-success fs-6 mt-2">Cierre automatico en {{ tiempoPulsoRestante }}s</span>
           </div>
         </div>
 
-        <!-- BOTONES DE ACCIÓN: ROSTRO Y HUELLAS (ÍNDICE Y PULGAR) -->
+        <!-- BOTONES DE ACCION: ROSTRO / QR Y HUELLAS -->
         <div class="row g-2 mb-3">
           <div class="col-12">
             <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center" (click)="capturarRostro()" [disabled]="procesando || escaneandoHuella">
-              <i class="bi bi-person-bounding-box me-2 fs-5"></i>
-              <span>{{ procesando ? 'Comparando vectores...' : 'Identificar Rostro y Abrir' }}</span>
+              <i class="bi bi-qr-code-scan me-2 fs-5"></i>
+              <span>{{ procesando ? 'Verificando Rostro o Codigo QR...' : 'Identificar Rostro / Escanear QR y Abrir' }}</span>
             </button>
           </div>
           <div class="col-md-6">
@@ -231,9 +232,6 @@
       <div class="card-footer bg-white p-3 d-flex justify-content-end gap-2 border-top">
         <button class="btn btn-outline-secondary px-3" (click)="cerrarModalPersona()">
           <i class="bi bi-x-circle me-1"></i> Cerrar
-        </button>
-        <button class="btn btn-success fw-bold px-3" (click)="enviarPulsoApertura('Re-apertura Manual'); cerrarModalPersona()">
-          <i class="bi bi-arrow-repeat me-1"></i> Pulsar Apertura Otra Vez
         </button>
       </div>
     </div>

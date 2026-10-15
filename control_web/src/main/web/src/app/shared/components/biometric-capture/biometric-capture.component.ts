@@ -17,8 +17,10 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   @Input() titulo: string = 'Captura de Datos Biometricos';
   @Input() soloFacial: boolean = false;
   @Input() mostrarBotonCaptura: boolean = true;
-  @Input() alturaCamaraPx: number = 220;
+  @Input() modoIdentificacion: boolean = false;
+  @Input() alturaCamaraPx: number = 300;
   @Input() fotoExistente: string = '';
+  public mostrarModalGaleriaFotogramas: boolean = false;
   @Input() huella1Existente: string = '';
   @Input() huella2Existente: string = '';
   @Output() biometricDataChange = new EventEmitter<{
@@ -42,7 +44,9 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   public camaraIdActual?: string;
   public esModoEspejo: boolean = true;
   public videoOptions: MediaTrackConstraints = {
-    aspectRatio: { ideal: 1.333333 }
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    aspectRatio: { ideal: 1.777777 }
   };
 
   // Asistente Multi-Ángulo / Movimiento de Cabeza
@@ -152,7 +156,16 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     return this.trigger.asObservable();
   }
 
+  public capturandoFotoPerfil: boolean = false;
+  public fotoPerfilManual: string = '';
+
   capturarFotograma(): void {
+    this.capturandoFotoPerfil = false;
+    this.trigger.next();
+  }
+
+  capturarFotoPerfilManual(): void {
+    this.capturandoFotoPerfil = true;
     this.trigger.next();
   }
 
@@ -160,8 +173,26 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     this.webcamImage = webcamImage;
     this.fotogramasCapturados++;
 
-    // Extraer vector facial representativo
-    this.generarVectorFacialDesdeImagen(webcamImage.imageAsDataUrl);
+    if (this.capturandoFotoPerfil) {
+      this.capturandoFotoPerfil = false;
+      this.fotoPerfilManual = webcamImage.imageAsDataUrl;
+      this.fotoExistente = webcamImage.imageAsDataUrl;
+
+      // Si aun no habia vector multi-angulo, generar el vector base de este fotograma
+      if (!this.faceVectorGenerado) {
+        this.generarVectorFacialDesdeImagen(webcamImage.imageAsDataUrl);
+      } else {
+        this.emitChanges();
+        this.fotogramaCapturado.emit({
+          fotoUrl: webcamImage.imageAsDataUrl,
+          faceVector: this.faceVectorGenerado
+        });
+      }
+    } else {
+      // Extraer vector facial representativo y agregar a la coleccion de fotogramas
+      this.generarVectorFacialDesdeImagen(webcamImage.imageAsDataUrl);
+    }
+
     this.reproducirSonidoCamara();
   }
 
@@ -245,9 +276,29 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  public removerFotogramaColeccion(indice: number): void {
+  public removerFotogramaColeccion(indice: number, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     this.fotogramasColeccion.splice(indice, 1);
     this.consolidarMultiVectores();
+  }
+
+  public abrirModalGaleria(): void {
+    this.mostrarModalGaleriaFotogramas = true;
+  }
+
+  public cerrarModalGaleria(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.mostrarModalGaleriaFotogramas = false;
+  }
+
+  public tienePoseRegistrada(clave: string): boolean {
+    return this.fotogramasColeccion.some(f => f.pose === clave);
   }
 
   private generarVectorFacialDesdeImagen(dataUrl: string): void {
@@ -286,10 +337,14 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
           }
           const vectorIndividual = descriptors.join(',');
           this.faceVectorGenerado = vectorIndividual;
-          this.registrarPoseEnColeccion(dataUrl, vectorIndividual);
+          if (!this.modoIdentificacion) {
+            this.registrarPoseEnColeccion(dataUrl, vectorIndividual);
+          }
         } else {
           this.generarVectorFallback();
-          this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+          if (!this.modoIdentificacion) {
+            this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+          }
         }
         this.emitChanges();
         this.fotogramaCapturado.emit({
@@ -299,7 +354,9 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       };
       img.onerror = () => {
         this.generarVectorFallback();
-        this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+        if (!this.modoIdentificacion) {
+          this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+        }
         this.emitChanges();
         this.fotogramaCapturado.emit({
           fotoUrl: dataUrl,
@@ -309,7 +366,9 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       img.src = dataUrl;
     } catch (e) {
       this.generarVectorFallback();
-      this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+      if (!this.modoIdentificacion) {
+        this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
+      }
       this.emitChanges();
       this.fotogramaCapturado.emit({
         fotoUrl: dataUrl,
@@ -455,8 +514,23 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }
 
   private emitChanges(): void {
+    let fotoFinal = this.fotoPerfilManual;
+    if (!fotoFinal && this.fotogramasColeccion && this.fotogramasColeccion.length > 0) {
+      // Buscar la pose frontal o la primera capturada
+      const poseFrontal = this.fotogramasColeccion.find(p => p.pose === 'POSE_1') || this.fotogramasColeccion[0];
+      if (poseFrontal && poseFrontal.fotoUrl) {
+        fotoFinal = poseFrontal.fotoUrl;
+      }
+    }
+    if (!fotoFinal && this.webcamImage) {
+      fotoFinal = this.webcamImage.imageAsDataUrl;
+    }
+    if (!fotoFinal && this.fotoExistente) {
+      fotoFinal = this.fotoExistente;
+    }
+
     this.biometricDataChange.emit({
-      fotoUrl: this.webcamImage ? this.webcamImage.imageAsDataUrl : undefined,
+      fotoUrl: fotoFinal,
       faceVector: this.faceVectorGenerado ? this.faceVectorGenerado : undefined,
       huella1: this.huella1Generada ? this.huella1Generada : undefined,
       huella2: this.huella2Generada ? this.huella2Generada : undefined

@@ -41,14 +41,26 @@
               <input type="text" class="form-control" [(ngModel)]="cliente.telefono" name="telefono" placeholder="+58 424 0000000">
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Estado de Membresía</label>
+              <label class="form-label small fw-bold text-primary"><i class="bi bi-card-checklist me-1"></i>Plan de Membresia *</label>
+              <select class="form-select border-primary" [(ngModel)]="membresiaSeleccionadaId" name="membresiaId">
+                <option [ngValue]="null">Sin Membresia Asignada</option>
+                <option *ngFor="let m of membresiasList" [value]="m.id">
+                  {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }} • {{ m.duracionDias || m.duracionesDias }} dias)
+                </option>
+              </select>
+              <div *ngIf="membresiaSeleccionada" class="form-text text-success fw-semibold small mt-1">
+                <i class="bi bi-currency-exchange me-1"></i>Equivalente BCV: {{ membresiaSeleccionada.precio | bcvConvert:'USD' }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Estado de Membresia</label>
               <select class="form-select" [(ngModel)]="cliente.estadoSuscripcion" name="estadoSuscripcion">
                 <option value="ACTIVA">ACTIVA (Acceso Permitido)</option>
                 <option value="POR_VENCER">POR VENCER (Acceso con Aviso)</option>
                 <option value="VENCIDA">VENCIDA (Paso Bloqueado)</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
               <label class="form-label small fw-bold">Sexo</label>
               <select class="form-select" [(ngModel)]="cliente.sexo" name="sexo">
                 <option value="M">Masculino</option>

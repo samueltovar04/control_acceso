@@ -13,6 +13,10 @@ export interface Cliente {
   huella2?: string;
   faceVector?: string;
   estadoSuscripcion?: string;
+  membresiaActual?: any;
+  fechaVencimientoMembresia?: string | Date;
+  fechaProximoCobro?: string | Date;
+  qrTokenDinamico?: string;
   sede?: any;
   pisosPermitidos?: any[];
 }

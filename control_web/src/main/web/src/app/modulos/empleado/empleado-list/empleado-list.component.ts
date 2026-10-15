@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-empleado-list',
@@ -17,7 +18,10 @@ export class EmpleadoListComponent implements OnInit {
   totalPaginas: number = 1;
   paginasArray: number[] = [];
 
-  constructor(private empleService: EmpleadoService) {}
+  constructor(
+    private empleService: EmpleadoService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.reloadData();
@@ -94,8 +98,14 @@ export class EmpleadoListComponent implements OnInit {
     this.actualizarPaginacion();
   }
 
-  deleteEmployee(id: number): void {
-    if (confirm('Desea eliminar este empleado?')) {
+  async deleteEmployee(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este empleado del sistema?',
+      'Eliminar Empleado',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.empleService.deleteEmployee(id).subscribe({
         next: () => this.reloadData(),
         error: (err) => console.log(err)

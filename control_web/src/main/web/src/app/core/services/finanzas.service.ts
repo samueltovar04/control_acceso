@@ -25,6 +25,15 @@ export interface Conciliacion {
   conciliadoPorUser: string;
 }
 
+export interface Gasto {
+  id?: number;
+  descripcion: string;
+  categoria: 'MANTENIMIENTO' | 'SERVICIOS' | 'SUMINISTROS' | 'PERSONAL' | 'EQUIPAMIENTO' | 'OTRO';
+  monto: number;
+  fechaGasto?: string;
+  registradoPor?: string;
+}
+
 export interface BalanceFinanciero {
   totalIngresos: number;
   totalGastos: number;
@@ -69,7 +78,11 @@ export class FinanzasService {
     return this.http.get<BalanceFinanciero>(`${this.apiUrl}/balance`);
   }
 
-  registrarGasto(gasto: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/gastos`, gasto);
+  getGastos(): Observable<Gasto[]> {
+    return this.http.get<Gasto[]>(`${this.apiUrl}/gastos`);
+  }
+
+  registrarGasto(gasto: Gasto): Observable<Gasto> {
+    return this.http.post<Gasto>(`${this.apiUrl}/gastos`, gasto);
   }
 }

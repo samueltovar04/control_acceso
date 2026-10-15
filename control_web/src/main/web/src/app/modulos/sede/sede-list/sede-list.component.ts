@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-sede-list',
@@ -10,7 +11,7 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container-fluid mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="mb-1 text-primary"><i class="bi bi-geo-alt-fill me-2"></i>Gestion de Sedes</h2>
           <p class="text-muted mb-0">Administracion de edificios, sucursales y ubicaciones de control</p>
@@ -45,7 +46,7 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
 
       <!-- TABLA DE SEDES -->
       <div class="card shadow-sm border-0">
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
@@ -61,12 +62,12 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
                   <span class="fw-bold text-dark">{{ s.sede }}</span>
                 </td>
                 <td class="text-end">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="abrirModalEditar(s)" title="Editar">
-                      <i class="bi bi-pencil"></i>
+                  <div class="d-flex flex-wrap justify-content-end gap-1">
+                    <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center px-2 py-1" (click)="abrirModalEditar(s)" title="Editar">
+                      <i class="bi bi-pencil me-1"></i>Editar
                     </button>
-                    <button class="btn btn-outline-danger" (click)="eliminarSede(s)" title="Eliminar">
-                      <i class="bi bi-trash"></i>
+                    <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center px-2 py-1" (click)="eliminarSede(s)" title="Eliminar">
+                      <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                   </div>
                 </td>
@@ -79,6 +80,30 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- VISTA TARJETAS MOVIL (< 768px) -->
+        <div class="d-md-none p-3 d-flex flex-column gap-3">
+          <div *ngFor="let s of itemsPaginados" class="card shadow-sm border-0 rounded-3 p-3 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <span class="badge bg-light text-dark border mb-1">#{{ s.id }}</span>
+                <div class="fw-bold fs-6 text-dark">{{ s.sede }}</div>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="abrirModalEditar(s)">
+                <i class="bi bi-pencil me-1"></i>Editar
+              </button>
+              <button class="btn btn-sm btn-outline-danger flex-fill d-inline-flex align-items-center justify-content-center py-2" (click)="eliminarSede(s)">
+                <i class="bi bi-trash me-1"></i>Eliminar
+              </button>
+            </div>
+          </div>
+          <div *ngIf="itemsPaginados.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            No se encontraron sedes registradas.
+          </div>
         </div>
 
         <!-- PAGINACION -->
@@ -151,7 +176,10 @@ export class SedeListComponent implements OnInit {
   editando: boolean = false;
   sedeActual: Sede = { sede: '' };
 
-  constructor(private sedeService: SedeService) {}
+  constructor(
+    private sedeService: SedeService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.cargarSedes();
@@ -233,9 +261,15 @@ export class SedeListComponent implements OnInit {
     }
   }
 
-  eliminarSede(s: Sede): void {
+  async eliminarSede(s: Sede): Promise<void> {
     if (!s.id) return;
-    if (confirm(`Desea eliminar la sede "${s.sede}"?`)) {
+    const confirmado = await this.alertModal.confirm(
+      `Desea eliminar la sede "${s.sede}"?`,
+      'Eliminar Sede',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.sedeService.deleteSede(s.id).subscribe({
         next: () => this.cargarSedes(),
         error: (err) => console.error('Error al eliminar sede:', err)

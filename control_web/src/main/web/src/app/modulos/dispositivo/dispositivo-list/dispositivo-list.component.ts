@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DispositivoService } from '../../../shared/dispositivo/dispositivo.service';
 import { PisoService } from '../../../shared/piso/piso.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-dispositivo-list',
@@ -50,7 +51,8 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
 
   constructor(
     private dispositivoService: DispositivoService,
-    private pisoService: PisoService
+    private pisoService: PisoService,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -169,8 +171,14 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteDispositivo(id: number): void {
-    if (confirm('Desea eliminar este dispositivo permanentemente?')) {
+  async deleteDispositivo(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este dispositivo permanentemente?',
+      'Eliminar Dispositivo',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.dispositivoService.deleteDispositivo(id).subscribe({
         next: () => this.reloadData(),
         error: (err) => console.error('Error al eliminar dispositivo:', err)
@@ -181,10 +189,10 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   abrirTorniquete(dispositivo: any): void {
     this.dispositivoService.abrirDispositivo(dispositivo.id).subscribe({
       next: () => {
-        alert('Pulso de apertura concedido al torniquete ' + (dispositivo.descripcion || dispositivo.nombre || dispositivo.id));
+        this.alertModal.success('Pulso de apertura concedido al torniquete ' + (dispositivo.descripcion || dispositivo.nombre || dispositivo.id), 'Torniquete Abierto');
       },
       error: (err) => {
-        alert('Error al enviar pulso al torniquete: ' + (err.message || 'Error de conexion'));
+        this.alertModal.error('Error al enviar pulso al torniquete: ' + (err.message || 'Error de conexion'), 'Error');
       }
     });
   }
@@ -201,7 +209,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         this.escaneandoId = null;
         console.error('Error al escanear informacion del dispositivo:', err);
-        alert('No se pudo completar el escaneo de red para este dispositivo.');
+        this.alertModal.error('No se pudo completar el escaneo de red para este dispositivo.', 'Error de Escaneo');
       }
     });
   }
@@ -229,7 +237,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         this.escaneandoDescubrimiento = false;
         console.error('Error al descubrir dispositivos en red:', err);
-        alert('Error al escanear la red local para descubrir dispositivos no registrados.');
+        this.alertModal.error('Error al escanear la red local para descubrir dispositivos no registrados.', 'Error');
       }
     });
   }
@@ -258,7 +266,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   registrarSeleccionadosMasivamente(): void {
     const seleccionados = (this.dispositivosDescubiertos || []).filter(d => d.seleccionado);
     if (seleccionados.length === 0) {
-      alert('Seleccione al menos un dispositivo para registrar.');
+      this.alertModal.warning('Seleccione al menos un dispositivo para registrar.', 'Seleccion Vacia');
       return;
     }
 
@@ -281,14 +289,14 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         this.guardandoLote = false;
         const total = Array.isArray(res) ? res.length : seleccionados.length;
-        alert('Se registraron ' + total + ' dispositivos exitosamente en la base de datos.');
+        this.alertModal.success('Se registraron ' + total + ' dispositivos exitosamente en la base de datos.', 'Lote Registrado');
         this.cerrarModalDescubrimiento();
         this.reloadData();
       },
       error: (err: any) => {
         this.guardandoLote = false;
         console.error('Error al registrar lote de dispositivos:', err);
-        alert('Ocurrio un error al registrar los dispositivos seleccionados.');
+        this.alertModal.error('Ocurrio un error al registrar los dispositivos seleccionados.', 'Error');
       }
     });
   }

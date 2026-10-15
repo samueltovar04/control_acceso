@@ -8,6 +8,7 @@ import { BiometricCaptureComponent } from '../../../shared/components/biometric-
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
 import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
 import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-crear-empleado',
@@ -46,7 +47,8 @@ export class CrearEmpleadoComponent implements OnInit {
     private sedeService: SedeService,
     private gerenciaService: GerenciaService,
     private tipoContratoService: TipoContratoService,
-    private router: Router
+    private router: Router,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -78,14 +80,14 @@ export class CrearEmpleadoComponent implements OnInit {
   save(): void {
     this.guardando = true;
     this.empleService.createEmployee(this.employee).subscribe({
-      next: (data: any) => {
+      next: async (data: any) => {
         this.guardando = false;
-        alert('Empleado registrado exitosamente con biometría activada.');
+        await this.alertModal.success('Empleado registrado exitosamente con biometria activada.', 'Registro Exitoso');
         this.router.navigate(['/home/empleados']);
       },
-      error: (err: any) => {
+      error: async (err: any) => {
         this.guardando = false;
-        alert('Empleado guardado localmente.');
+        await this.alertModal.info('Empleado guardado localmente.', 'Modo Local');
         this.router.navigate(['/home/empleados']);
       }
     });
@@ -94,7 +96,7 @@ export class CrearEmpleadoComponent implements OnInit {
   onSubmit(): void {
     this.submitted = true;
     if (!this.employee.nombre || !this.employee.documento) {
-      alert('Por favor ingrese el nombre y documento del empleado.');
+      this.alertModal.warning('Por favor ingrese el nombre y documento del empleado.', 'Campos Requeridos');
       return;
     }
     this.save();

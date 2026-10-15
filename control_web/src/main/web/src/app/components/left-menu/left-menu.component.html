@@ -1,93 +1,173 @@
-<div class="sidebar-wrapper bg-dark text-white d-flex flex-column h-100" style="width: 250px; min-height: 100vh;">
+<div class="sidebar-wrapper bg-dark text-white d-flex flex-column h-100 w-100" style="min-height: 100vh;">
   <!-- BRAND / HEADER -->
-  <div class="sidebar-header p-3 border-bottom border-secondary d-flex align-items-center">
-    <i class="bi bi-shield-lock-fill text-primary fs-3 me-2"></i>
-    <span class="fs-5 fw-bold tracking-tight">Access Control</span>
+  <div class="sidebar-header p-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-shield-lock-fill text-primary fs-3 me-2"></i>
+      <span class="fs-5 fw-bold tracking-tight">Access Control</span>
+    </div>
+    <button 
+      type="button" 
+      class="btn btn-sm btn-link text-white-50 d-md-none p-1" 
+      (click)="sidebarService.close()" 
+      title="Cerrar Menú"
+      aria-label="Cerrar Menú">
+      <i class="bi bi-x-lg fs-5"></i>
+    </button>
   </div>
 
   <!-- NAVEGACIÓN -->
-  <div class="sidebar-menu flex-grow-1 py-3 px-2">
+  <div class="sidebar-menu flex-grow-1 py-3 px-2 overflow-auto">
     <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Panel & Visión</div>
     <ul class="nav flex-column mb-3">
+
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/admin-dashboard" routerLinkActive="active bg-primary text-white">
-          <i class="bi bi-speedometer2 me-3 fs-5"></i> Dashboard Central
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          routerLink="/home/acceso-torniquetes" routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-door-open-fill me-3 fs-5 text-warning"></i> Control de Torniquetes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/biometria-facial" routerLinkActive="active bg-primary text-white">
-          <i class="bi bi-camera-video me-3 fs-5"></i> Terminal Torniquetes
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/monitor-salud" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/monitor-salud"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-heart-pulse me-3 fs-5"></i> Monitor de Salud IoT
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" href="http://localhost:8080/dashboard-dinamico.html" target="_blank">
-          <i class="bi bi-activity me-3 fs-5 text-danger"></i> Telemetría Dinámica (Quarkus + Recharts)
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          href="http://localhost:8080/dashboard-dinamico.html" target="_blank"
+          (click)="onNavClick()">
+          <i class="bi bi-activity me-3 fs-5 text-danger"></i> Telemetría Dinámica
+        </a>
+      </li>
+    </ul>
+
+    <!-- MODULO PAGOS Y FINANZAS -->
+    <div
+      class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
+      style="cursor: pointer;" (click)="menuPagosAbierto = !menuPagosAbierto">
+      <span><i class="bi bi-cash-coin me-2 text-success"></i>Gestion de Pagos</span>
+      <i class="bi" [ngClass]="menuPagosAbierto ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+    </div>
+    <ul class="nav flex-column mb-3" *ngIf="menuPagosAbierto">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/admin-dashboard"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-speedometer2 me-3 fs-5"></i> Control Finanzas
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pagos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-cash-stack me-3 fs-5 text-success"></i> Control Pagos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/conciliacion"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-wallet2 me-3 fs-5 text-info"></i> Conciliacion Pagos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tasas"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-currency-exchange me-3 fs-5 text-warning"></i> Tasas Cambiarias BCV
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/bancos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-bank2 me-3 fs-5 text-primary"></i> Cuentas Bancarias
         </a>
       </li>
     </ul>
 
     <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Gestion de Acceso</div>
     <ul class="nav flex-column mb-3">
+
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/clientes" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/clientes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-people-fill me-3 fs-5"></i> Clientes & Membresias
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/empleados" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/empleados"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-person-badge-fill me-3 fs-5"></i> Empleados
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/visitantes" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/visitantes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-person-lines-fill me-3 fs-5"></i> Visitantes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/permisos-pisos" routerLinkActive="active bg-primary text-white">
-          <i class="bi bi-shield-check me-3 fs-5"></i> Permisos por Pisos
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/membresias"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-card-checklist me-3 fs-5"></i> Catalogo Membresias
         </a>
       </li>
+
     </ul>
 
-    <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Hardware & Infraestructura</div>
+    <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Infraestructura</div>
     <ul class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/dispositivos" routerLinkActive="active bg-primary text-white">
-          <i class="bi bi-hdd-network-fill me-3 fs-5"></i> Torniquetes & Red
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/dispositivos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-hdd-network-fill me-3 fs-5"></i> Network
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pisos" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pisos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-layers-fill me-3 fs-5"></i> Pisos & Zonas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/portal-cliente" routerLinkActive="active bg-primary text-white">
-          <i class="bi bi-qr-code-scan me-3 fs-5"></i> Credencial QR Movil
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/permisos-pisos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-shield-check me-3 fs-5"></i> Permisos por Pisos
         </a>
       </li>
+
     </ul>
 
-    <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Estructura Organizacional</div>
+    <div class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">Ubicaciones</div>
     <ul class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/sedes" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/sedes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-geo-alt-fill me-3 fs-5"></i> Sedes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/gerencias" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/gerencias"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-briefcase-fill me-3 fs-5"></i> Gerencias
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tipo-contratos" routerLinkActive="active bg-primary text-white">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tipo-contratos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
           <i class="bi bi-file-earmark-text-fill me-3 fs-5"></i> Tipos de Contrato
         </a>
       </li>
@@ -95,8 +175,9 @@
   </div>
 
   <!-- FOOTER LATERAL -->
-  <div class="sidebar-footer p-3 border-top border-secondary text-secondary small d-flex justify-content-between align-items-center">
-    <span>Build 2.0.0-PRO</span>
+  <div
+    class="sidebar-footer p-3 border-top border-secondary text-secondary small d-flex justify-content-between align-items-center">
+    <span>Acceso 2.0.0-PRO</span>
     <span class="badge bg-success">Online</span>
   </div>
 </div>

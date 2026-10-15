@@ -2,8 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ClienteService } from '../../../shared/cliente/cliente.service';
 import { Cliente } from '../../../shared/cliente/cliente.model';
+import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 interface VitalData {
   bpm: number;
@@ -17,10 +20,10 @@ interface VitalData {
 @Component({
   selector: 'app-cliente-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, BcvConvertPipe],
   template: `
     <div class="container-fluid mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="mb-1 text-primary"><i class="bi bi-people-fill me-2"></i>Gestion de Clientes & Socios</h2>
           <p class="text-muted mb-0">Control de membresias, enrolamiento biometrico dual y accesos</p>
@@ -70,8 +73,8 @@ interface VitalData {
         </div>
       </div>
 
-      <!-- TABLA -->
-      <div class="card shadow-sm border-0">
+      <!-- VISTA TABLA (DESKTOP >= 768px) -->
+      <div class="card shadow-sm border-0 d-none d-md-block">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
@@ -133,7 +136,6 @@ interface VitalData {
                 </td>
                 <td class="text-center">
                   <div class="d-flex flex-wrap justify-content-center gap-1">
-                    <!-- BOTON MEMBRESIA -->
                     <button
                       class="btn btn-sm btn-outline-success d-inline-flex align-items-center px-2 py-1"
                       (click)="abrirModalMembresia(c)"
@@ -142,8 +144,6 @@ interface VitalData {
                       <i class="bi bi-credit-card-2-front me-1"></i>
                       <span>Membresia</span>
                     </button>
-
-                    <!-- BOTON ASIGNAR PULSERA -->
                     <button
                       class="btn btn-sm btn-outline-info d-inline-flex align-items-center px-2 py-1"
                       (click)="abrirModalPulsera(c)"
@@ -152,8 +152,6 @@ interface VitalData {
                       <i class="bi bi-smartwatch me-1"></i>
                       <span>Pulsera</span>
                     </button>
-
-                    <!-- BOTON VER / QR -->
                     <a
                       [routerLink]="['/home/cliente', c.id]"
                       class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center px-2 py-1"
@@ -162,8 +160,6 @@ interface VitalData {
                       <i class="bi bi-qr-code me-1"></i>
                       <span>QR</span>
                     </a>
-
-                    <!-- BOTON EDITAR -->
                     <a
                       [routerLink]="['/home/cliente-edit', c.id]"
                       class="btn btn-sm btn-outline-primary d-inline-flex align-items-center px-2 py-1"
@@ -172,14 +168,13 @@ interface VitalData {
                       <i class="bi bi-pencil me-1"></i>
                       <span>Editar</span>
                     </a>
-
-                    <!-- BOTON ELIMINAR -->
                     <button
                       class="btn btn-sm btn-outline-danger d-inline-flex align-items-center px-2 py-1"
                       (click)="eliminarCliente(c.id!)"
                       title="Eliminar Cliente"
                     >
-                      <i class="bi bi-trash"></i>
+                      <i class="bi bi-trash me-1"></i>
+                      <span>Eliminar</span>
                     </button>
                   </div>
                 </td>
@@ -193,19 +188,129 @@ interface VitalData {
             </tbody>
           </table>
         </div>
+      </div>
 
-        <!-- PAGINACION -->
-        <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-2" *ngIf="clientesFiltrados.length > pageSize">
-          <span class="small text-muted">Pagina {{ page }} de {{ totalPaginas }}</span>
+      <!-- VISTA TARJETAS RESPONSIVAS (MOVIL < 768px) -->
+      <div class="d-md-none d-flex flex-column gap-3">
+        <div *ngFor="let c of itemsPaginados" class="card shadow-sm border-0 rounded-3 p-3 bg-white">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+              <img
+                [src]="c.foto || 'assets/images/user-placeholder.png'"
+                class="rounded-circle me-2 border"
+                style="width: 44px; height: 44px; object-fit: cover;"
+                onerror="this.src='https://via.placeholder.com/44'"
+              />
+              <div>
+                <div class="fw-bold text-dark fs-6">{{ c.nombre }} {{ c.apellido }}</div>
+                <div class="d-flex align-items-center gap-1">
+                  <small class="text-muted fw-bold">DOC: {{ c.documento }}</small>
+                </div>
+              </div>
+            </div>
+            <span *ngIf="c.codigoInsignia" class="badge bg-light text-primary border" style="font-size: 0.7rem;">
+              <i class="bi bi-smartwatch me-1"></i>Pulsera
+            </span>
+          </div>
+
+          <div class="bg-light rounded p-2 mb-3 small">
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-white">
+              <span class="text-muted">Contacto:</span>
+              <span class="text-dark text-truncate text-end ms-2" style="max-width: 200px;">
+                {{ c.telefono ? c.telefono : (c.email || 'Sin contacto') }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-white">
+              <span class="text-muted">Membresía:</span>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-success': c.estadoSuscripcion === 'ACTIVA',
+                  'bg-danger': c.estadoSuscripcion === 'VENCIDA',
+                  'bg-warning text-dark': c.estadoSuscripcion === 'POR_VENCER',
+                  'bg-secondary': !c.estadoSuscripcion || c.estadoSuscripcion === 'SIN_MEMBRESIA' || c.estadoSuscripcion === 'SUSPENDIDA'
+                }"
+              >
+                {{ c.estadoSuscripcion || 'SIN MEMBRESIA' }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-1">
+              <span class="text-muted">Biometría:</span>
+              <div>
+                <span class="badge me-1" [ngClass]="c.huella1 ? 'bg-primary' : 'bg-light text-muted border'">
+                  <i class="bi bi-fingerprint me-1"></i>Huella
+                </span>
+                <span class="badge" [ngClass]="c.faceVector ? 'bg-info text-dark' : 'bg-light text-muted border'">
+                  <i class="bi bi-camera-fill me-1"></i>Facial
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTONES DE ACCION MÓVIL FULL-WIDTH -->
+          <div class="d-flex flex-wrap gap-1">
+            <button
+              class="btn btn-sm btn-outline-success flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
+              (click)="abrirModalMembresia(c)"
+              title="Activar o Cambiar Membresia"
+            >
+              <i class="bi bi-credit-card-2-front me-1"></i>
+              <span>Membresía</span>
+            </button>
+            <button
+              class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
+              (click)="abrirModalPulsera(c)"
+              title="Asignar Pulsera"
+            >
+              <i class="bi bi-smartwatch me-1"></i>
+              <span>Pulsera</span>
+            </button>
+            <a
+              [routerLink]="['/home/cliente', c.id]"
+              class="btn btn-sm btn-outline-secondary flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
+              title="Ver Ficha y QR"
+            >
+              <i class="bi bi-qr-code me-1"></i>
+              <span>QR</span>
+            </a>
+            <a
+              [routerLink]="['/home/cliente-edit', c.id]"
+              class="btn btn-sm btn-outline-primary flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
+              title="Editar Cliente"
+            >
+              <i class="bi bi-pencil me-1"></i>
+              <span>Editar</span>
+            </a>
+            <button
+              class="btn btn-sm btn-outline-danger flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
+              (click)="eliminarCliente(c.id!)"
+              title="Eliminar Cliente"
+            >
+              <i class="bi bi-trash me-1"></i>
+              <span>Eliminar</span>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="itemsPaginados.length === 0" class="card p-4 text-center text-muted border-0 shadow-sm">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          No se encontraron clientes registrados con los filtros seleccionados.
+        </div>
+      </div>
+
+      <!-- PAGINACION COMPARTIDA -->
+      <div class="card shadow-sm border-0 mt-3" *ngIf="clientesFiltrados.length > pageSize">
+        <div class="card-body p-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <span class="small text-muted">Página {{ page }} de {{ totalPaginas }}</span>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" [class.disabled]="page === 1">
-              <button class="page-link" (click)="cambiarPagina(page - 1)">Anterior</button>
+              <button class="page-link" (click)="cambiarPagina(page - 1)">Ant</button>
             </li>
-            <li class="page-item" *ngFor="let p of paginasArray" [class.active]="p === page">
-              <button class="page-link" (click)="cambiarPagina(p)">{{ p }}</button>
+            <li class="page-item" *ngFor="let pag of paginasArray" [class.active]="pag === page">
+              <button class="page-link" (click)="cambiarPagina(pag)">{{ pag }}</button>
             </li>
             <li class="page-item" [class.disabled]="page === totalPaginas">
-              <button class="page-link" (click)="cambiarPagina(page + 1)">Siguiente</button>
+              <button class="page-link" (click)="cambiarPagina(page + 1)">Sig</button>
             </li>
           </ul>
         </div>
@@ -225,8 +330,72 @@ interface VitalData {
           </div>
           <div class="modal-body p-4">
             <p class="text-muted small mb-3">
-              Seleccione el nuevo estado de suscripcion para habilitar o restringir el paso por torniquetes y puertas.
+              Seleccione el plan de membresia del catalogo y el estado de suscripcion para habilitar o restringir el paso por torniquetes.
             </p>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-primary"><i class="bi bi-card-checklist me-1"></i>Plan de Membresia *</label>
+              <select class="form-select border-primary" [(ngModel)]="membresiaModalId" (ngModelChange)="onMembresiaModalChange()">
+                <option [ngValue]="null">Sin Membresia Asignada</option>
+                <option *ngFor="let m of catalogoMembresias" [value]="m.id">
+                  {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }} • {{ m.duracionDias || m.duracionesDias }} dias)
+                </option>
+              </select>
+              <div *ngIf="membresiaModalSeleccionada" class="form-text text-success fw-semibold small mt-1">
+                <i class="bi bi-currency-exchange me-1"></i>Precio Base: $ {{ membresiaModalSeleccionada.precio }} ({{ membresiaModalSeleccionada.precio | bcvConvert:'USD' }})
+              </div>
+            </div>
+
+            <!-- SELECTOR DE CUPON O PROMOCION -->
+            <div class="mb-3" *ngIf="membresiaModalId">
+              <label class="form-label fw-bold small text-success">
+                <i class="bi bi-tag-fill me-1"></i>Aplicar Cupon o Promocion (Opcional)
+              </label>
+              <select class="form-select border-success" [(ngModel)]="cuponSeleccionadoCodigo">
+                <option value="">Sin promocion / Precio Regular</option>
+                <option *ngFor="let promo of promocionesFiltradas" [value]="promo.codigo">
+                  {{ promo.nombre }} [Codigo: {{ promo.codigo }}] — {{ promo.tipoDescuento }}: {{ promo.valorDescuento }}{{ promo.tipoDescuento === 'PORCENTAJE' ? '%' : (promo.tipoDescuento === 'MONTO_FIJO' ? '$' : '') }}
+                </option>
+              </select>
+              <div *ngIf="promocionModalSeleccionada" class="form-text text-primary small fw-semibold mt-1">
+                <i class="bi bi-stars me-1"></i>{{ precioFinalConDescuento.etiqueta }}
+              </div>
+            </div>
+
+            <!-- METODO DE PAGO GENERADO -->
+            <div class="mb-3" *ngIf="membresiaModalId">
+              <label class="form-label fw-bold small text-secondary">
+                <i class="bi bi-cash-stack me-1"></i>Metodo de Pago
+              </label>
+              <select class="form-select" [(ngModel)]="metodoPagoSeleccionado">
+                <option value="EFECTIVO">Efectivo (Caja Recepcion)</option>
+                <option value="PAGO_MOVIL">Pago Movil</option>
+                <option value="PUNTO_VENTA">Tarjeta / Punto de Venta (POS)</option>
+                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                <option value="ZELLE">Zelle / Divisas</option>
+              </select>
+            </div>
+
+            <!-- RESUMEN DE COBRO Y PAGO GENERADO AL CLIENTE -->
+            <div class="card bg-light border-0 p-3 mb-3" *ngIf="membresiaModalId && precioFinalConDescuento">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Precio Plan:</span>
+                <span>$ {{ precioFinalConDescuento.precioOriginal | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between small text-success mb-1" *ngIf="precioFinalConDescuento.descuento > 0">
+                <span>Descuento Promocional:</span>
+                <span>-$ {{ precioFinalConDescuento.descuento | number:'1.2-2' }}</span>
+              </div>
+              <hr class="my-1 text-muted">
+              <div class="d-flex justify-content-between fw-bold text-dark fs-6">
+                <span>Monto a Cobrar / Pago:</span>
+                <span class="text-primary">$ {{ precioFinalConDescuento.total | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between small text-muted mt-1">
+                <span>Equivalente BCV:</span>
+                <span class="text-success fw-bold">{{ precioFinalConDescuento.total | bcvConvert:'USD' }}</span>
+              </div>
+            </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold small">Estado de Membresia</label>
@@ -240,13 +409,13 @@ interface VitalData {
             </div>
 
             <div class="alert alert-info py-2 px-3 small border-0 mb-0">
-              <i class="bi bi-info-circle me-1"></i>El cambio actualiza los permisos del socio en tiempo real.
+              <i class="bi bi-info-circle me-1"></i>Al asignar el plan, se generara el pago correspondiente al cliente, se actualizara su fecha de vencimiento y se habilitaran los torniquetes en tiempo real.
             </div>
           </div>
           <div class="modal-footer bg-light py-2">
             <button type="button" class="btn btn-secondary btn-sm" (click)="cerrarModalMembresia()">Cancelar</button>
             <button type="button" class="btn btn-success btn-sm px-3" (click)="guardarMembresia()" [disabled]="guardando">
-              <i class="bi bi-check2-circle me-1"></i>Actualizar Membresia
+              <i class="bi bi-check2-circle me-1"></i>Guardar y Asignar
             </button>
           </div>
         </div>
@@ -411,8 +580,63 @@ export class ClienteListComponent implements OnInit, OnDestroy {
   mostrarModalPulsera: boolean = false;
   clienteSeleccionado: Cliente | null = null;
   nuevoEstadoMembresia: string = 'ACTIVA';
+  catalogoMembresias: any[] = [];
+  catalogoPromociones: any[] = [];
+  promocionesFiltradas: any[] = [];
+  cuponSeleccionadoCodigo: string = '';
+  metodoPagoSeleccionado: string = 'EFECTIVO';
+  membresiaModalId: number | null = null;
   pulseraInput: string = '';
   guardando: boolean = false;
+
+  get membresiaModalSeleccionada(): any {
+    return this.catalogoMembresias.find(m => m.id === this.membresiaModalId);
+  }
+
+  get promocionModalSeleccionada(): any {
+    if (!this.cuponSeleccionadoCodigo) return null;
+    return this.catalogoPromociones.find(p => p.codigo === this.cuponSeleccionadoCodigo);
+  }
+
+  get precioFinalConDescuento(): { precioOriginal: number; descuento: number; total: number; etiqueta: string } {
+    const mem = this.membresiaModalSeleccionada;
+    if (!mem || !mem.precio) {
+      return { precioOriginal: 0, descuento: 0, total: 0, etiqueta: '' };
+    }
+    const precioBase = Number(mem.precio);
+    const promo = this.promocionModalSeleccionada;
+    if (!promo) {
+      return { precioOriginal: precioBase, descuento: 0, total: precioBase, etiqueta: '' };
+    }
+
+    let descuento = 0;
+    let etiqueta = '';
+    const tipo = (promo.tipoDescuento || '').toUpperCase();
+    const val = Number(promo.valorDescuento || 0);
+
+    if (tipo === 'PORCENTAJE') {
+      descuento = (precioBase * val) / 100;
+      etiqueta = `${val}% de descuento aplicado`;
+    } else if (tipo === 'MONTO_FIJO') {
+      descuento = val;
+      etiqueta = `$${val} de rebaja directa`;
+    } else if (tipo === 'DOS_POR_UNO' || tipo === '2X1') {
+      descuento = precioBase * 0.50;
+      etiqueta = `Promo 2x1 (50% de descuento en la cuota)`;
+    } else if (tipo === 'DIAS_EXTRA' || tipo === 'MESES_EXTRA') {
+      descuento = 0;
+      etiqueta = `+${val} dias gratis de acceso adicional`;
+    }
+
+    if (descuento > precioBase) descuento = precioBase;
+    const total = Math.max(0, precioBase - descuento);
+    return {
+      precioOriginal: Math.round(precioBase * 100) / 100,
+      descuento: Math.round(descuento * 100) / 100,
+      total: Math.round(total * 100) / 100,
+      etiqueta
+    };
+  }
 
   poolEjemplos: string[] = ['PULSERA_001', 'PULSERA_002', 'PULSERA_003', 'PULSERA_004', 'PULSERA_005'];
 
@@ -427,10 +651,26 @@ export class ClienteListComponent implements OnInit, OnDestroy {
 
   private socket: WebSocket | null = null;
 
-  constructor(private clienteService: ClienteService) {}
+  constructor(
+    private clienteService: ClienteService,
+    private http: HttpClient,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.cargarClientes();
+    this.cargarMembresiasCatalogo();
+  }
+
+  cargarMembresiasCatalogo(): void {
+    this.http.get<any[]>('/api/v1/membresias').subscribe({
+      next: (mems) => (this.catalogoMembresias = mems || []),
+      error: (err) => console.error('Error al cargar catalogo de membresias:', err)
+    });
+    this.http.get<any[]>('/api/v1/membresias/promociones').subscribe({
+      next: (promos) => (this.catalogoPromociones = promos || []),
+      error: (err) => console.error('Error al cargar catalogo de promociones:', err)
+    });
   }
 
   ngOnDestroy(): void {
@@ -483,8 +723,14 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     this.actualizarPaginacion();
   }
 
-  eliminarCliente(id: number): void {
-    if (confirm('Desea eliminar este cliente permanentemente?')) {
+  async eliminarCliente(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este cliente permanentemente?',
+      'Eliminar Cliente',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.clienteService.deleteCliente(id).subscribe({
         next: () => {
           this.clientes = this.clientes.filter((c) => c.id !== id);
@@ -499,31 +745,75 @@ export class ClienteListComponent implements OnInit, OnDestroy {
   abrirModalMembresia(c: Cliente): void {
     this.clienteSeleccionado = c;
     this.nuevoEstadoMembresia = c.estadoSuscripcion || 'ACTIVA';
+    this.membresiaModalId = c.membresiaActual ? (c.membresiaActual.id || null) : null;
+    this.cuponSeleccionadoCodigo = '';
+    this.metodoPagoSeleccionado = 'EFECTIVO';
+    this.actualizarPromocionesFiltradas();
     this.mostrarModalMembresia = true;
+  }
+
+  actualizarPromocionesFiltradas(): void {
+    if (!this.membresiaModalId) {
+      this.promocionesFiltradas = this.catalogoPromociones.filter(p => !p.membresiaAplica && p.activo !== false);
+    } else {
+      this.promocionesFiltradas = this.catalogoPromociones.filter(p => 
+        p.activo !== false && (!p.membresiaAplica || p.membresiaAplica.id === this.membresiaModalId)
+      );
+    }
+    // Si la promo elegida ya no aplica, resetearla
+    if (this.cuponSeleccionadoCodigo && !this.promocionesFiltradas.some(p => p.codigo === this.cuponSeleccionadoCodigo)) {
+      this.cuponSeleccionadoCodigo = '';
+    }
+  }
+
+  onMembresiaModalChange(): void {
+    this.actualizarPromocionesFiltradas();
   }
 
   cerrarModalMembresia(): void {
     this.mostrarModalMembresia = false;
     this.clienteSeleccionado = null;
+    this.membresiaModalId = null;
+    this.cuponSeleccionadoCodigo = '';
   }
 
   guardarMembresia(): void {
     if (!this.clienteSeleccionado || !this.clienteSeleccionado.id) return;
     this.guardando = true;
-    this.clienteService.actualizarMembresia(this.clienteSeleccionado, this.nuevoEstadoMembresia).subscribe({
-      next: (res) => {
-        if (this.clienteSeleccionado) {
-          this.clienteSeleccionado.estadoSuscripcion = this.nuevoEstadoMembresia;
+
+    if (this.membresiaModalId) {
+      // Usar endpoint especializado de asignacion que aplica cupon, genera pago inmediato e invalida cache
+      this.clienteService.asignarMembresiaAlCliente(
+        this.clienteSeleccionado.id, 
+        Number(this.membresiaModalId), 
+        this.nuevoEstadoMembresia,
+        this.cuponSeleccionadoCodigo || undefined,
+        this.metodoPagoSeleccionado || 'EFECTIVO'
+      ).subscribe({
+        next: () => {
+          this.guardando = false;
+          this.cerrarModalMembresia();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          console.error('Error al asignar membresia:', err);
+          this.guardando = false;
         }
-        this.guardando = false;
-        this.cerrarModalMembresia();
-        this.cargarClientes();
-      },
-      error: (err) => {
-        console.error('Error al actualizar membresia:', err);
-        this.guardando = false;
-      }
-    });
+      });
+    } else {
+      // Actualizacion simple de estado si no se selecciono plan (Sin Membresia)
+      this.clienteService.actualizarMembresia(this.clienteSeleccionado, 'SIN_MEMBRESIA').subscribe({
+        next: () => {
+          this.guardando = false;
+          this.cerrarModalMembresia();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          console.error('Error al actualizar membresia:', err);
+          this.guardando = false;
+        }
+      });
+    }
   }
 
   // ACCION ASIGNAR PULSERA

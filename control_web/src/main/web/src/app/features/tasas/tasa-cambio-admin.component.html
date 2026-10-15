@@ -1,0 +1,238 @@
+<div class="container-fluid p-3">
+  <!-- ENCABEZADO -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-dark m-0">
+        <i class="bi bi-currency-exchange text-success me-2"></i>Gestion de Tasas Cambiarias BCV
+      </h3>
+      <p class="text-muted small m-0">
+        Control de tasas oficiales (USD / EUR), sincronizacion automatica con DolarAPI y registro manual
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <button 
+        type="button" 
+        class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm"
+        (click)="sincronizarDolarApi('USD')"
+        [disabled]="tasaService.cargandoSignal()">
+        <i class="bi bi-arrow-repeat" [class.spin]="tasaService.cargandoSignal()"></i>
+        <span>Sync USD (BCV)</span>
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-outline-info btn-sm d-flex align-items-center gap-1 shadow-sm"
+        (click)="sincronizarDolarApi('EUR')"
+        [disabled]="tasaService.cargandoSignal()">
+        <i class="bi bi-arrow-repeat" [class.spin]="tasaService.cargandoSignal()"></i>
+        <span>Sync EUR (BCV)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TARJETAS DE ESTADO ACTUAL -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-success">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Tasa USD Vigente</span>
+            <h3 class="fw-bold text-success m-0 mt-1">
+              Bs. {{ tasaService.tasaUsdSignal() ? (tasaService.tasaUsdSignal() | number:'1.2-4') : '---' }}
+            </h3>
+          </div>
+          <div class="bg-success-subtle text-success p-3 rounded-circle fs-4">
+            <i class="bi bi-currency-dollar"></i>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block">
+          <i class="bi bi-calendar-event me-1"></i>Vigencia: {{ tasaService.fechaVigenciaSignal() || 'Pendiente' }}
+        </small>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-info">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Tasa EUR Vigente</span>
+            <h3 class="fw-bold text-info m-0 mt-1">
+              Bs. {{ tasaService.tasaEurSignal() ? (tasaService.tasaEurSignal() | number:'1.2-4') : '---' }}
+            </h3>
+          </div>
+          <div class="bg-info-subtle text-info p-3 rounded-circle fs-4">
+            <i class="bi bi-currency-euro"></i>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block">
+          <i class="bi bi-calendar-event me-1"></i>Vigencia: {{ tasaService.fechaVigenciaSignal() || 'Pendiente' }}
+        </small>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-primary">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Estado de Sincronizacion</span>
+            <div class="mt-2">
+              <span 
+                class="badge" 
+                [ngClass]="{
+                  'bg-success': tasaService.estadoSincronizacionSignal() === 'SINCRONIZADO',
+                  'bg-warning text-dark': tasaService.estadoSincronizacionSignal() === 'DESACTUALIZADO',
+                  'bg-info': tasaService.estadoSincronizacionSignal() === 'SINCRONIZANDO',
+                  'bg-danger': tasaService.estadoSincronizacionSignal() === 'ERROR'
+                }">
+                {{ tasaService.estadoSincronizacionSignal() }}
+              </span>
+            </div>
+          </div>
+          <div class="bg-primary-subtle text-primary p-3 rounded-circle fs-4">
+            <i class="bi bi-shield-check"></i>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block">
+          Monitoreo en tiempo real para cobros y facturacion
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- FORMULARIO DE TASA MANUAL -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100">
+        <h5 class="fw-bold text-secondary mb-3">
+          <i class="bi bi-pencil-square me-2 text-primary"></i>Registrar Tasa Manual
+        </h5>
+        <p class="text-muted small mb-3">
+          Permite fijar manualmente la tasa en caso de contingencia o requerimiento administrativo.
+        </p>
+
+        <form (ngSubmit)="registrarManual()">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Moneda</label>
+            <select class="form-select" [(ngModel)]="nuevaTasa.moneda" name="moneda" required>
+              <option value="USD">USD - Dolar Estadounidense</option>
+              <option value="EUR">EUR - Euro Oficial</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Valor de Tasa en Bolívares (VES)</label>
+            <div class="input-group">
+              <span class="input-group-text">Bs.</span>
+              <input 
+                type="number" 
+                step="0.0001" 
+                min="0.0001" 
+                class="form-control" 
+                [(ngModel)]="nuevaTasa.tasa" 
+                name="tasa" 
+                placeholder="Ej. 43.8398" 
+                required />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Fecha de Vigencia</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="nuevaTasa.fecha" 
+              name="fecha" 
+              required />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-bold">Fuente / Origen</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="nuevaTasa.fuente" 
+              name="fuente" 
+              placeholder="MANUAL / Mesa de Cambio" />
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-success w-100 fw-bold shadow-sm"
+            [disabled]="guardandoManual || !nuevaTasa.tasa">
+            <i class="bi bi-check-circle me-1"></i>
+            {{ guardandoManual ? 'Guardando...' : 'Fijar y Registrar Tasa' }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TABLA HISTORICA DE TASAS -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 class="fw-bold text-secondary m-0">
+            <i class="bi bi-clock-history me-2 text-info"></i>Historico de Tasas Registradas
+          </h5>
+          <div class="d-flex gap-2">
+            <select class="form-select form-select-sm" [(ngModel)]="filtroMoneda" (change)="cargarHistorico()" style="width: 140px;">
+              <option value="">Todas las Monedas</option>
+              <option value="USD">Solo USD</option>
+              <option value="EUR">Solo EUR</option>
+            </select>
+            <button class="btn btn-light btn-sm border" (click)="cargarHistorico()" [disabled]="cargandoHistorico">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="cargandoHistorico" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted small mt-2">Cargando historico de tasas...</p>
+        </div>
+
+        <div *ngIf="!cargandoHistorico && historicoTasas.length === 0" class="text-center py-5">
+          <i class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-2"></i>
+          <p class="text-muted small">No hay tasas registradas en el historial.</p>
+        </div>
+
+        <div *ngIf="!cargandoHistorico && historicoTasas.length > 0" class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr class="small text-muted text-uppercase">
+                <th>Moneda</th>
+                <th>Valor Tasa (VES)</th>
+                <th>Fecha Vigencia</th>
+                <th>Fecha Captura</th>
+                <th>Fuente / Origen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of historicoTasas">
+                <td>
+                  <span 
+                    class="badge" 
+                    [ngClass]="item.monedaOrigen === 'USD' ? 'bg-success' : 'bg-info'">
+                    {{ item.monedaOrigen }}
+                  </span>
+                </td>
+                <td class="fw-bold text-dark">
+                  Bs. {{ item.valor | number:'1.2-4' }}
+                </td>
+                <td class="small">
+                  {{ item.fechaVigencia }}
+                </td>
+                <td class="small text-muted">
+                  {{ item.fechaCaptura ? (item.fechaCaptura | date:'short') : '---' }}
+                </td>
+                <td>
+                  <span class="badge bg-light text-secondary border small">
+                    {{ item.origenCaptura || 'Sistema' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

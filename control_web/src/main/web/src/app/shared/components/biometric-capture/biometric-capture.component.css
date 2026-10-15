@@ -17,7 +17,7 @@
 .camera-box ::ng-deep webcam video {
   width: 100% !important;
   height: 100% !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   object-position: center center !important;
   display: block !important;
   transition: transform 0.2s ease-in-out;
@@ -28,14 +28,14 @@
   transform: scaleX(-1) !important;
 }
 
-/* Reticula guia lineal de centrado de rostro */
+/* Reticula guia lineal de centrado de rostro identica a terminal de vision */
 .face-target-guide {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 190px;
-  height: 215px;
+  width: 210px;
+  height: 250px;
   pointer-events: none;
   z-index: 10;
 }

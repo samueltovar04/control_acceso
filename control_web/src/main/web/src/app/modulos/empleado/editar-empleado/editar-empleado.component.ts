@@ -7,6 +7,7 @@ import { BiometricCaptureComponent } from '../../../shared/components/biometric-
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
 import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
 import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-editar-empleado',
@@ -48,7 +49,8 @@ export class EditarEmpleadoComponent implements OnInit {
     private empleService: EmpleadoService,
     private sedeService: SedeService,
     private gerenciaService: GerenciaService,
-    private tipoContratoService: TipoContratoService
+    private tipoContratoService: TipoContratoService,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -110,14 +112,14 @@ export class EditarEmpleadoComponent implements OnInit {
   save(): void {
     this.guardando = true;
     this.empleService.updateEmployee(this.id, this.employee).subscribe({
-      next: () => {
+      next: async () => {
         this.guardando = false;
-        alert('Empleado actualizado exitosamente.');
+        await this.alertModal.success('Empleado actualizado exitosamente.', 'Actualizacion Exitosa');
         this.router.navigate(['/home/empleados']);
       },
-      error: (err) => {
+      error: async (err) => {
         this.guardando = false;
-        alert('Cambios guardados localmente.');
+        await this.alertModal.info('Cambios guardados localmente.', 'Modo Local');
         this.router.navigate(['/home/empleados']);
       }
     });
@@ -126,7 +128,7 @@ export class EditarEmpleadoComponent implements OnInit {
   onSubmit(): void {
     this.submitted = true;
     if (!this.employee.nombre || !this.employee.documento) {
-      alert('Por favor ingrese el nombre y documento del empleado.');
+      this.alertModal.warning('Por favor ingrese el nombre y documento del empleado.', 'Campos Requeridos');
       return;
     }
     this.save();

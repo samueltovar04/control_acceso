@@ -36,6 +36,8 @@ services:
       QUARKUS_SMALLRYE_JWT_ENABLED: "false"
     volumes:
       - /tmp:/host_tmp:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       access_control_db:
         condition: service_healthy

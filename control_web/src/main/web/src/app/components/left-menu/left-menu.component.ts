@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { SidebarService } from '../../shared/services/sidebar.service';
 
 @Component({
   selector: 'app-left-menu',
@@ -9,4 +10,13 @@ import { RouterModule } from '@angular/router';
   templateUrl: './left-menu.component.html',
   styleUrls: ['./left-menu.component.css']
 })
-export class LeftMenuComponent {}
+export class LeftMenuComponent {
+  public sidebarService = inject(SidebarService);
+  menuPagosAbierto: boolean = true;
+
+  onNavClick(): void {
+    if (window.innerWidth < 768) {
+      this.sidebarService.close();
+    }
+  }
+}

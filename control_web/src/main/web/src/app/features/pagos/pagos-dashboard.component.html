@@ -1,0 +1,655 @@
+<div class="container-fluid p-3">
+  <!-- ENCABEZADO Y PESTANAS -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-dark m-0">
+        <i class="bi bi-cash-stack text-success me-2"></i>Central de Control de Pagos
+      </h3>
+      <p class="text-muted small m-0">
+        Monitoreo de recaudación multimoneda, registro de cobros en caja y conciliación de transferencias
+      </p>
+    </div>
+
+    <!-- PESTAÑAS DE NAVEGACION -->
+    <ul class="nav nav-pills bg-white p-1 rounded-3 shadow-sm border">
+      <li class="nav-item">
+        <button 
+          class="nav-link fw-semibold px-3 py-2 d-flex align-items-center gap-2"
+          [class.active]="pestanaActiva === 'resumen'"
+          (click)="pestanaActiva = 'resumen'">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>Resumen y Auditoría</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button 
+          class="nav-link fw-semibold px-3 py-2 d-flex align-items-center gap-2"
+          [class.active]="pestanaActiva === 'registro'"
+          (click)="pestanaActiva = 'registro'">
+          <i class="bi bi-plus-circle text-success"></i>
+          <span>Registrar Cobro & Conciliación</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PESTAÑA 1: RESUMEN Y AUDITORIA             -->
+  <!-- ========================================== -->
+  <div *ngIf="pestanaActiva === 'resumen'">
+    <!-- TARJETAS KPIS -->
+    <div class="row g-3 mb-4">
+      <!-- RECAUDACION FILTRADA USD / VES -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-success">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">
+                Recaudado
+                <span class="badge bg-success-subtle text-success ms-1" *ngIf="fechaSeleccionada">
+                  {{ fechaSeleccionada | date:'dd/MM/yyyy' }}
+                </span>
+                <span class="badge bg-light text-dark border ms-1" *ngIf="!fechaSeleccionada">
+                  {{ periodoSeleccionado | uppercase }}
+                </span>
+              </span>
+              <h3 class="fw-bold text-success m-0 mt-1">
+                $ {{ totalRecaudadoFiltradoUSD | number:'1.2-2' }}
+              </h3>
+            </div>
+            <div class="bg-success-subtle text-success p-3 rounded-circle fs-4">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block">
+            Equivalente: Bs. {{ totalRecaudadoFiltradoVES | number:'1.2-2' }}
+          </small>
+        </div>
+      </div>
+
+      <!-- CLIENTES AL DIA -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-primary">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Clientes al Día</span>
+              <h3 class="fw-bold text-primary m-0 mt-1">
+                {{ metricas.clientesAlDia || 0 }}
+              </h3>
+            </div>
+            <div class="bg-primary-subtle text-primary p-3 rounded-circle fs-4">
+              <i class="bi bi-person-check-fill"></i>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block text-truncate">
+            Acceso total activo en torniquetes
+          </small>
+        </div>
+      </div>
+
+      <!-- POR CONCILIAR -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-warning">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Por Conciliar</span>
+              <h3 class="fw-bold text-warning m-0 mt-1">
+                {{ metricas.clientesPendienteConciliar || 0 }}
+              </h3>
+            </div>
+            <div class="bg-warning-subtle text-warning p-3 rounded-circle fs-4">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block text-truncate">
+            Comprobantes pendientes de revisión
+          </small>
+        </div>
+      </div>
+
+      <!-- MOROSOS / VENCIDOS -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-danger">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small text-uppercase fw-bold">Morosos / Vencidos</span>
+              <h3 class="fw-bold text-danger m-0 mt-1">
+                {{ metricas.clientesMorosos || 0 }}
+              </h3>
+            </div>
+            <div class="bg-danger-subtle text-danger p-3 rounded-circle fs-4">
+              <i class="bi bi-person-x-fill"></i>
+            </div>
+          </div>
+          <small class="text-muted mt-2 d-block text-truncate">
+            Paso restringido en torniquetes
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA AUDITORIA DE TRANSACCIONES -->
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+          <h5 class="fw-bold text-secondary m-0">
+            <i class="bi bi-receipt-cutoff me-2 text-primary"></i>Historial de Pagos y Transacciones
+          </h5>
+          <span class="text-muted small">Reporte financiero de cobros y pagos procesados</span>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          <!-- BUSCADOR -->
+          <div class="input-group input-group-sm" style="width: 200px;">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control border-start-0" 
+              placeholder="Buscar cliente, cédula..." 
+              [(ngModel)]="filtroBusqueda" 
+              (ngModelChange)="aplicarFiltros()">
+          </div>
+
+          <!-- FILTRO DE ESTADO -->
+          <select class="form-select form-select-sm" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" style="width: 150px;">
+            <option value="TODOS">Todos los Estados</option>
+            <option value="PAGADO">PAGADO</option>
+            <option value="CONCILIADO">CONCILIADO</option>
+            <option value="COMPLETADO">COMPLETADO</option>
+            <option value="PENDIENTE_CONCILIAR">PENDIENTE</option>
+            <option value="RECHAZADO">RECHAZADO</option>
+          </select>
+
+          <!-- SELECTOR DE PERIODO (SEMANAL / MENSUAL / DIA / TODOS) -->
+          <select class="form-select form-select-sm" [(ngModel)]="periodoSeleccionado" (change)="onPeriodoChange()" style="width: 120px;">
+            <option value="todos">Todos</option>
+            <option value="dia">Del Día</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensual">Mensual</option>
+          </select>
+
+          <!-- SELECTOR DE CALENDARIO / FECHA EXACTA -->
+          <div class="input-group input-group-sm" style="width: 175px;">
+            <span class="input-group-text bg-light"><i class="bi bi-calendar-event"></i></span>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="fechaSeleccionada" 
+              (change)="onFechaChange()" 
+              title="Filtrar por fecha específica">
+            <button 
+              *ngIf="fechaSeleccionada" 
+              class="btn btn-outline-secondary" 
+              type="button" 
+              (click)="limpiarFiltroFecha()" 
+              title="Limpiar fecha">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+
+          <!-- BOTON DESCARGA EN EXCEL / CSV -->
+          <button 
+            type="button" 
+            class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm px-3"
+            (click)="exportarExcel()"
+            [disabled]="transaccionesFiltradas.length === 0"
+            title="Descargar reporte en formato Excel / CSV">
+            <i class="bi bi-file-earmark-excel-fill"></i>
+            <span>Exportar Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="cargandoReporte" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted small mt-2">Cargando reporte de transacciones...</p>
+      </div>
+
+      <div *ngIf="!cargandoReporte && transaccionesFiltradas.length === 0" class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted opacity-50 d-block mb-2"></i>
+        <p class="text-muted small">No se encontraron transacciones para el filtro seleccionado.</p>
+      </div>
+
+      <div *ngIf="!cargandoReporte && transaccionesFiltradas.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr class="small text-muted text-uppercase">
+              <th>ID</th>
+              <th>Cliente / Socio</th>
+              <th>Cédula</th>
+              <th>Monto USD</th>
+              <th>Monto VES</th>
+              <th>Tasa BCV</th>
+              <th>Método</th>
+              <th>Referencia</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of transaccionesFiltradas">
+              <td class="fw-bold text-muted small">#{{ t.pagoId }}</td>
+              <td class="fw-semibold text-dark">{{ t.cliente }}</td>
+              <td class="small">{{ t.cedula }}</td>
+              <td class="fw-bold text-success">$ {{ t.montoUSD | number:'1.2-2' }}</td>
+              <td class="small">
+                Bs. {{ t.montoVES ? (t.montoVES | number:'1.2-2') : '---' }}
+              </td>
+              <td class="small text-muted">
+                {{ t.tasa ? (t.tasa | number:'1.2-4') : '---' }}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border small">{{ t.metodo }}</span>
+              </td>
+              <td class="small text-muted">{{ t.referencia || 'N/A' }}</td>
+              <td>
+                <span 
+                  class="badge" 
+                  [ngClass]="{
+                    'bg-success': t.estado === 'PAGADO' || t.estado === 'CONCILIADO' || t.estado === 'COMPLETADO',
+                    'bg-warning text-dark': t.estado === 'PENDIENTE_CONCILIAR' || t.estado === 'PENDIENTE_CONCILIACION',
+                    'bg-danger': t.estado === 'RECHAZADO'
+                  }">
+                  {{ t.estado }}
+                </span>
+              </td>
+              <td class="small text-muted">
+                {{ t.fecha ? (t.fecha | date:'short') : '---' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- RESUMEN DE TOTALES POR METODO DE PAGO (ABAJO DE LA GRILLA)      -->
+      <!-- ============================================================== -->
+      <div class="mt-4 pt-3 border-top" *ngIf="!cargandoReporte && resumenPorMetodo.length > 0">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="fw-bold text-dark small text-uppercase">
+            <i class="bi bi-pie-chart-fill text-primary me-1"></i>Resumen de Recaudación por Método de Pago
+          </span>
+          <span class="badge bg-light text-dark border">
+            {{ transaccionesFiltradas.length }} transacciones filtradas
+          </span>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let r of resumenPorMetodo">
+            <div class="p-2 border rounded-3 bg-light d-flex justify-content-between align-items-center shadow-xs">
+              <div>
+                <span class="badge bg-white text-dark border fw-bold text-truncate" style="max-width: 140px;">
+                  {{ r.metodo }}
+                </span>
+                <span class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                  {{ r.cantidad }} {{ r.cantidad === 1 ? 'operación' : 'operaciones' }}
+                </span>
+              </div>
+              <div class="text-end">
+                <span class="fw-bold text-success d-block small">$ {{ r.totalUSD | number:'1.2-2' }}</span>
+                <span class="text-muted" style="font-size: 0.72rem;">Bs. {{ r.totalVES | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- PESTAÑA 2: REGISTRAR COBRO & CONCILIACION DE TRANSFERENCIAS     -->
+  <!-- ============================================================== -->
+  <div *ngIf="pestanaActiva === 'registro'">
+    <div class="row g-4">
+      <!-- FORMULARIO 1: REGISTRAR COBRO / PAGO DE CLIENTE -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100 rounded-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-secondary mb-0">
+              <i class="bi bi-plus-circle me-1 text-success"></i> Registrar Cobro / Pago de Cliente
+            </h5>
+            <!-- TASA DEL DIA EN EL TOP -->
+            <div class="badge bg-light text-dark border px-3 py-2 d-flex align-items-center gap-2 shadow-sm" *ngIf="tasaService.tasaUsdSignal() as tasa">
+              <i class="bi bi-currency-exchange text-success fs-6"></i>
+              <div class="text-start">
+                <span class="text-muted d-block" style="font-size: 0.65rem;">Tasa Oficial BCV del Dia</span>
+                <strong class="text-success fs-6">{{ tasa | number:'1.2-4' }} VES/USD</strong>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible fade show py-2 px-3 small border-0 mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> {{ mensajeExito }}
+            <button type="button" class="btn-close py-2" (click)="mensajeExito = ''"></button>
+          </div>
+          <p class="text-muted small mb-3">
+            Busque el cliente para listar y seleccionar los pagos pendientes de cobro con monto en solo lectura a tasa del dia.
+          </p>
+
+          <form (ngSubmit)="registrarPago()">
+            <!-- BUSCADOR DE CLIENTE CON AUTOCOMPLETE -->
+            <div class="mb-3 position-relative">
+              <label class="form-label small fw-bold">Buscar y Seleccionar Cliente *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="busquedaClienteTexto" 
+                  name="busquedaCliente"
+                  (input)="filtrarClientes()"
+                  (focus)="mostrarDropdownClientes = true"
+                  placeholder="Escriba nombre, apellido o cédula..." 
+                  autocomplete="off"
+                  required />
+                <button 
+                  *ngIf="clienteSeleccionado" 
+                  type="button" 
+                  class="btn btn-outline-secondary" 
+                  (click)="limpiarClienteSeleccionado()">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              <!-- DROPDOWN DE COINCIDENCIAS -->
+              <div 
+                *ngIf="mostrarDropdownClientes && clientesFiltrados.length > 0" 
+                class="position-absolute w-100 bg-white border rounded shadow-lg mt-1 overflow-auto" 
+                style="max-height: 220px; z-index: 1050;">
+                <div 
+                  *ngFor="let c of clientesFiltrados" 
+                  class="p-2 border-bottom cliente-item d-flex justify-content-between align-items-center"
+                  style="cursor: pointer;"
+                  (click)="seleccionarCliente(c)">
+                  <div>
+                    <span class="fw-bold d-block">{{ c.nombre }} {{ c.apellido }}</span>
+                    <small class="text-muted"><i class="bi bi-person-vcard me-1"></i>{{ c.documento }} • {{ c.email || 'Sin correo' }}</small>
+                  </div>
+                  <span class="badge" [ngClass]="c.estadoSuscripcion === 'ACTIVA' ? 'bg-success' : 'bg-warning text-dark'">
+                    {{ c.estadoSuscripcion || 'ACTIVA' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- INFO DEL CLIENTE SELECCIONADO (ID SETEADO POR DETRAS) -->
+              <div *ngIf="clienteSeleccionado" class="alert alert-success py-2 px-3 small border-0 mt-2 mb-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <i class="bi bi-check-circle-fill me-1"></i>
+                  <strong>ID Cliente #{{ clienteSeleccionado.id }}:</strong> {{ clienteSeleccionado.nombre }} {{ clienteSeleccionado.apellido }}
+                  <span class="ms-2 text-muted" *ngIf="clienteSeleccionado.membresiaActual">({{ clienteSeleccionado.membresiaActual.nombre }})</span>
+                </div>
+                <span class="badge bg-white text-success border">Seleccionado</span>
+              </div>
+            </div>
+
+            <!-- LISTADO DE PAGOS PENDIENTES DEL CLIENTE SELECCIONADO -->
+            <div *ngIf="clienteSeleccionado" class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label small fw-bold mb-0 text-dark">
+                  <i class="bi bi-receipt-cutoff me-1 text-primary"></i>Pagos / Cuotas Pendientes del Cliente
+                </label>
+                <button *ngIf="pagosPendientesCliente.length > 1" type="button" class="btn btn-link btn-sm p-0 text-decoration-none" (click)="toggleTodosLosPagos()">
+                  {{ pagosSeleccionadosIds.size === pagosPendientesCliente.length ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+                </button>
+              </div>
+
+              <div *ngIf="cargandoPagosPendientes" class="text-center py-2 text-muted small">
+                <div class="spinner-border spinner-border-sm me-1" role="status"></div> Cargando pagos pendientes...
+              </div>
+
+              <div *ngIf="!cargandoPagosPendientes && pagosPendientesCliente.length > 0" class="border rounded-3 p-2 bg-light mb-2">
+                <div *ngFor="let p of pagosPendientesCliente" 
+                     class="d-flex justify-content-between align-items-center p-2 mb-1 bg-white rounded border border-light-subtle"
+                     style="cursor: pointer;"
+                     (click)="togglePagoSeleccionado(p)">
+                  <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" [checked]="pagosSeleccionadosIds.has(p.id!)" (click)="$event.stopPropagation(); togglePagoSeleccionado(p)">
+                    <label class="form-check-label small fw-semibold text-dark">
+                      Cobro #{{ p.id }} - {{ p.fechaPago ? (p.fechaPago | date:'mediumDate') : 'Cuota de membresia' }}
+                    </label>
+                    <div class="text-muted" style="font-size: 0.72rem;">
+                      Estado: <span class="badge bg-warning text-dark py-0">{{ p.estadoPago }}</span> | {{ p.metodoPago || 'CORTE_AUTOMATICO' }}
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="fw-bold text-success d-block">${{ p.monto | number:'1.2-2' }} USD</span>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ p.monto | bcvConvert:'USD' }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="!cargandoPagosPendientes && pagosPendientesCliente.length === 0" class="alert alert-info py-2 px-3 small border-0 mb-2">
+                <i class="bi bi-info-circle me-1"></i> No tiene cuotas vencidas en histórico. Se aplicará el cobro de renovación de membresía: <strong>${{ nuevoPago.monto | number:'1.2-2' }} USD</strong>.
+              </div>
+            </div>
+
+            <!-- MONTO USD Y EQUIVALENTE EN VES EN SOLO LECTURA -->
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center">
+                <span>Monto a Cobrar ($ USD) [Solo Lectura]</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                  {{ pagosSeleccionadosIds.size }} pago(s) seleccionado(s)
+                </span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light fw-bold text-muted">$</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  class="form-control bg-light fw-bold fs-5 text-success" 
+                  [value]="nuevoPago.monto | number:'1.2-2'" 
+                  readonly 
+                  tabindex="-1"
+                  required />
+              </div>
+              <div class="p-2 mt-2 rounded bg-light border border-light-subtle d-flex justify-content-between align-items-center" *ngIf="nuevoPago.monto > 0">
+                <span class="small text-muted"><i class="bi bi-calculator me-1 text-primary"></i>Equivalente Oficial BCV:</span>
+                <strong class="text-success fs-6">{{ nuevoPago.monto | bcvConvert:'USD' }}</strong>
+              </div>
+            </div>
+
+            <!-- CAMPO CUPON DE PROMOCION / DESCUENTO -->
+            <div class="mb-3 p-3 rounded-3 bg-light border border-light-subtle">
+              <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-tag-fill text-success me-1"></i> Cupon de Promocion / Descuento</span>
+                <span class="badge bg-white text-muted border" *ngIf="!cuponAplicado">Opcional</span>
+              </label>
+
+              <div class="input-group input-group-sm">
+                <input 
+                  type="text" 
+                  class="form-control text-uppercase font-monospace" 
+                  placeholder="Ej: PROMO2X1" 
+                  [(ngModel)]="cuponTexto" 
+                  name="cupon"
+                  [disabled]="validandoCupon || esCuponValido">
+                
+                <button 
+                  *ngIf="!esCuponValido"
+                  type="button" 
+                  class="btn btn-outline-success fw-bold px-3" 
+                  (click)="validarCupon()"
+                  [disabled]="validandoCupon || !cuponTexto.trim()">
+                  <span *ngIf="validandoCupon" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="!validandoCupon" class="bi bi-check2-circle me-1"></i>
+                  Aplicar
+                </button>
+
+                <button 
+                  *ngIf="esCuponValido"
+                  type="button" 
+                  class="btn btn-outline-danger px-3" 
+                  (click)="removerCupon()">
+                  <i class="bi bi-x-circle me-1"></i> Quitar
+                </button>
+              </div>
+
+              <!-- MENSAJE DE ESTADO DEL CUPON -->
+              <div *ngIf="mensajeCupon" class="mt-2 small"
+                   [ngClass]="esCuponValido ? 'text-success fw-semibold' : 'text-danger'">
+                <i class="bi me-1" [ngClass]="esCuponValido ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
+                {{ mensajeCupon }}
+              </div>
+
+              <!-- RESUMEN DETALLADO DEL DESCUENTO APLICADO -->
+              <div *ngIf="cuponAplicado" class="mt-2 pt-2 border-top border-secondary-subtle border-opacity-25 small">
+                <div class="d-flex justify-content-between text-muted">
+                  <span>Tarifa base:</span>
+                  <span class="font-monospace">${{ cuponAplicado.precioOriginal | number:'1.2-2' }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-danger fw-bold" *ngIf="cuponAplicado.descuentoMonto > 0">
+                  <span>Descuento aplicado:</span>
+                  <span class="font-monospace">-${{ cuponAplicado.descuentoMonto | number:'1.2-2' }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-primary fw-bold" *ngIf="cuponAplicado.beneficioExtra">
+                  <span>Beneficio extra:</span>
+                  <span>{{ cuponAplicado.beneficioExtra }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-dark fw-bold pt-1 border-top border-light-subtle">
+                  <span>Monto final a pagar:</span>
+                  <span class="font-monospace text-success fs-6">${{ cuponAplicado.montoFinal | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- METODO DE PAGO -->
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Método de Pago *</label>
+              <select class="form-select" [(ngModel)]="nuevoPago.metodoPago" name="metodoPago">
+                <option value="PAGO_MOVIL">Pago Móvil</option>
+                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                <option value="EFECTIVO_USD">Efectivo USD (Divisas)</option>
+                <option value="EFECTIVO_VES">Efectivo Bolívares (VES)</option>
+                <option value="TARJETA">Punto de Venta / Tarjeta</option>
+                <option value="ZELLE">Zelle</option>
+                <option value="BINANCE">Binance Pay / USDT</option>
+                <option value="APP_ONLINE">Pago en Línea / Web</option>
+              </select>
+            </div>
+
+            <!-- NUMERO DE REFERENCIA REQUERIDO -->
+            <div class="mb-3">
+              <label class="form-label small fw-bold d-flex justify-content-between">
+                <span>Número de Referencia / Comprobante *</span>
+                <span class="text-danger small" *ngIf="errorReferencia">{{ errorReferencia }}</span>
+              </label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [class.is-invalid]="errorReferencia"
+                [(ngModel)]="nuevoPago.numeroReferencia" 
+                (input)="errorReferencia = ''"
+                name="referencia" 
+                placeholder="Ej. TRANS-123456 o Recibo de Caja"
+                required>
+              <div class="invalid-feedback" *ngIf="errorReferencia">
+                {{ errorReferencia }}
+              </div>
+            </div>
+
+            <!-- ALERTA INLINE GENERAL DE VALIDACION SI FALTA ALGO -->
+            <div *ngIf="errorFormulario" class="alert alert-danger py-2 px-3 small border-0 mb-3 d-flex align-items-center">
+              <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+              <span>{{ errorFormulario }}</span>
+            </div>
+
+            <!-- SUBIR COMPROBANTE DE PAGO (OPCIONAL) -->
+            <div class="mb-4">
+              <label class="form-label small fw-bold text-secondary">
+                <i class="bi bi-image me-1 text-primary"></i>Subir Comprobante de Pago (Opcional)
+              </label>
+              <input 
+                type="file" 
+                class="form-control form-control-sm" 
+                accept="image/*,.pdf" 
+                (change)="onArchivoComprobante($event)">
+              
+              <!-- PREVISUALIZACION COMPROBANTE -->
+              <div *ngIf="comprobantePreview" class="position-relative mt-2 border rounded p-2 text-center bg-light">
+                <img [src]="comprobantePreview" alt="Comprobante" class="img-fluid rounded" style="max-height: 140px; object-fit: contain;">
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle" 
+                  (click)="removerComprobante()" 
+                  title="Eliminar comprobante">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- BOTON CONFIRMAR -->
+            <button 
+              type="submit" 
+              class="btn btn-success w-100 fw-bold shadow-sm py-2" 
+              [disabled]="guardandoPago || !clienteSeleccionado || !nuevoPago.monto">
+              <i class="bi bi-check-lg me-1"></i> 
+              {{ guardandoPago ? 'Procesando Pago...' : 'Confirmar Pago' }}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FORMULARIO 2: CONCILIACION BANCARIA DE TRANSFERENCIAS -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100 rounded-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold text-secondary m-0">
+              <i class="bi bi-shield-check me-1 text-primary"></i> Conciliación Bancaria de Transferencias
+            </h5>
+            <button class="btn btn-outline-secondary btn-sm" (click)="cargarPendientesConciliacion()" [disabled]="cargandoPendientes">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+          <p class="text-muted small mb-3">
+            Revisión y validación de transferencias reportadas pendientes de confirmación bancaria.
+          </p>
+
+          <div *ngIf="cargandoPendientes" class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <p class="text-muted small mt-2">Cargando transferencias pendientes...</p>
+          </div>
+
+          <div *ngIf="!cargandoPendientes" class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted text-uppercase">
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Monto</th>
+                  <th>Ref.</th>
+                  <th class="text-end">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of pendientesConciliacion">
+                  <td class="small">{{ p.fechaPago | date:'shortDate' }}</td>
+                  <td>
+                    <span class="fw-semibold text-dark d-block">{{ p.cliente?.nombre }} {{ p.cliente?.apellido }}</span>
+                    <small class="text-muted">{{ p.cliente?.documento || '' }}</small>
+                  </td>
+                  <td class="fw-bold text-success">${{ p.monto }}</td>
+                  <td><small class="text-muted">{{ p.numeroReferencia || 'N/A' }}</small></td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-success me-1 px-2 py-1" (click)="conciliar(p, 'CONCILIADO')" title="Aprobar pago">
+                      <i class="bi bi-check-lg"></i> Aprobar
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger px-2 py-1" (click)="conciliar(p, 'DISCREPANCIA')" title="Rechazar pago">
+                      <i class="bi bi-x-lg"></i> Rechazar
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="pendientesConciliacion.length === 0">
+                  <td colspan="5" class="text-center text-muted py-4">
+                    <i class="bi bi-check2-circle fs-3 d-block text-success opacity-50 mb-1"></i>
+                    No hay transferencias pendientes de conciliación.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

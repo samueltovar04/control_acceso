@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { VisitanteService } from '../../../shared/visitante/visitante.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-visitante-list',
@@ -17,7 +18,10 @@ export class VisitanteListComponent implements OnInit {
   totalPaginas: number = 1;
   paginasArray: number[] = [];
 
-  constructor(private visiService: VisitanteService) {}
+  constructor(
+    private visiService: VisitanteService,
+    private alertModal: AlertModalService
+  ) {}
 
   ngOnInit(): void {
     this.reloadData();
@@ -71,8 +75,14 @@ export class VisitanteListComponent implements OnInit {
     }
   }
 
-  deleteVisitante(id: number): void {
-    if (confirm('Desea eliminar este visitante?')) {
+  async deleteVisitante(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este visitante del sistema?',
+      'Eliminar Visitante',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
       this.visiService.deleteVisitante(id).subscribe({
         next: () => this.reloadData(),
         error: (err) => console.log(err)

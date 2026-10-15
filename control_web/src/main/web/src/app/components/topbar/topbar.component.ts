@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
+import { TasaCambioService } from '../../core/services/tasa-cambio.service';
+import { SidebarService } from '../../shared/services/sidebar.service';
+
 @Component({
   selector: 'app-topbar',
   standalone: true,
@@ -13,8 +16,14 @@ import { HttpClient } from '@angular/common/http';
 export class TopbarComponent implements OnInit {
   public branding: any = { nombreEmpresa: 'Control de Acceso' };
   public usuarioActivo: string = 'Administrador';
+  public monedaActiva: 'USD' | 'EUR' = 'USD';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    public tasaService: TasaCambioService,
+    public sidebarService: SidebarService
+  ) {}
 
   ngOnInit(): void {
     const user = localStorage.getItem('usuario_activo');

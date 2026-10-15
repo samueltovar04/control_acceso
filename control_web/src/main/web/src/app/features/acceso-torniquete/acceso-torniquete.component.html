@@ -1,0 +1,81 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="radar-indicator bg-success"></div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark">Monitor de Torniquetes en Vivo</h3>
+        <small class="text-muted">Paso fisico y validacion automatica en tiempo real</small>
+      </div>
+    </div>
+    <span class="badge bg-dark font-monospace px-3 py-2">WebSocket Activo: /ws/acceso</span>
+  </div>
+
+  <!-- KPI CARDS ACCESOS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-3 bg-white">
+        <small class="text-muted fw-bold text-uppercase">Total Intentos</small>
+        <div class="fs-3 fw-bold text-dark">{{ totalHoy() }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-3 bg-white">
+        <small class="text-success fw-bold text-uppercase">Accesos Concedidos</small>
+        <div class="fs-3 fw-bold text-success">{{ permitidosHoy() }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm p-3 bg-white">
+        <small class="text-danger fw-bold text-uppercase">Accesos Denegados</small>
+        <div class="fs-3 fw-bold text-danger">{{ denegadosHoy() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA DE EVENTOS -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+      <h6 class="m-0 fw-bold text-dark">Registro en Tiempo Real</h6>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Hora</th>
+            <th>Torniquete</th>
+            <th>Cliente</th>
+            <th>Cedula</th>
+            <th>Estado Membresia</th>
+            <th>Resultado</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ev of eventos()" class="acceso-row" [class.table-danger]="!ev.accesoPermitido" [class.table-success]="ev.accesoPermitido">
+            <td class="font-monospace fw-bold">{{ ev.timestamp }}</td>
+            <td><i class="bi bi-door-closed me-1"></i> {{ ev.torniquete }}</td>
+            <td class="fw-bold">{{ ev.cliente }}</td>
+            <td class="font-monospace">{{ ev.cedula }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="ev.estadoMembresia === 'ACTIVA'" [class.bg-warning]="ev.estadoMembresia === 'PENDIENTE_CONCILIAR'" [class.bg-danger]="ev.estadoMembresia === 'MOROSO' || ev.estadoMembresia === 'VENCIDA'">
+                {{ ev.estadoMembresia }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class.bg-success]="ev.accesoPermitido" [class.bg-danger]="!ev.accesoPermitido">
+                {{ ev.accesoPermitido ? 'PERMITIDO' : 'DENEGADO' }}
+              </span>
+            </td>
+            <td class="small">{{ ev.motivo }}</td>
+          </tr>
+          <tr *ngIf="eventos().length === 0">
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-broadcast fs-2 d-block mb-2"></i>
+              Esperando eventos de paso por torniquete...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

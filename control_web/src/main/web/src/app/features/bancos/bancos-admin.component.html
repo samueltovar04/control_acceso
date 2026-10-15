@@ -1,0 +1,362 @@
+<div class="bancos-container p-4">
+  <!-- ENCABEZADO -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">
+        <i class="bi bi-bank2 text-primary me-2"></i>Gestion de Cuentas Bancarias y Pasarelas Receptoras
+      </h2>
+      <p class="text-muted small mb-0">
+        Parametrizacion de cuentas receptoras para Pago Movil, Transferencias, Zelle y Binance Pay sincronizadas en tiempo real con la App Movil.
+      </p>
+    </div>
+    <div class="d-flex gap-2 mt-2 mt-md-0">
+      <button class="btn btn-outline-secondary btn-sm" (click)="cargarBancos()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+      </button>
+      <button class="btn btn-primary btn-sm d-flex align-items-center" (click)="abrirModalNuevo()">
+        <i class="bi bi-plus-circle me-1"></i>Nueva Cuenta Receptora
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTROS POR METODO -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <button
+      class="btn btn-sm"
+      [ngClass]="filtroTipo() === 'TODOS' ? 'btn-dark' : 'btn-outline-secondary'"
+      (click)="cambiarFiltro('TODOS')"
+    >
+      Todos ({{ bancos().length }})
+    </button>
+    <button
+      class="btn btn-sm"
+      [ngClass]="filtroTipo() === 'PAGO_MOVIL' ? 'btn-primary' : 'btn-outline-primary'"
+      (click)="cambiarFiltro('PAGO_MOVIL')"
+    >
+      <i class="bi bi-phone me-1"></i>Pago Móvil
+    </button>
+    <button
+      class="btn btn-sm"
+      [ngClass]="filtroTipo() === 'TRANSFERENCIA' ? 'btn-info text-white' : 'btn-outline-info'"
+      (click)="cambiarFiltro('TRANSFERENCIA')"
+    >
+      <i class="bi bi-arrow-left-right me-1"></i>Transferencia
+    </button>
+    <button
+      class="btn btn-sm"
+      [ngClass]="filtroTipo() === 'ZELLE' ? 'btn-success' : 'btn-outline-success'"
+      (click)="cambiarFiltro('ZELLE')"
+    >
+      <i class="bi bi-currency-dollar me-1"></i>Zelle
+    </button>
+    <button
+      class="btn btn-sm"
+      [ngClass]="filtroTipo() === 'BINANCE' ? 'btn-warning text-dark' : 'btn-outline-warning'"
+      (click)="cambiarFiltro('BINANCE')"
+    >
+      <i class="bi bi-coin me-1"></i>Binance / Crypto
+    </button>
+  </div>
+
+  <!-- INDICADOR DE COPIADO FLOTANTE -->
+  <div *ngIf="copiadoTexto" class="alert alert-success py-1 px-3 small shadow-sm position-fixed top-0 end-0 m-4 z-3">
+    <i class="bi bi-clipboard-check me-1"></i>Copiado al portapapeles: {{ copiadoTexto }}
+  </div>
+
+  <!-- TARJETAS DE BANCOS -->
+  <div *ngIf="cargando()" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando cuentas...</span>
+    </div>
+    <div class="text-muted small mt-2">Consultando cuentas receptoras en base de datos...</div>
+  </div>
+
+  <div *ngIf="!cargando() && bancosFiltrados.length === 0" class="text-center py-5 bg-light rounded-3 border">
+    <i class="bi bi-credit-card-2-front fs-1 text-muted opacity-50 mb-2 d-block"></i>
+    <h5 class="text-secondary fw-semibold">No se encontraron cuentas configuradas</h5>
+    <p class="text-muted small mb-3">Agrega una cuenta bancaria o billetera para que tus clientes puedan pagar desde la App.</p>
+    <button class="btn btn-primary btn-sm" (click)="abrirModalNuevo()">
+      <i class="bi bi-plus-lg me-1"></i>Registrar Cuenta
+    </button>
+  </div>
+
+  <div *ngIf="!cargando() && bancosFiltrados.length > 0" class="row g-3">
+    <div *ngFor="let b of bancosFiltrados" class="col-md-6 col-xl-4">
+      <div class="card h-100 shadow-sm border-0 position-relative rounded-3 overflow-hidden bank-card" [class.border-inactive]="!b.activo">
+        <div class="card-header bg-white border-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <!-- Icono segun tipo -->
+            <div class="badge-icon rounded-circle d-flex align-items-center justify-content-center" [ngClass]="{
+              'bg-primary-subtle text-primary': b.tipo === 'PAGO_MOVIL',
+              'bg-info-subtle text-info': b.tipo === 'TRANSFERENCIA',
+              'bg-success-subtle text-success': b.tipo === 'ZELLE',
+              'bg-warning-subtle text-warning-emphasis': b.tipo === 'BINANCE'
+            }">
+              <i class="bi fs-5" [ngClass]="{
+                'bi-phone': b.tipo === 'PAGO_MOVIL',
+                'bi-arrow-left-right': b.tipo === 'TRANSFERENCIA',
+                'bi-currency-dollar': b.tipo === 'ZELLE',
+                'bi-coin': b.tipo === 'BINANCE'
+              }"></i>
+            </div>
+            <div>
+              <h6 class="mb-0 fw-bold text-dark">{{ b.nombre }}</h6>
+              <span class="badge text-uppercase" style="font-size: 0.65rem;" [ngClass]="{
+                'bg-primary': b.tipo === 'PAGO_MOVIL',
+                'bg-info': b.tipo === 'TRANSFERENCIA',
+                'bg-success': b.tipo === 'ZELLE',
+                'bg-warning text-dark': b.tipo === 'BINANCE'
+              }">
+                {{ b.tipo }}
+              </span>
+              <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.65rem;">
+                {{ b.moneda }}
+              </span>
+            </div>
+          </div>
+          <div class="form-check form-switch m-0" title="Activar/Desactivar Cuenta">
+            <input class="form-check-input" type="checkbox" [checked]="b.activo" (change)="toggleEstado(b)">
+          </div>
+        </div>
+
+        <div class="card-body py-2">
+          <!-- DETALLES BANCARIOS SEGUN TIPO -->
+          <div *ngIf="b.tipo === 'PAGO_MOVIL' || b.tipo === 'TRANSFERENCIA'" class="small text-secondary">
+            <div *ngIf="b.codigo" class="d-flex justify-content-between py-1 border-bottom border-light">
+              <span>Codigo Banco:</span>
+              <strong class="text-dark">{{ b.codigo }}</strong>
+            </div>
+            <div *ngIf="b.numeroCuenta" class="py-1 border-bottom border-light">
+              <span class="d-block text-muted" style="font-size: 0.72rem;">Numero de Cuenta:</span>
+              <div class="d-flex justify-content-between align-items-center">
+                <code class="text-dark fw-bold">{{ b.numeroCuenta }}</code>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.numeroCuenta)" title="Copiar cuenta">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.telefono" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <span>Teléfono Pago Móvil:</span>
+              <div>
+                <strong class="text-dark me-1">{{ b.telefono }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.telefono)" title="Copiar telefono">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.documentoTitular" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <span>RIF / Cédula:</span>
+              <div>
+                <strong class="text-dark me-1">{{ b.documentoTitular }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.documentoTitular)" title="Copiar documento">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.titular" class="d-flex justify-content-between py-1 border-bottom border-light">
+              <span>Titular:</span>
+              <strong class="text-dark">{{ b.titular }}</strong>
+            </div>
+          </div>
+
+          <!-- DETALLES ZELLE -->
+          <div *ngIf="b.tipo === 'ZELLE'" class="small text-secondary">
+            <div *ngIf="b.email" class="py-1 border-bottom border-light">
+              <span class="d-block text-muted" style="font-size: 0.72rem;">Correo Zelle:</span>
+              <div class="d-flex justify-content-between align-items-center">
+                <strong class="text-success">{{ b.email }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.email)" title="Copiar correo">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.telefono" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <span>Teléfono Zelle:</span>
+              <div>
+                <strong class="text-dark me-1">{{ b.telefono }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.telefono)">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.titular" class="d-flex justify-content-between py-1 border-bottom border-light">
+              <span>Nombre Titular:</span>
+              <strong class="text-dark">{{ b.titular }}</strong>
+            </div>
+          </div>
+
+          <!-- DETALLES BINANCE / CRYPTO -->
+          <div *ngIf="b.tipo === 'BINANCE'" class="small text-secondary">
+            <div *ngIf="b.memoQr" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <span>Binance Pay ID:</span>
+              <div>
+                <strong class="text-warning-emphasis me-1">{{ b.memoQr }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.memoQr)">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.email" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <span>Email Binance:</span>
+              <div>
+                <strong class="text-dark me-1">{{ b.email }}</strong>
+                <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.email)">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+            <div *ngIf="b.red" class="d-flex justify-content-between py-1 border-bottom border-light">
+              <span>Red de Envío:</span>
+              <span class="badge bg-dark">{{ b.red }}</span>
+            </div>
+            <div *ngIf="b.direccionBilletera" class="py-1 border-bottom border-light">
+              <span class="d-block text-muted" style="font-size: 0.72rem;">Dirección Wallet:</span>
+              <div class="d-flex justify-content-between align-items-center">
+                <code class="text-break text-dark fw-bold" style="font-size: 0.75rem;">{{ b.direccionBilletera }}</code>
+                <button class="btn btn-sm btn-link p-0 text-muted ms-1" (click)="copiarAlPortapapeles(b.direccionBilletera)">
+                  <i class="bi bi-clipboard"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOTAS ADICIONALES -->
+          <div *ngIf="b.notasInstruccion" class="alert alert-light border mt-2 py-1 px-2 mb-0 small text-muted">
+            <i class="bi bi-info-circle me-1 text-primary"></i>{{ b.notasInstruccion }}
+          </div>
+        </div>
+
+        <div class="card-footer bg-white border-0 pt-0 pb-3 d-flex justify-content-between align-items-center">
+          <span class="badge" [ngClass]="b.activo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'">
+            <i class="bi me-1" [ngClass]="b.activo ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+            {{ b.activo ? 'Activa en App' : 'Inactiva' }}
+          </span>
+          <button class="btn btn-sm btn-outline-primary" (click)="abrirModalEditar(b)">
+            <i class="bi bi-pencil me-1"></i>Editar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR BANCO -->
+<div *ngIf="mostrarModal()" class="modal-backdrop fade show"></div>
+<div *ngIf="mostrarModal()" class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-light border-0">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-bank me-2 text-primary"></i>{{ editandoId ? 'Editar Cuenta Receptora' : 'Registrar Nueva Cuenta Receptora' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <!-- TIPO DE PASARELA -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-primary">Tipo de Metodo / Pasarela *</label>
+              <select class="form-select border-primary" formControlName="tipo">
+                <option value="PAGO_MOVIL">Pago Móvil (VES)</option>
+                <option value="TRANSFERENCIA">Transferencia Bancaria (VES/USD)</option>
+                <option value="ZELLE">Zelle (USD)</option>
+                <option value="BINANCE">Binance Pay / Crypto (USDT)</option>
+              </select>
+            </div>
+
+            <!-- MONEDA -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Moneda Aceptada *</label>
+              <select class="form-select" formControlName="moneda">
+                <option value="VES">Bolívares (VES)</option>
+                <option value="USD">Dólares (USD)</option>
+                <option value="USDT">Tether (USDT)</option>
+                <option value="EUR">Euros (EUR)</option>
+              </select>
+            </div>
+
+            <!-- NOMBRE ENTIDAD -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Nombre del Banco / Entidad *</label>
+              <input type="text" class="form-control" formControlName="nombre" placeholder="Ej: Banesco, Mercantil, Zelle Corp">
+            </div>
+
+            <!-- CODIGO BANCO (VES) -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'TRANSFERENCIA'">
+              <label class="form-label small fw-bold">Código Bancario (4 dígitos)</label>
+              <input type="text" class="form-control" formControlName="codigo" placeholder="Ej: 0134, 0105, 0102">
+            </div>
+
+            <!-- TITULAR -->
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Nombre Titular de la Cuenta *</label>
+              <input type="text" class="form-control" formControlName="titular" placeholder="Ej: Gimnasio GymAccess C.A.">
+            </div>
+
+            <!-- DOCUMENTO / RIF -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'TRANSFERENCIA'">
+              <label class="form-label small fw-bold">Cédula / RIF Titular</label>
+              <input type="text" class="form-control" formControlName="documentoTitular" placeholder="Ej: J-12345678-9 o V-12345678">
+            </div>
+
+            <!-- TELEFONO -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'ZELLE'">
+              <label class="form-label small fw-bold">Teléfono Asociado</label>
+              <input type="text" class="form-control" formControlName="telefono" placeholder="Ej: 04141234567">
+            </div>
+
+            <!-- NUMERO DE CUENTA -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'TRANSFERENCIA' || form.get('tipo')?.value === 'PAGO_MOVIL'">
+              <label class="form-label small fw-bold">Número de Cuenta (20 dígitos)</label>
+              <input type="text" class="form-control" formControlName="numeroCuenta" placeholder="01340000000000000000">
+            </div>
+
+            <!-- EMAIL -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'ZELLE' || form.get('tipo')?.value === 'BINANCE' || form.get('tipo')?.value === 'TRANSFERENCIA'">
+              <label class="form-label small fw-bold">Correo Electrónico</label>
+              <input type="email" class="form-control" formControlName="email" placeholder="pagos@empresa.com">
+            </div>
+
+            <!-- BINANCE CAMPOS -->
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'BINANCE'">
+              <label class="form-label small fw-bold">Binance Pay ID / Pay Memo</label>
+              <input type="text" class="form-control" formControlName="memoQr" placeholder="Ej: 88291039">
+            </div>
+
+            <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'BINANCE'">
+              <label class="form-label small fw-bold">Red Cripto</label>
+              <input type="text" class="form-control" formControlName="red" placeholder="Ej: TRC20, BSC, Polygon">
+            </div>
+
+            <div class="col-md-12" *ngIf="form.get('tipo')?.value === 'BINANCE'">
+              <label class="form-label small fw-bold">Dirección de Billetera (Wallet Address)</label>
+              <input type="text" class="form-control" formControlName="direccionBilletera" placeholder="Ej: TXyZ9876543210ABCDEF1234567890USDT">
+            </div>
+
+            <!-- INSTRUCCIONES AL CLIENTE -->
+            <div class="col-12">
+              <label class="form-label small fw-bold">Instrucciones para el Cliente (Visible en App)</label>
+              <textarea class="form-control" formControlName="notasInstruccion" rows="2" placeholder="Ej: Colocar numero de cedula en concepto o enviar comprobante por WhatsApp"></textarea>
+            </div>
+
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" formControlName="activo" id="checkActivo">
+                <label class="form-check-label small fw-semibold" for="checkActivo">Mostrar y habilitar para recepción de pagos en la App</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-0">
+          <button type="button" class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary px-4" [disabled]="form.invalid">
+            <i class="bi bi-check-lg me-1"></i>Guardar Cuenta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

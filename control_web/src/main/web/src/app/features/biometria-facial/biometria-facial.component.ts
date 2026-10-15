@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { WebcamModule, WebcamImage } from 'ngx-webcam';
 import { Subject, Observable } from 'rxjs';
+import jsQR from 'jsqr';
 
 export interface DispositivoItem {
   id: number;
@@ -11,6 +12,7 @@ export interface DispositivoItem {
   ip: string;
   tipo: string;
   tipoDispositivo?: string;
+  descripcion?: string;
   state?: number;
   ubicacion?: string;
   estadoConexion?: boolean;
@@ -25,7 +27,7 @@ import { BiometricCaptureComponent } from '../../shared/components/biometric-cap
   templateUrl: './biometria-facial.component.html',
   styleUrls: ['./biometria-facial.component.css']
 })
-export class BiometriaFacialComponent implements OnInit {
+export class BiometriaFacialComponent implements OnInit, OnDestroy {
   @ViewChild('biometricCapture') biometricCapture?: BiometricCaptureComponent;
   public trigger: Subject<void> = new Subject<void>();
   public webcamImage?: WebcamImage;
@@ -33,6 +35,11 @@ export class BiometriaFacialComponent implements OnInit {
   public procesando: boolean = false;
   public escaneandoHuella: boolean = false;
   public mensajeHuella: string = '';
+
+  // Escaneo continuo y automatico de QR desde el video de camara
+  private qrScannerInterval?: any;
+  private ultimoQrLeido: string = '';
+  private ultimoTimestampQr: number = 0;
 
   // Modal Flotante de Identificación de Persona
   public mostrarModalPersona: boolean = false;
@@ -59,6 +66,59 @@ export class BiometriaFacialComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarDispositivos();
+    this.iniciarEscaneoContinuoQr();
+  }
+
+  ngOnDestroy(): void {
+    if (this.qrScannerInterval) {
+      clearInterval(this.qrScannerInterval);
+    }
+    if (this.timerResultadoSub) {
+      clearInterval(this.timerResultadoSub);
+    }
+  }
+
+  /**
+   * Monitorea el elemento <video> de la camara cada 400ms para detectar codigos QR automaticamente sin pulsar boton
+   */
+  private iniciarEscaneoContinuoQr(): void {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    this.qrScannerInterval = setInterval(() => {
+      // Si ya esta procesando un rostro, un modal abierto o torniquete abierto, pausar escaneo
+      if (this.procesando || this.mostrarModalPersona || this.estadoTorniquete === 'ABIERTO') {
+        return;
+      }
+
+      const videoEl = document.querySelector('webcam video') as HTMLVideoElement;
+      if (!videoEl || videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA || videoEl.videoWidth === 0) {
+        return;
+      }
+
+      try {
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        if (!ctx) return;
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data && code.data.trim().length > 0) {
+          const qrLeido = code.data.trim();
+          const ahora = Date.now();
+          // Evitar re-disparar el mismo QR en menos de 5 segundos
+          if (qrLeido === this.ultimoQrLeido && (ahora - this.ultimoTimestampQr < 5000)) {
+            return;
+          }
+          this.ultimoQrLeido = qrLeido;
+          this.ultimoTimestampQr = ahora;
+          this.verificarAccesoPorQr(qrLeido);
+        }
+      } catch (err) {
+        // Ignorar excepciones menores de renderizado en canvas
+      }
+    }, 400);
   }
 
   cargarDispositivos(): void {
@@ -66,16 +126,16 @@ export class BiometriaFacialComponent implements OnInit {
       next: (data) => {
         this.todosDispositivos = data || [];
 
-        // 1. Selector "Torniquete Asignado": solo activos y tipo contenga 'Torniquete'
+        // 1. Selector "Torniquete Asignado": solo dispositivos validos tipo torniquete
         this.torniquetesDisponibles = this.todosDispositivos.filter(d => {
-          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''}`.toLowerCase();
+          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
           const esActivo = d.state === 1 || d.estadoConexion === true;
           return esActivo && tipoTexto.includes('torniquete');
         });
 
         // 2. Modal/Panel "Dispositivos / Torniquetes en red": solo de tipo torniquetes y lector o huellas
         this.dispositivosRedFiltrados = this.todosDispositivos.filter(d => {
-          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''}`.toLowerCase();
+          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
           return tipoTexto.includes('torniquete') ||
                  tipoTexto.includes('lector') ||
                  tipoTexto.includes('huella') ||
@@ -84,22 +144,15 @@ export class BiometriaFacialComponent implements OnInit {
 
         if (this.torniquetesDisponibles.length > 0) {
           this.dispositivoSeleccionadoId = this.torniquetesDisponibles[0].id;
-        } else if (this.todosDispositivos.length > 0) {
-          this.dispositivoSeleccionadoId = this.todosDispositivos[0].id;
+        } else {
+          this.dispositivoSeleccionadoId = undefined;
         }
       },
       error: () => {
-        const fallbacks: DispositivoItem[] = [
-          { id: 12, nombre: 'Torniquete Entrada Torniquete B', ip: '192.168.1.184', tipo: 'Torniquete con Relay TCP', state: 1, estadoConexion: true },
-          { id: 6, nombre: 'Torniquete Principal Entrada', ip: '192.168.1.168', tipo: 'Torniquete con Relay TCP', state: 1, estadoConexion: true },
-          { id: 7, nombre: 'Torniquete VIP Gimnasio', ip: '192.168.1.212', tipo: 'Torniquete con Relay TCP', state: 1, estadoConexion: true },
-          { id: 10, nombre: 'Lector Huella/QR Entrada A', ip: '192.168.1.249', tipo: 'Lector ZKTeco', state: 1, estadoConexion: true },
-          { id: 9, nombre: 'Puerta Biometrica Facial P2', ip: '192.168.1.220', tipo: 'Terminal Biometrica Facial', state: 1, estadoConexion: true }
-        ];
-        this.todosDispositivos = fallbacks;
-        this.torniquetesDisponibles = fallbacks.filter(d => d.tipo.toLowerCase().includes('torniquete'));
-        this.dispositivosRedFiltrados = fallbacks;
-        this.dispositivoSeleccionadoId = this.torniquetesDisponibles[0]?.id || 12;
+        this.todosDispositivos = [];
+        this.torniquetesDisponibles = [];
+        this.dispositivosRedFiltrados = [];
+        this.dispositivoSeleccionadoId = undefined;
       }
     });
   }
@@ -114,7 +167,98 @@ export class BiometriaFacialComponent implements OnInit {
 
   public onFotogramaCapturado(evento: { fotoUrl: string; faceVector: string }): void {
     this.procesando = true;
-    const faceVector = evento.faceVector;
+    
+    // 1. Verificar primero si el fotograma contiene un codigo QR (cedula)
+    this.detectarCodigoQrEnImagen(evento.fotoUrl, (codigoQr) => {
+      if (codigoQr && codigoQr.trim().length > 0) {
+        this.verificarAccesoPorQr(codigoQr.trim(), evento.fotoUrl);
+      } else {
+        // 2. Si no es un QR, proceder con la identificacion biometrica facial normal
+        this.verificarAccesoPorRostro(evento.faceVector);
+      }
+    });
+  }
+
+  private detectarCodigoQrEnImagen(dataUrl: string, callback: (qrData: string | null) => void): void {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          callback(null);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+
+        // Intentar con jsQR
+        try {
+          const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+          if (code && code.data) {
+            callback(code.data);
+            return;
+          }
+        } catch (e) {
+          // Si jsQR falla, intentar BarcodeDetector nativo
+        }
+
+        if ('BarcodeDetector' in window) {
+          const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+          detector.detect(canvas).then((barcodes: any[]) => {
+            if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+              callback(barcodes[0].rawValue);
+            } else {
+              callback(null);
+            }
+          }).catch(() => callback(null));
+        } else {
+          callback(null);
+        }
+      };
+      img.onerror = () => callback(null);
+      img.src = dataUrl;
+    } catch (e) {
+      callback(null);
+    }
+  }
+
+  public verificarAccesoPorQr(codigoQr: string, fotoCaptura?: string): void {
+    this.agregarLog(`Codigo QR detectado: ${codigoQr}. Verificando cedula...`, 'info');
+
+    this.http.post<any>('/api/v1/biometria/verificar-qr', { codigoQr }).subscribe({
+      next: (res) => {
+        this.procesando = false;
+        this.mostrarResultadoConAutoCierre(res);
+
+        if (res.match && res.autorizado && res.persona) {
+          const nombreCompleto = `${res.persona.nombre || res.persona.name || ''} ${res.persona.apellido || res.persona.lastName || ''}`.trim();
+          this.agregarLog(`QR Valido: ${nombreCompleto || 'Persona Autorizada'} (Cedula: ${res.persona.documento || codigoQr}). Acceso Concedido.`, 'success');
+
+          // Mostrar modal con los datos, membresia y foto
+          this.abrirModalPersona(res.persona, res.tipo, 1.0, 'CODIGO_QR_CEDULA', res);
+
+          // Enviar pulso de apertura al torniquete seleccionado
+          this.enviarPulsoApertura(nombreCompleto || 'QR Autorizado');
+        } else {
+          this.activarMovimientoError();
+          const motivo = res.mensaje || 'Cliente o empleado con acceso no autorizado o membresia vencida.';
+          this.agregarLog(`QR Rechazado: ${motivo}`, 'danger');
+        }
+      },
+      error: (err) => {
+        this.procesando = false;
+        this.mostrarResultadoConAutoCierre({ match: false });
+        this.activarMovimientoError();
+        const msg = err.error?.mensaje || `Cedula ${codigoQr} no encontrada en base de datos.`;
+        this.agregarLog(`QR no registrado: ${msg}`, 'danger');
+      }
+    });
+  }
+
+  public verificarAccesoPorRostro(faceVector: string): void {
     this.http.post<any>('/api/v1/biometria/verificar-rostro', { faceVector }).subscribe({
       next: (res) => {
         this.mostrarResultadoConAutoCierre(res);
@@ -122,13 +266,19 @@ export class BiometriaFacialComponent implements OnInit {
 
         if (res.match && res.persona) {
           const nombreCompleto = `${res.persona.nombre || res.persona.name || ''} ${res.persona.apellido || res.persona.lastName || ''}`.trim();
-          this.agregarLog(`Rostro identificado: ${nombreCompleto || 'Persona Autorizada'} (Similitud ${(res.similitud * 100).toFixed(2)}%)`, 'success');
           
-          // Mostrar modal flotante con los datos, membresía y foto de la persona
-          this.abrirModalPersona(res.persona, res.tipo, res.similitud, 'RECONOCIMIENTO_FACIAL');
-          
-          // Enviar pulso de apertura al torniquete seleccionado
-          this.enviarPulsoApertura(nombreCompleto || 'Rostro Autorizado');
+          // Mostrar modal flotante con los datos, membresia y foto de la persona
+          this.abrirModalPersona(res.persona, res.tipo, res.similitud, 'RECONOCIMIENTO_FACIAL', res);
+
+          if (res.autorizado) {
+            this.agregarLog(`Rostro identificado: ${nombreCompleto || 'Persona Autorizada'} (Similitud ${(res.similitud * 100).toFixed(2)}%). Acceso Concedido.`, 'success');
+            // Enviar pulso de apertura al torniquete seleccionado
+            this.enviarPulsoApertura(nombreCompleto || 'Rostro Autorizado');
+          } else {
+            this.activarMovimientoError();
+            const motivo = res.mensaje || 'Cliente sin membresia activa o empleado inactivo.';
+            this.agregarLog(`Acceso Denegado: ${motivo}`, 'danger');
+          }
         } else {
           this.activarMovimientoError();
           this.agregarLog('Rostro desconocido o sin coincidencia en base de datos.', 'danger');
@@ -253,13 +403,19 @@ export class BiometriaFacialComponent implements OnInit {
 
             if (matchRes.match && matchRes.persona) {
               const nombreCompleto = `${matchRes.persona.nombre || matchRes.persona.name || ''} ${matchRes.persona.apellido || matchRes.persona.lastName || ''}`.trim();
-              this.agregarLog(`Huella identificada: ${nombreCompleto || 'Persona Autorizada'} (${matchRes.tipo}). Acceso Concedido.`, 'success');
               
-              // Abrir modal flotante con foto, datos y membresía
-              this.abrirModalPersona(matchRes.persona, matchRes.tipo, matchRes.calidad ? (matchRes.calidad / 100) : 0.98, 'HUELLA_DACTILAR_SUPREMA');
-              
-              // Mandar a abrir el torniquete seleccionado
-              this.enviarPulsoApertura(nombreCompleto || 'Huella Autorizada');
+              // Abrir modal flotante con foto, datos y membresia
+              this.abrirModalPersona(matchRes.persona, matchRes.tipo, matchRes.calidad ? (matchRes.calidad / 100) : 0.98, 'HUELLA_DACTILAR_SUPREMA', matchRes);
+
+              if (matchRes.autorizado) {
+                this.agregarLog(`Huella identificada: ${nombreCompleto || 'Persona Autorizada'} (${matchRes.tipo}). Acceso Concedido.`, 'success');
+                // Mandar a abrir el torniquete seleccionado
+                this.enviarPulsoApertura(nombreCompleto || 'Huella Autorizada');
+              } else {
+                this.activarMovimientoError();
+                const motivo = matchRes.mensaje || 'Cliente sin membresia activa o empleado inactivo.';
+                this.agregarLog(`Huella Rechazada: ${motivo}`, 'danger');
+              }
             } else {
               this.activarMovimientoError();
               this.agregarLog('Huella no registrada en el sistema de clientes ni empleados.', 'danger');
@@ -283,19 +439,32 @@ export class BiometriaFacialComponent implements OnInit {
     });
   }
 
-  public abrirModalPersona(persona: any, tipo: string, similitud: number, metodo: string): void {
-    const estadoMembresia = persona.estadosuscripcion || persona.estadoSuscripcion || (persona.enabled ? 'ACTIVA' : 'ACTIVA');
+  public abrirModalPersona(persona: any, tipo: string, similitud: number, metodo: string, respuestaApi?: any): void {
+    const estadoMembresia = respuestaApi?.estadoMembresia || persona.estadosuscripcion || persona.estadoSuscripcion || (persona.enabled ? 'ACTIVO' : 'SIN_ESTADO');
+    let labelMetodo = 'Rostro Facial 128D';
+    if (metodo === 'HUELLA_DACTILAR_SUPREMA') {
+      labelMetodo = 'Huella Suprema 384B';
+    } else if (metodo === 'CODIGO_QR_CEDULA') {
+      labelMetodo = 'Codigo QR (Cedula)';
+    }
+
+    const nombreMembresiaReal = respuestaApi?.membresiaNombre ||
+                                persona.membresiaActual?.nombre ||
+                                persona.membresia?.nombre ||
+                                (typeof persona.membresia === 'string' ? persona.membresia : null) ||
+                                (tipo === 'CLIENTE' ? 'Sin Membresia Asignada' : 'Personal Interno');
+
     this.datosPersonaIdentificada = {
       ...persona,
       tipoPersona: tipo || 'CLIENTE',
       similitudPorcentaje: (similitud * 100).toFixed(1),
-      metodoValidacion: metodo === 'RECONOCIMIENTO_FACIAL' ? 'Rostro Facial 128D' : 'Huella Suprema 384B',
+      metodoValidacion: labelMetodo,
       fotoUrl: persona.foto || (persona.picture ? `data:image/jpeg;base64,${persona.picture}` : null),
       documentoCompleto: persona.documento || persona.document || persona.cedula || 'N/A',
       nombreCompleto: `${persona.nombre || persona.name || ''} ${persona.apellido || persona.lastName || ''}`.trim(),
       estado: estadoMembresia,
       membresiaEstado: estadoMembresia,
-      membresiaNombre: persona.membresia || (estadoMembresia === 'ACTIVA' ? 'Plan Fitness Acceso Total' : 'Sin Membresía Activa')
+      membresiaNombre: nombreMembresiaReal
     };
     this.mostrarModalPersona = true;
   }
@@ -305,25 +474,30 @@ export class BiometriaFacialComponent implements OnInit {
   }
 
   enviarPulsoApertura(origen: string = 'Operador Manual'): void {
-    const dispo = this.torniquetesDisponibles.find(d => d.id === this.dispositivoSeleccionadoId) ||
-                  this.todosDispositivos.find(d => d.id === this.dispositivoSeleccionadoId) ||
-                  this.torniquetesDisponibles[0] ||
-                  this.todosDispositivos[0];
+    if (!this.dispositivoSeleccionadoId) {
+      return;
+    }
 
-    const dispoId = this.dispositivoSeleccionadoId || dispo?.id || 12;
+    const dispo = this.torniquetesDisponibles.find(d => d.id === this.dispositivoSeleccionadoId) ||
+                  this.todosDispositivos.find(d => d.id === this.dispositivoSeleccionadoId);
+
+    if (!dispo || !dispo.ip) {
+      return;
+    }
+
     const payload = {
       operador: origen,
-      ip: dispo ? dispo.ip : '192.168.1.184'
+      ip: dispo.ip
     };
 
-    this.http.post<any>(`/api/v1/acceso/dispositivo/${dispoId}/abrir`, payload).subscribe({
+    this.http.post<any>(`/api/v1/acceso/dispositivo/${dispo.id}/abrir`, payload).subscribe({
       next: (resp) => {
         this.activarReleApertura(resp.mensaje || 'Torniquete Abierto');
-        this.agregarLog(`Apertura fisica enviada a ${dispo?.nombre || 'Torniquete'} (${dispo?.ip || ''})`, 'info');
+        const nombreTorniquete = dispo.nombre || dispo.descripcion || 'Torniquete';
+        this.agregarLog(`Apertura fisica enviada a ${nombreTorniquete} (${dispo.ip})`, 'info');
       },
       error: () => {
         this.activarReleApertura('Pulso de apertura simulado con exito.');
-        this.agregarLog(`Apertura forzada enviada a ${dispo?.nombre || 'Torniquete'}`, 'info');
       }
     });
   }

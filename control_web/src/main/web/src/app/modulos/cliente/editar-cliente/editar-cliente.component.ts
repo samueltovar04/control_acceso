@@ -2,15 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { ClienteService } from '../../../shared/cliente/cliente.service';
 import { Cliente } from '../../../shared/cliente/cliente.model';
-import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
 
 @Component({
   selector: 'app-editar-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, BiometricCaptureComponent],
+  imports: [CommonModule, FormsModule, RouterModule, BiometricCaptureComponent, BcvConvertPipe],
   template: `
     <div class="container-fluid p-3" *ngIf="cliente">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -60,6 +63,27 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
                   <input type="text" class="form-control" [(ngModel)]="cliente.telefono" name="telefono" placeholder="+58 424 0000000">
                 </div>
                 <div class="col-md-6">
+                  <label class="form-label small fw-bold text-primary"><i class="bi bi-card-checklist me-1"></i>Plan de Membresia *</label>
+                  <select class="form-select border-primary" [(ngModel)]="membresiaSeleccionadaId" name="membresiaId">
+                    <option [ngValue]="null">Sin Membresia Asignada</option>
+                    <option *ngFor="let m of membresiasList" [value]="m.id">
+                      {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }} • {{ m.duracionDias || m.duracionesDias }} dias)
+                    </option>
+                  </select>
+                  <div *ngIf="membresiaSeleccionada" class="form-text text-success fw-semibold small mt-1">
+                    <i class="bi bi-currency-exchange me-1"></i>Equivalente BCV: {{ membresiaSeleccionada.precio | bcvConvert:'USD' }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-success"><i class="bi bi-tag-fill me-1"></i>Cupon o Promocion (Opcional)</label>
+                  <select class="form-select border-success" [(ngModel)]="cuponSeleccionadoCodigo" name="cuponCodigo">
+                    <option value="">Sin Promocion / Tarifa Regular</option>
+                    <option *ngFor="let p of promocionesFiltradas" [value]="p.codigo">
+                      {{ p.nombre }} [{{ p.codigo }}] — {{ p.tipoDescuento }}: {{ p.valorDescuento }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-6">
                   <label class="form-label small fw-bold">Estado de Membresia</label>
                   <select class="form-select" [(ngModel)]="cliente.estadoSuscripcion" name="estadoSuscripcion">
                     <option value="ACTIVA">ACTIVA (Acceso Permitido)</option>
@@ -69,7 +93,7 @@ import { SedeService, Sede } from '../../../shared/sede/sede.service';
                     <option value="SIN_MEMBRESIA">SIN MEMBRESIA</option>
                   </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <label class="form-label small fw-bold">Sexo</label>
                   <select class="form-select" [(ngModel)]="cliente.sexo" name="sexo">
                     <option value="M">Masculino</option>
@@ -192,26 +216,61 @@ export class EditarClienteComponent implements OnInit {
   private nuevaHuella2?: string;
 
   sedesList: Sede[] = [];
+  membresiasList: any[] = [];
+  promocionesList: any[] = [];
+  promocionesFiltradas: any[] = [];
+  cuponSeleccionadoCodigo: string = '';
+  membresiaSeleccionadaId: number | null = null;
   guardando: boolean = false;
+
+  get membresiaSeleccionada(): any {
+    return this.membresiasList.find(m => m.id === this.membresiaSeleccionadaId);
+  }
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private clienteService: ClienteService,
-    private sedeService: SedeService
+    private sedeService: SedeService,
+    private http: HttpClient,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.cargarSedes();
+    this.cargarMembresias();
+    this.cargarPromociones();
     if (id) {
       this.clienteService.getCliente(id).subscribe({
         next: (data) => {
-          if (data) this.cliente = data;
+          if (data) {
+            this.cliente = data;
+            if (this.cliente.membresiaActual) {
+              this.membresiaSeleccionadaId = this.cliente.membresiaActual.id || null;
+            }
+          }
         },
         error: (err) => console.error('Error al cargar cliente:', err)
       });
     }
+  }
+
+  cargarMembresias(): void {
+    this.http.get<any[]>('/api/v1/membresias').subscribe({
+      next: (data) => (this.membresiasList = data || []),
+      error: (err) => console.error('Error al cargar membresias:', err)
+    });
+  }
+
+  cargarPromociones(): void {
+    this.http.get<any[]>('/api/v1/membresias/promociones').subscribe({
+      next: (data) => {
+        this.promocionesList = data || [];
+        this.promocionesFiltradas = this.promocionesList.filter(p => p.activo !== false);
+      },
+      error: (err) => console.error('Error al cargar promociones:', err)
+    });
   }
 
   cargarSedes(): void {
@@ -248,17 +307,47 @@ export class EditarClienteComponent implements OnInit {
     if (!this.cliente || !this.cliente.id) return;
     this.guardando = true;
 
-    // Solo si el usuario capturo nuevos datos se sobrescriben, de lo contrario se envian los que ya existian en BD
+    if (this.membresiaSeleccionadaId) {
+      const mem = this.membresiasList.find(m => m.id === Number(this.membresiaSeleccionadaId));
+      if (mem) {
+        this.cliente.membresiaActual = mem;
+      }
+    } else {
+      this.cliente.membresiaActual = null;
+      this.cliente.estadoSuscripcion = 'SIN_MEMBRESIA';
+    }
+
     this.clienteService.updateCliente(this.cliente.id, this.cliente).subscribe({
-      next: () => {
-        this.guardando = false;
-        alert('Cliente actualizado exitosamente.');
-        this.router.navigate(['/home/clientes']);
+      next: async () => {
+        // Si tiene membresia asignada, registrar la asignacion formal con cupon y pago generado
+        if (this.membresiaSeleccionadaId && this.cliente.id) {
+          this.clienteService.asignarMembresiaAlCliente(
+            this.cliente.id,
+            Number(this.membresiaSeleccionadaId),
+            this.cliente.estadoSuscripcion || 'ACTIVA',
+            this.cuponSeleccionadoCodigo || undefined
+          ).subscribe({
+            next: async () => {
+              this.guardando = false;
+              await this.alertModal.success('Cliente y membresia actualizados con pago generado correctamente.', 'Actualizacion Exitosa');
+              this.router.navigate(['/home/clientes']);
+            },
+            error: async () => {
+              this.guardando = false;
+              await this.alertModal.info('Cliente guardado.', 'Guardado');
+              this.router.navigate(['/home/clientes']);
+            }
+          });
+        } else {
+          this.guardando = false;
+          await this.alertModal.success('Cliente actualizado exitosamente.', 'Actualizacion Exitosa');
+          this.router.navigate(['/home/clientes']);
+        }
       },
-      error: (err) => {
+      error: async (err) => {
         this.guardando = false;
         console.error('Error al actualizar cliente:', err);
-        alert('Cambios guardados.');
+        await this.alertModal.info('Cambios guardados.', 'Guardado');
         this.router.navigate(['/home/clientes']);
       }
     });

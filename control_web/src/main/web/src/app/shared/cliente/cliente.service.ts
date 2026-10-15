@@ -57,6 +57,16 @@ export class ClienteService {
     return this.http.put<Cliente>(`${this.baseUrl}/${cliente.id}`, payload);
   }
 
+  asignarMembresiaAlCliente(clienteId: number, membresiaId: number, estadoSuscripcion: string = 'ACTIVA', codigoCupon?: string, metodoPago?: string): Observable<any> {
+    return this.http.put(`/api/clientes/${clienteId}/asignar-membresia`, {
+      membresiaId,
+      estadoSuscripcion,
+      codigoCupon: codigoCupon || null,
+      metodoPago: metodoPago || 'EFECTIVO',
+      registrarPago: true
+    });
+  }
+
   asignarPulsera(cliente: Cliente, codigoInsignia: string): Observable<Cliente> {
     const payload: Cliente = {
       ...cliente,

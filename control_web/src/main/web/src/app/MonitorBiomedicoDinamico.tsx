@@ -118,9 +118,12 @@ export const MonitorBiomedicoDinamico: React.FC = () => {
     } else {
       setEmuladorActivo(true);
       emuTimerRef.current = setInterval(async () => {
-        // Dinamica de desconexion de pulsera
+        // Dinamica de desconexion de pulsera (excepto 001 y 002)
         if (Math.random() < 0.15 && poolActivoRef.current.length > 2) {
-          poolActivoRef.current.shift(); // Desconecta
+          const idx = poolActivoRef.current.findIndex(p => p !== 'PULSERA_001' && p !== 'PULSERA_002');
+          if (idx !== -1) {
+            poolActivoRef.current.splice(idx, 1);
+          }
         }
         // Dinamica de conexion de nueva pulsera
         if (Math.random() < 0.25 && poolActivoRef.current.length < 15) {
@@ -132,7 +135,16 @@ export const MonitorBiomedicoDinamico: React.FC = () => {
 
         if (poolActivoRef.current.length === 0) return;
 
-        const id = poolActivoRef.current[Math.floor(Math.random() * poolActivoRef.current.length)];
+        // Alternar para garantizar que PULSERA_001 y PULSERA_002 esten siempre activas
+        const rndFija = Math.random();
+        let id: string;
+        if (rndFija < 0.4) {
+          id = 'PULSERA_001';
+        } else if (rndFija < 0.8) {
+          id = 'PULSERA_002';
+        } else {
+          id = poolActivoRef.current[Math.floor(Math.random() * poolActivoRef.current.length)];
+        }
         const rnd = Math.random();
 
         let bpm = Math.floor(66 + Math.random() * 20);
