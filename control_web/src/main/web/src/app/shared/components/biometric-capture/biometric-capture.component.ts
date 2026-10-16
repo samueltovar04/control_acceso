@@ -5,6 +5,7 @@ import { WebcamImage, WebcamInitError, WebcamModule, WebcamUtil } from 'ngx-webc
 import { Observable, Subject, Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
+import { BiometricDeviceStateService, DispositivoBiometrico } from '../../dispositivo/biometric-device-state.service';
 
 @Component({
   selector: 'app-biometric-capture',
@@ -78,16 +79,77 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   public sensorVerificando: boolean = false;
   private sensorPollingSub?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  // Dispositivos reactivos dinamicos (Camaras y Captahuellas)
+  public listaCaptahuellas: DispositivoBiometrico[] = [];
+  public listaCamaras: DispositivoBiometrico[] = [];
+  public captahuellasSeleccionadoId: string | number = 'LOCAL_8085';
+  public camaraSeleccionadaId: string | number = 'LOCAL_WEBCAM';
+  public captahuellasHost: string = '127.0.0.1:8085';
+  public esCamaraIpActiva: boolean = false;
+  public urlCamaraIpSnapshot: string = '';
+  private bioDevSubs: Subscription[] = [];
+
+  constructor(
+    private http: HttpClient,
+    public biometricDeviceState: BiometricDeviceStateService
+  ) {}
 
   ngOnInit(): void {
     this.iniciarMonitoreoTiempoRealSensor();
     this.detectarCamarasDisponibles();
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.captahuellasDisponibles$.subscribe(list => {
+        this.listaCaptahuellas = list || [];
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.captahuellasSeleccionado$.subscribe(c => {
+        this.captahuellasSeleccionadoId = c.id;
+        this.captahuellasHost = c.host;
+        this.verificarEstadoSensorSuprema();
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.camarasDisponibles$.subscribe(list => {
+        this.listaCamaras = list || [];
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.camaraSeleccionada$.subscribe(cam => {
+        this.camaraSeleccionadaId = cam.id;
+        this.esCamaraIpActiva = cam.id !== 'LOCAL_WEBCAM' && !!cam.ip;
+        if (this.esCamaraIpActiva) {
+          this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&t=${Date.now()}`;
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
     if (this.sensorPollingSub) {
       this.sensorPollingSub.unsubscribe();
+    }
+    this.bioDevSubs.forEach(s => s.unsubscribe());
+  }
+
+  public onCaptahuellasSelect(val: any): void {
+    this.captahuellasSeleccionadoId = val;
+    this.biometricDeviceState.seleccionarCaptahuellas(val);
+  }
+
+  public onCamaraSelect(val: any): void {
+    this.camaraSeleccionadaId = val;
+    this.biometricDeviceState.seleccionarCamara(val);
+  }
+
+  public refrescarSnapshotCamaraIp(): void {
+    const cam = this.biometricDeviceState.getCamaraActual();
+    if (cam && cam.ip) {
+      this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&t=${Date.now()}`;
     }
   }
 
@@ -134,20 +196,21 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }
 
   verificarEstadoSensorSuprema(): void {
-    this.http.get<any>('/api/v1/biometria/suprema/status').subscribe({
+    const host = this.captahuellasHost || '127.0.0.1:8085';
+    this.http.get<any>(`/api/v1/biometria/suprema/status?host=${encodeURIComponent(host)}`).subscribe({
       next: (res) => {
         this.sensorVerificando = false;
         this.sensorConectado = !!res.conectado;
         if (res.conectado && res.dispositivo) {
-          this.nombreDispositivoSensor = res.dispositivo;
+          this.nombreDispositivoSensor = `${res.dispositivo} (${host})`;
         } else if (!res.conectado) {
-          this.nombreDispositivoSensor = 'Dispositivo USB Desconectado';
+          this.nombreDispositivoSensor = `Sensor Desconectado (${host})`;
         }
       },
       error: () => {
         this.sensorVerificando = false;
         this.sensorConectado = false;
-        this.nombreDispositivoSensor = 'Dispositivo USB Desconectado';
+        this.nombreDispositivoSensor = `Sensor Desconectado (${host})`;
       }
     });
   }
@@ -160,13 +223,55 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   public fotoPerfilManual: string = '';
 
   capturarFotograma(): void {
+    if (this.esCamaraIpActiva) {
+      this.capturarDesdeCamaraIp();
+      return;
+    }
     this.capturandoFotoPerfil = false;
     this.trigger.next();
   }
 
   capturarFotoPerfilManual(): void {
+    if (this.esCamaraIpActiva) {
+      this.capturandoFotoPerfil = true;
+      this.capturarDesdeCamaraIp();
+      return;
+    }
     this.capturandoFotoPerfil = true;
     this.trigger.next();
+  }
+
+  private capturarDesdeCamaraIp(): void {
+    const cam = this.biometricDeviceState.getCamaraActual();
+    if (!cam || !cam.ip) {
+      this.trigger.next();
+      return;
+    }
+    const url = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&path=/snapshot.jpg&t=${Date.now()}`;
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string;
+          this.fotogramasCapturados++;
+          if (this.capturandoFotoPerfil) {
+            this.capturandoFotoPerfil = false;
+            this.fotoPerfilManual = dataUrl;
+            this.fotoExistente = dataUrl;
+            this.generarVectorFacialDesdeImagen(dataUrl);
+          } else {
+            this.generarVectorFacialDesdeImagen(dataUrl);
+          }
+          this.reproducirSonidoCamara();
+        };
+        reader.readAsDataURL(blob);
+      },
+      error: () => {
+        this.capturandoFotoPerfil = false;
+        this.generarVectorFallback();
+        this.reproducirSonidoCamara();
+      }
+    });
   }
 
   handleImage(webcamImage: WebcamImage): void {
@@ -399,8 +504,9 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       }
     }, 100);
 
-    // Capturar minucias reales directamente desde el dispositivo USB Suprema
-    this.http.get<any>(`/api/v1/biometria/suprema/capturar?dedo=${indice}`).subscribe({
+    // Capturar minucias reales directamente desde el dispositivo USB Suprema activo
+    const host = this.captahuellasHost || '127.0.0.1:8085';
+    this.http.get<any>(`/api/v1/biometria/suprema/capturar?dedo=${indice}&host=${encodeURIComponent(host)}`).subscribe({
       next: (res) => {
         clearInterval(interval);
         if (res.success === false) {

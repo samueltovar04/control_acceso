@@ -68,10 +68,10 @@
             <div>
                 <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                     BioTrack Enterprise: Telemetría Dinámica de Pulseras
-                    <span
-                        class="text-xs px-2.5 py-0.5 rounded-full font-mono bg-slate-900 border border-slate-700 text-slate-300">
-                        Selecione Sede
-                    </span>
+                    <select id="sede-selector" onchange="onSedeChange(this.value)"
+                        class="text-xs px-2.5 py-1 rounded-full font-mono bg-slate-900 border border-slate-700 text-slate-300 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer">
+                        <option value="">Todas las Sedes</option>
+                    </select>
                 </h1>
                 <p class="text-xs text-slate-400">Conexión y desconexión autónoma de brazaletes con expiración por
                     inactividad</p>
@@ -127,6 +127,103 @@
         let cleanupInterval = null;
         let ws;
 
+        let selectedSedeId = null;
+        let pulseraSedeMap = new Map(); // id_pulsera.toUpperCase() -> { sedeId, sedeNombre, clienteNombre }
+
+        async function cargarSedes() {
+            try {
+                const res = await fetch('/api/v1/sedes');
+                if (res.ok) {
+                    const sedes = await res.json();
+                    const sel = document.getElementById('sede-selector');
+                    sel.innerHTML = '<option value="">Todas las Sedes</option>';
+                    sedes.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.sede;
+                        sel.appendChild(opt);
+                    });
+
+                    aplicarReglasSesion(sedes);
+                }
+            } catch (err) {
+                console.warn('Error cargando sedes:', err);
+            }
+        }
+
+        async function cargarClientesSede() {
+            try {
+                const res = await fetch('/api/v1/clientes');
+                if (res.ok) {
+                    const clientes = await res.json();
+                    clientes.forEach(c => {
+                        const pulsera = c.codigoInsignia ? c.codigoInsignia.trim().toUpperCase() : null;
+                        const sId = c.sede?.id || c.sede_id || c.sedeId;
+                        const sNombre = c.sede?.sede || 'Sede';
+                        if (pulsera && sId) {
+                            pulseraSedeMap.set(pulsera, {
+                                sedeId: Number(sId),
+                                sedeNombre: sNombre,
+                                clienteNombre: `${c.nombre || ''} ${c.apellido || ''}`.trim()
+                            });
+                        }
+                    });
+                    updateUIState();
+                }
+            } catch (err) {
+                console.warn('Error cargando clientes:', err);
+            }
+        }
+
+        function aplicarReglasSesion(sedes) {
+            const rawUser = localStorage.getItem('currentUser');
+            const sel = document.getElementById('sede-selector');
+            if (rawUser) {
+                try {
+                    const user = JSON.parse(rawUser);
+                    const rol = String(user.role || '').toUpperCase();
+                    const esAdmin = rol === 'ADMIN' || rol === 'SUPER_ADMIN' || rol === 'SUPERADMIN';
+                    const userSedeId = user.sedeId || (user.sede && user.sede.id);
+
+                    if (!esAdmin && userSedeId) {
+                        selectedSedeId = Number(userSedeId);
+                        sel.value = String(userSedeId);
+                        sel.disabled = true;
+                        sel.title = 'Sede predeterminada por rol de usuario';
+                        updateUIState();
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            const stored = localStorage.getItem('control_acceso_sede_seleccionada');
+            if (stored && stored !== 'null') {
+                selectedSedeId = Number(stored);
+                sel.value = stored;
+            } else {
+                selectedSedeId = null;
+                sel.value = '';
+            }
+            updateUIState();
+        }
+
+        function onSedeChange(val) {
+            selectedSedeId = val ? Number(val) : null;
+            if (selectedSedeId) {
+                localStorage.setItem('control_acceso_sede_seleccionada', String(selectedSedeId));
+            } else {
+                localStorage.removeItem('control_acceso_sede_seleccionada');
+            }
+            updateUIState();
+        }
+
+        function coincideSede(idPulsera) {
+            if (selectedSedeId === null) return true;
+            const info = pulseraSedeMap.get(idPulsera.toUpperCase());
+            if (!info) return true;
+            return Number(info.sedeId) === Number(selectedSedeId);
+        }
+
         // Limpieza periodica de pulseras inactivas / desconectadas
         cleanupInterval = setInterval(() => {
             const now = Date.now();
@@ -151,13 +248,29 @@
         }, 1500);
 
         function updateUIState() {
-            const count = activeDevices.size;
-            document.getElementById('connected-count').textContent = count;
+            let visibles = 0;
+            let alertCount = 0;
+
+            for (const [id, dev] of activeDevices.entries()) {
+                const elem = document.getElementById(`card-${id}`);
+                const match = coincideSede(id);
+                if (elem) {
+                    if (match) {
+                        elem.classList.remove('hidden');
+                        visibles++;
+                        if (dev.alerta === 1) alertCount++;
+                    } else {
+                        elem.classList.add('hidden');
+                    }
+                }
+            }
+
+            document.getElementById('connected-count').textContent = visibles;
 
             const emptyState = document.getElementById('empty-state');
             const grid = document.getElementById('cards-grid');
 
-            if (count === 0) {
+            if (visibles === 0) {
                 emptyState.classList.remove('hidden');
                 grid.classList.add('hidden');
             } else {
@@ -165,10 +278,6 @@
                 grid.classList.remove('hidden');
             }
 
-            let alertCount = 0;
-            for (const dev of activeDevices.values()) {
-                if (dev.alerta === 1) alertCount++;
-            }
             const alertBadge = document.getElementById('alert-counter');
             alertBadge.textContent = alertCount;
             alertBadge.className = alertCount > 0 ? 'text-rose-400 font-bold font-mono' : 'text-emerald-400 font-bold font-mono';
@@ -438,6 +547,8 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initWebSocket();
+            cargarSedes();
+            cargarClientesSede();
         });
     </script>
 </body>

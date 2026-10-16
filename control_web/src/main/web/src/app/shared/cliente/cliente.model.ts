@@ -18,5 +18,7 @@ export interface Cliente {
   fechaProximoCobro?: string | Date;
   qrTokenDinamico?: string;
   sede?: any;
+  sede_id?: any;
+  sedeId?: any;
   pisosPermitidos?: any[];
 }

@@ -2,6 +2,31 @@
 
 ## Historial de Tareas y Estado del Sistema
 
+- **Selector Centralizado de Sede en Topbar y Correccion de Guardado de Dispositivos (Octubre 2026)**:
+  - **Selector de Sede Centralizado en Menu Top**:
+    - Se elimino el badge inoperativo "Torniquetes Online (Wi-Fi Activo)" en [topbar.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/topbar/topbar.component.html).
+    - Se incorporo el selector global de Sede en [topbar.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/topbar/topbar.component.html) y [topbar.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/topbar/topbar.component.ts) conectado a [SedeStateService](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/sede/sede-state.service.ts).
+    - Se removieron los selectores individuales y redundantes de sede de las vistas [torniquetes-hub.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/acceso-torniquete/torniquetes-hub.component.ts), [dispositivo-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/dispositivo-list/dispositivo-list.component.html), [monitor-salud.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/monitor-salud/monitor-salud.component.html) y [DashboardBiomedico.tsx](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/DashboardBiomedico.tsx).
+    - Todas las vistas mantienen su suscripcion reactiva a `sedeStateService.sedeSeleccionadaId$`, reaccionando automaticamente al cambio de sede desde la barra superior.
+  - **Correccion de Persistencia en Edicion de Dispositivos**:
+    - Causa: En [Dispositivo.java](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_server/src/main/java/com/access/control/model/Dispositivo.java), los getters virtuales `getNombre()` y `getTipo()` eran serializados en JSON. Al recibir el PUT, Jackson llamaba a `setNombre()` y `setTipo()` con los valores viejos que sobreescribian los cambios hechos a `descripcion` y `tipoDispositivo`. Ademas, `piso_id` no coincidia con `pisoId`.
+    - Solucion: Se configuraron los getters virtuales como `@JsonProperty(access = JsonProperty.Access.READ_ONLY)` y se anadio `@JsonAlias({"piso_id", "pisoId"})`.
+    - En [DispositivoServiceImpl.java](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_server/src/main/java/com/access/control/services/DispositivoServiceImpl.java): Se aseguro la resolucion y asignacion de `Piso` a traves de `pisoRepository.findById()`.
+    - En [editar-dispositivo.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/editar-dispositivo/editar-dispositivo.component.ts) y [crear-dispositivo.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/crear-dispositivo/crear-dispositivo.component.ts): Sincronizacion de `piso_id`, `pisoId`, `nombre`, `tipo` y campos numericos al enviar.
+
+- **Hardware Biometrico Dinamico y Reactivo por Sede (Camara Web, Camara IP, Captahuellas USB) (Octubre 2026)**:
+  - **Nuevos Tipos de Dispositivo Registrables**:
+    - Se incorporaron `Camara Web`, `Camara IP` y `Captahuellas USB Suprema` en el catalogo de dispositivos ([crear-dispositivo.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/crear-dispositivo/crear-dispositivo.component.html), [editar-dispositivo.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/editar-dispositivo/editar-dispositivo.component.html), [dispositivo-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/dispositivo/dispositivo-list/dispositivo-list.component.ts)).
+  - **Servicio Central de Estado de Hardware Biometrico**:
+    - Se creo [biometric-device-state.service.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/dispositivo/biometric-device-state.service.ts) que filtra reactivamente segun la sede seleccionada los captahuellas y camaras disponibles.
+    - Opciones por defecto sin hardcodeo: Camara Web local del navegador (`LOCAL_WEBCAM`) y Captahuellas Localhost (`127.0.0.1:8085`). Si se selecciona una Camara IP o Captahuellas registrado en la sede, el sistema utiliza dinamicamente su `ip:puerto`.
+  - **Backend Dinamico de Biometria**:
+    - [BiometriaResource.java](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_server/src/main/java/com/access/control/controller/BiometriaResource.java): Los endpoints `/suprema/status` y `/suprema/capturar` ahora aceptan `@QueryParam("host") String host`, dirigiendo la peticion al host:puerto especificado en lugar de listas fijas, y anade proxy de snapshot para camaras IP (`/camara/snapshot`).
+  - **Enrolamiento de Clientes, Empleados y Visitantes**:
+    - [biometric-capture.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/components/biometric-capture/biometric-capture.component.ts) y [biometric-capture.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/components/biometric-capture/biometric-capture.component.html): Se anadieron selectores en linea para Fuente de Video (Camara Web / Camaras IP de la sede) y Lector de Huella (Localhost:8085 / Captahuellas registrados en sede).
+  - **Terminal de Torniquetes y Control de Acceso**:
+    - [biometria-facial.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/biometria-facial/biometria-facial.component.ts) y [biometria-facial.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/biometria-facial/biometria-facial.component.html): Selectores independientes para Torniquete Asignado, Camara y Captahuellas por sede, ejecutando la lectura biometrica contra la IP:puerto del sensor seleccionado.
+
 - **Menú y Vistas Responsivas a Tamaño de Teléfono Móvil (Octubre 2026)**:
   - **Sidebar Drawer Móvil**:
     - Se creó [sidebar.service.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/services/sidebar.service.ts) con signal reactivo `isOpen` para controlar la apertura y cierre del menú.
@@ -105,7 +130,7 @@
   - Submenu desplegable interactivo:
     - `Dashboard Control de Pagos` (`/home/pagos`):
       - **Pestana 1 (Resumen y Auditoria):** Metricas de recaudacion multimoneda (USD / VES), conteo de clientes (al dia, pendientes, morosos) y tabla de auditoria transaccional con filtros por estado, periodo y busqueda en vivo.
-      - **Pestana 2 (Registrar Cobro & Conciliacion):** 
+      - **Pestana 2 (Registrar Cobro & Conciliacion):**
         - Formulario *Registrar Cobro / Pago de Cliente*: con buscador reactivo de clientes (autocompletado por nombre, apellido y cedula que asocia el ID del cliente por detras), monto en USD y equivalente dinamico en Bs. (BCV), metodo de pago, numero de referencia y campo opcional para subir imagen/comprobante de pago con previsualizacion.
         - Tabla *Conciliacion Bancaria de Transferencias*: lista de transferencias pendientes con botones de accion rapida (Aprobar / Rechazar) manteniendo la logica de conciliacion.
       - Se removieron ambos formularios de `AdminDashboardComponent` centralizandolos exclusivamente en esta vista.
@@ -153,8 +178,8 @@
     - `FinanzasResource.java`:
       - Al registrar o conciliar un pago (`COMPLETADO`/`CONCILIADO`), transiciona el estado del cliente a `ACTIVA`, limpia dias de gracia y comprobantes pendientes, y calcula la nueva `fechaVencimientoMembresia` y `fechaProximoCobro` en base a la duracion real de la membresia (`duracionesDias`) mas dias extra de promocion si aplica.
 
-
 ### 1. Despliegue Local y Dockerización
+
 - **Docker Compose**: Orquestación de servicios (`access_control_db`, `access_control_backend`, `access_control_frontend`, `biotrack_mongo`).
 - **Modulo Clientes Refactorizado**:
   - Botones de acciones claros y etiquetados en tabla (`Membresia`, `Pulsera`, `QR`, `Editar`, `Eliminar`).
@@ -167,6 +192,7 @@
 - **Makefile**: Metas `build-all`, `docker-build`, `docker-up`, `docker-down`, `discover-devices`, `mobile-build`, `test-all`, `clean`.
 
 ### 2. Dispositivos de Red Local Wi-Fi (Torniquetes y Lectores)
+
 - Detección automática vía tabla ARP (`arp -an` en `en0`).
 - Mapeo de dispositivos:
   - `192.168.1.168`: Torniquete Principal Entrada- **Biomedical IoT Bracelet & Gateway (ESP32 + Quarkus):**
@@ -189,10 +215,12 @@
 - Script automatizado: `scripts/register_wifi_devices.sh`.
 
 ### 3. Compilación e Integración Mobile
+
 - App React Native en `control_mobile/` configurada para apuntar al backend local (`http://localhost:8080/api/v1`).
 - Módulos probados: Credencial QR dinámico, Dashboard de Cliente, Historial de Accesos y Alertas Médicas.
 
 ### 5. Modernización UI/UX, Biometría Dual y Torniquetes en Vivo
+
 - **Navegación**: Nuevo Sidebar oscuro responsivo con categorización y Topbar con branding, estado de red Wi-Fi y sesión activa.
 - **Biometría Dual**: Componente reutilizable `BiometricCaptureComponent` para extracción de fotogramas (vector 128D) y lectura/calidad de huellas dactilares (índice y pulgar), integrado en alta de Clientes y Empleados.
 - **Terminal de Visión y Torniquetes**: Selección de dispositivos de red (`192.168.1.168`, `192.168.1.212`, etc.), reconocimiento en vivo con cámara y envío de pulso de apertura (`/api/v1/acceso/dispositivo/{id}/abrir`) con temporizador de 3s y bitácora de paso.
@@ -200,6 +228,7 @@
 - **Despliegue Docker**: Contenedores en ejecución en `http://localhost/` y `http://localhost:8080/`.
 
 ### 7. Membresias, Facturacion Multimoneda (BCV) y Control de Acceso Fisico (<50ms)
+
 - **Estado de Membresia Materializado en Clientes**: Para cumplir el SLA <50ms (lectura 2-8ms) en torniquetes, el estado (`estado_suscripcion`, `fecha_vencimiento_membresia`, `fecha_proximo_cobro`) se materializa directamente en la fila de `clientes` con indexacion B-Tree, mientras `suscripciones_cliente` y `pagos` registran el historico inmutable de auditoria.
 - **Migracion Delta**: Se definieron sentencias `ALTER TABLE clientes ADD COLUMN ...` preservando los datos existentes (`qr_token_dinamico`, `fecha_vencimiento_membresia`, `fecha_proximo_cobro`, `membresia_actual_id`, etc.).
 - **Tasa Oficial BCV Diaria**: Worker `@Scheduled(cron = "0 0 18 ? * MON-FRI")` y endpoint manual `POST /api/admin/tasa-bcv/sincronizar` integrados con `ve.dolarapi.com/v1/dolares/oficial` y `ve.dolarapi.com/v1/euros/oficial` para captura oficial de USD/EUR y congelamiento inmutable (*rate freeze*) en cada orden de pago.
@@ -209,6 +238,7 @@
   - Empleados y Visitantes: Credencial QR, biometria dual y asociacion de pisos.
 
 ### 7. Sincronización SQL, Correcciones de Formularios y Selectores Relacionales
+
 - **Esquema SQL (`controlaccesos.sql`)**: 100% de tablas preexistentes conservadas; anexadas al final las definiciones DDL de `clientes`, `clientes_pisos`, `suscripciones_cliente`, `pagos`, `conciliaciones_pago`, `accesos_registro`, `signos_vitales` y `biometria_facial`.
 - **Correcciones en Vistas Frontend**:
   - `editar-piso.component.html`: Corregido encabezado que erróneamente indicaba *"Modificar Visitante"* a *"Modificar Piso / Nivel"* con campos adaptados y validación.
@@ -217,7 +247,9 @@
 - **Selectores Relacionales Dinámicos**:
   - `crear-dispositivo` y `editar-dispositivo`: Selector desplegable de Pisos alimentado por `PisoService.getPisosList()`.
   - `crear-empleado`: Selectores desplegables dinámicos de **Sedes**, **Gerencias** y **Tipos de Contrato** consumiendo sus respectivos servicios REST.
+
 ### 8. Modulos de Sedes, Gerencias, Contratos, Permisos de Pisos y Grillas con Paginacion
+
 - **Nuevos Modulos Frontend**:
   - `SedeListComponent`: CRUD completo de Sedes con busqueda reactiva, paginacion y modal de creacion/edicion.
   - `GerenciaListComponent`: CRUD de Departamentos/Gerencias con busqueda, paginacion y modal dinamico.
@@ -235,6 +267,7 @@
   - Contenedores `access_control_backend` y `access_control_frontend` recompilados y operativos al 100%.
 
 ### 9. Escaneo de Ping de Red, Switch de Estado y Monitoreo WebSocket en Dispositivos
+
 - **Tabla de Dispositivos Estandarizada**:
   - Columnas requeridas: `ID`, `Descripcion`, `Ip`, `Puerto`, `Piso`, `Ping`, `Estado`, `Actions`.
   - Indicador visual de Ping con circulo incandescente y badge (`verde` / ONLINE cuando responde, `rojo` / OFFLINE cuando no responde).
@@ -250,6 +283,7 @@
   - Paginacion, filtros de busqueda reactiva y diseno responsivo alineado a la estetica general.
 
 ### 10. Diagnostico Avanzado de Red, Botones Descriptivos y Formulario Estandarizado de Dispositivos
+
 - **Formularios Modernizados (`editar-dispositivo` y `crear-dispositivo`)**:
   - Estructura visual identica a `editar-piso`: Tarjeta limpia con sombra tenue, boton superior de retorno (`Volver a Dispositivos`), encabezado con icono y subtitulo, grilla responsiva de 3 columnas (Nombre, IP, Puerto, Piso Asignado, Sentido de Paso, Estado Operativo) y botones de accion (`Cancelar` y `Guardar Cambios`).
   - Mapeo bidireccional de `piso_id` y `Piso` en backend y frontend.
@@ -260,6 +294,7 @@
   - Modal reactivo en `dispositivo-list.component.html` para visualizacion completa de telemetria de red con funcion de re-escaneo en vivo.
 
 ### 11. Registro de Dispositivos Wi-Fi y Campos Estandarizados (Tipo y Sistema Operativo)
+
 - **Campos en Base de Datos y Entidad (`dispositivos`)**:
   - `tipo_dispositivo` (VARCHAR 255): *Torniquete con Relay TCP*, *Terminal Biometrica Facial*, *Lector ZKTeco*, *Terminal Movil*, *Servidor de Control*.
   - `sistema_operativo` (VARCHAR 255): *Linux Embedded (ZKOS / HikOS)*, *Android/iOS*, *macOS/Linux 64-bit*, *RTOS*.
@@ -273,6 +308,7 @@
   - Badges informativos en la columna de descripcion de la grilla de dispositivos.
 
 ### 12. Desacoplamiento Estricto del Modal de Diagnostico a Telemetria de Red en Vivo
+
 - **Problema Corregido**:
   - El modal de escaneo de red utilizaba `d.getDescripcion()` y mapas estaticos con MACs prefijadas para simular el tipo de hardware, sistema operativo y version de firmware, mostrando datos no reales incluso si el host no tenia puertos abiertos o era otro tipo de dispositivo en la red local.
 - **Implementacion de Escaneo Puro de Red**:
@@ -280,13 +316,17 @@
   - **Resolucion Real de MAC y Fabricante (OUI)**:
     - Montaje de `/tmp:/host_tmp:ro` en `docker-compose.yml` para acceder a la tabla ARP viva del host.
     - Resolucion de OUI segun prefijo IEEE real (ej. `84:e6:57` Sony, `74:cc:40` TP-Link, `06:ce:b3` / `04:bf:d5` / `ae:2f:57` Apple, `90:b6:86` ZKTeco, `00:1a:8c` Hikvision, o MACs privadas aleatorias de Wi-Fi).
+
 ### 13. Integracion y Aislamiento del SDK Suprema BioMini (libUFScanner.dylib)
+
 - **Aislamiento de Binario Nativo (`infrastructure/libs/mac/`)**:
   - Centralizacion del driver nativo en `./infrastructure/libs/mac/libUFScanner.dylib` con guia técnica [INSTRUCCIONES.md](file:///Users/samueltovar/Documents/GitHub/control_acceso/infrastructure/libs/mac/INSTRUCCIONES.md) para el aprovisionamiento de binarios licenciados de Suprema Inc.
 - **Refactorizacion en Python (`scripts/suprema_usb_bridge.py`)**:
   - Creacion de la clase `BioMiniScanner` con resolucion de ruta absoluta dinamica via `pathlib.Path(__file__).resolve().parent.parent / "infrastructure" / "libs" / "mac" / "libUFScanner.dylib"`.
   - Patron **Context Manager** (`__enter__` y `__exit__`) para inicializacion y destruccion determinista de memoria C (`UFS_Init`, `UFS_Uninit`).
+
 ### 14. Dockerizacion del Puente Suprema BioMini en Linux con Librerias C Nativas
+
 - **Despliegue del Contenedor (`docker/suprema_bridge/Dockerfile`)**:
   - Imagen base `linux/amd64 ubuntu:20.04` para compatibilidad binaria con `libUFScanner.so` y `libUFMatcher.so` del SDK Linux v3.5 de Suprema.
   - Resolucion de dependencia Sentinel HASP: Compilacion e inyeccion de `libhasp_shim.so` via `LD_PRELOAD` para satisfacer dinamicamente los simbolos de licencia `hasp_login`, `hasp_get_sessioninfo`, `hasp_logout` y `hasp_free`.
@@ -297,3 +337,25 @@
   - Servicio operativo en `http://127.0.0.1:8085` respondiendo `GET /api/suprema/status` y `GET /api/suprema/capturar?dedo=1` con driver `NATIVO_LIBUFSCANNER`.
   - Backend Quarkus (`access_control_backend:8080`) consumiendo exitosamente el puente en contenedor a traves de `http://host.docker.internal:8085/api/suprema/...`.
   - Comandos `make suprema-up`, `make suprema-down` y `make suprema-build` integrados en el `Makefile`.
+
+## Tarea: Implementación de Inferencia Facial en Quarkus (DJL)
+
+- **Problema:** Procesar los arreglos de bytes (`byte[]`) entrantes provenientes del muestreo de Angular para detectar rostros y emitir un vector de características sin bloquear los hilos I/O de Quarkus y sin fugas de memoria.
+
+- **Solución Técnica:**
+  Se integró la API de DJL y el motor de PyTorch en el `pom.xml`. Se codificó un bean `FaceRecognitionService` de alcance de aplicación (`@ApplicationScoped`). El modelo principal es cargado en la fase de inicialización (`@PostConstruct`). Para cada invocación de `processImage()`, se instancia un `Predictor<Image, DetectedObjects>` acotado al ciclo de vida de un bloque *try-with-resources*.
+- **Por qué funcionó:**
+  Al aislar la instanciación del Predictor, Quarkus puede manejar peticiones concurrentes de múltiples cámaras. El modelo estático no se bloquea, pero cada hilo de Request obtiene su propio entorno de inferencia, previniendo choques de memoria (C-heap) de la librería PyTorch subyacente.
+- **Prevención de regresiones:**
+  NUNCA se debe declarar el `Predictor` a nivel de clase ni reutilizarlo entre hilos. Los predictores de DJL no son *Thread-Safe*. Las violaciones a esta regla causarán *Segmentation Faults* o *Memory Leaks* fatales que derribarán la JVM entera.
+
+  ## Tarea: Implementación de Base de Datos Vectorial para Biometría
+
+- **Problema:** Mapear y comparar eficientemente la matriz de características flotantes (Face Embedding) contra los registros de acceso en Quarkus.
+
+- **Solución Técnica:**
+  Se desplegó un contenedor con la imagen `ankane/pgvector`. Se estructuró la tabla principal con la columna especial `vector(512)`. En Quarkus, se obvió la capa JPA estándar para esta operación específica en favor de una consulta nativa (`createNativeQuery`) explotando el operador `<=>` (distancia de coseno) propio de la base de datos.
+- **Por qué funcionó:**
+  Delegar la matemática vectorial a la base de datos en lugar de hacerla en Java (traer todos los registros a RAM y comparar) es infinitamente más rápido. El umbral estricto en el bloque `WHERE` filtra los "falsos positivos" a nivel de SQL.
+- **Prevención de regresiones:**
+  Si el motor de IA cambia (ej. pasas de un modelo que escupe 512 dimensiones a uno de 128 dimensiones), la tabla en PostgreSQL arrojará un error de dimensiones. El tamaño del vector en el DDL (`vector(X)`) DEBE coincidir con la salida del modelo cargado en DJL.

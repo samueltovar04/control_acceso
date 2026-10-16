@@ -2,6 +2,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DispositivoService } from '../../../shared/dispositivo/dispositivo.service';
 import { PisoService } from '../../../shared/piso/piso.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dispositivo-list',
@@ -12,6 +15,10 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   dispositivos: any[] = [];
   dispositivosFiltrados: any[] = [];
   itemsPaginados: any[] = [];
+
+  sedesList: Sede[] = [];
+  filtroSedeId: number | null = null;
+  sedeBloqueada: boolean = false;
 
   filtroTexto: string = '';
   page: number = 1;
@@ -35,6 +42,9 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   tiposDispositivoDisponibles: string[] = [
     'Torniquete con Relay TCP',
     'Terminal Biometrica Facial',
+    'Camara Web',
+    'Camara IP',
+    'Captahuellas USB Suprema',
     'Lector ZKTeco',
     'Terminal Movil',
     'Servidor de Control'
@@ -48,17 +58,48 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   ];
 
   private ws: WebSocket | null = null;
+  private subs: Subscription[] = [];
 
   constructor(
     private dispositivoService: DispositivoService,
     private pisoService: PisoService,
+    private sedeService: SedeService,
+    private sedeStateService: SedeStateService,
     private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
+    this.iniciarGestionSedes();
     this.reloadData();
     this.cargarPisos();
     this.iniciarWebSocket();
+  }
+
+  iniciarGestionSedes(): void {
+    this.sedeService.getListSedes().subscribe({
+      next: (sedes) => (this.sedesList = sedes || []),
+      error: (err) => console.warn('Error cargando sedes en dispositivo-list:', err)
+    });
+
+    this.subs.push(
+      this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+        this.filtroSedeId = id;
+        this.aplicarFiltro();
+      })
+    );
+
+    this.subs.push(
+      this.sedeStateService.sedeBloqueada$.subscribe(b => {
+        this.sedeBloqueada = b;
+      })
+    );
+  }
+
+  onSedeChange(val: any): void {
+    const id = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+    this.filtroSedeId = id;
+    this.sedeStateService.seleccionarSede(id);
+    this.aplicarFiltro();
   }
 
   cargarPisos(): void {
@@ -76,6 +117,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
         this.ws.close();
       } catch (e) {}
     }
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   reloadData(): void {
@@ -135,24 +177,29 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
 
   aplicarFiltro(): void {
     const q = (this.filtroTexto || '').toLowerCase().trim();
-    if (!q) {
-      this.dispositivosFiltrados = [...this.dispositivos];
-    } else {
-      this.dispositivosFiltrados = this.dispositivos.filter((d) => {
-        const idStr = (d.id || '').toString();
-        const desc = (d.descripcion || d.nombre || '').toLowerCase();
-        const ip = (d.ip || '').toLowerCase();
-        const port = (d.port || '').toString();
-        const piso = (d.piso?.numeroPiso || d.piso?.descripcion || d.piso?.piso || '').toLowerCase();
-        return (
-          idStr.includes(q) ||
-          desc.includes(q) ||
-          ip.includes(q) ||
-          port.includes(q) ||
-          piso.includes(q)
-        );
-      });
-    }
+    this.dispositivosFiltrados = this.dispositivos.filter((d) => {
+      if (this.filtroSedeId !== null && this.filtroSedeId !== undefined) {
+        const sId = d.piso?.sede?.id || d.piso?.sede_id || d.piso?.sedeId;
+        if (sId !== this.filtroSedeId) {
+          return false;
+        }
+      }
+      if (!q) {
+        return true;
+      }
+      const idStr = (d.id || '').toString();
+      const desc = (d.descripcion || d.nombre || '').toLowerCase();
+      const ip = (d.ip || '').toLowerCase();
+      const port = (d.port || '').toString();
+      const piso = (d.piso?.numeroPiso || d.piso?.descripcion || d.piso?.piso || '').toLowerCase();
+      return (
+        idStr.includes(q) ||
+        desc.includes(q) ||
+        ip.includes(q) ||
+        port.includes(q) ||
+        piso.includes(q)
+      );
+    });
     this.totalPaginas = Math.ceil(this.dispositivosFiltrados.length / this.pageSize) || 1;
     this.page = 1;
     this.actualizarPaginacion();

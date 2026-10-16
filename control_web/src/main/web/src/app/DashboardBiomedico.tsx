@@ -55,7 +55,69 @@ export const DashboardBiomedico: React.FC = () => {
 
   const [wsConectado, setWsConectado] = useState<boolean>(false);
   const [emuladorActivo, setEmuladorActivo] = useState<boolean>(false);
+  const [sedes, setSedes] = useState<Array<{ id: number; sede: string }>>([]);
+  const [sedeSeleccionadaId, setSedeSeleccionadaId] = useState<number | null>(null);
+  const [sedeBloqueada, setSedeBloqueada] = useState<boolean>(false);
+  const [pulseraSedeMap, setPulseraSedeMap] = useState<Map<string, number>>(new Map());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Cargar Sedes
+    fetch('/api/v1/sedes')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setSedes(data);
+      })
+      .catch(err => console.warn('Error cargando sedes:', err));
+
+    // Cargar Clientes para mapeo de pulsera a Sede
+    fetch('/api/v1/clientes')
+      .then(res => res.json())
+      .then(clientes => {
+        if (Array.isArray(clientes)) {
+          const map = new Map<string, number>();
+          clientes.forEach((c: any) => {
+            const pulsera = c.codigoInsignia ? c.codigoInsignia.trim().toUpperCase() : null;
+            const sId = c.sede?.id || c.sede_id || c.sedeId;
+            if (pulsera && sId) map.set(pulsera, Number(sId));
+          });
+          setPulseraSedeMap(map);
+        }
+      })
+      .catch(err => console.warn('Error cargando clientes:', err));
+
+    // Reglas de sesion de usuario
+    const rawUser = localStorage.getItem('currentUser');
+    if (rawUser) {
+      try {
+        const user = JSON.parse(rawUser);
+        const rol = String(user.role || '').toUpperCase();
+        const esAdmin = rol === 'ADMIN' || rol === 'SUPER_ADMIN' || rol === 'SUPERADMIN';
+        const userSedeId = user.sedeId || (user.sede && user.sede.id);
+        if (!esAdmin && userSedeId) {
+          setSedeSeleccionadaId(Number(userSedeId));
+          setSedeBloqueada(true);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    const stored = localStorage.getItem('control_acceso_sede_seleccionada');
+    if (stored && stored !== 'null') {
+      setSedeSeleccionadaId(Number(stored));
+    }
+  }, []);
+
+  const handleSedeChange = (val: string) => {
+    if (sedeBloqueada) return;
+    const newId = val ? Number(val) : null;
+    setSedeSeleccionadaId(newId);
+    if (newId) {
+      localStorage.setItem('control_acceso_sede_seleccionada', String(newId));
+    } else {
+      localStorage.removeItem('control_acceso_sede_seleccionada');
+    }
+  };
 
   // Conexion WebSocket con Token JWT
   useEffect(() => {
@@ -159,7 +221,14 @@ export const DashboardBiomedico: React.FC = () => {
     };
   }, []);
 
-  const totalAlertas = Object.values(pulseras).filter((p) => p.alerta === 1).length;
+  const pulserasFiltradas = Object.values(pulseras).filter((p) => {
+    if (sedeSeleccionadaId === null) return true;
+    const sId = pulseraSedeMap.get(p.id_pulsera.toUpperCase());
+    if (!sId) return true;
+    return Number(sId) === Number(sedeSeleccionadaId);
+  });
+
+  const totalAlertas = pulserasFiltradas.filter((p) => p.alerta === 1).length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 flex flex-col gap-6 selection:bg-rose-500 selection:text-white">
@@ -171,12 +240,9 @@ export const DashboardBiomedico: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              Panel de Monitoreo Central Biomedico
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                Quarkus 3.x + MongoDB
-              </span>
+              BioTrack Enterprise: Telemetría Dinámica de Pulseras
             </h1>
-            <p className="text-xs text-slate-400">Telemetria concurrente multicliente vía WebSockets en tiempo real</p>
+            <p className="text-xs text-slate-400">Conexión y desconexión autónoma de brazaletes con expiración por inactividad</p>
           </div>
         </div>
 
@@ -184,6 +250,11 @@ export const DashboardBiomedico: React.FC = () => {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
             <span className={`w-2.5 h-2.5 rounded-full ${wsConectado ? 'bg-emerald-400' : 'bg-rose-500 animate-ping'}`} />
             <span className="text-slate-300">{wsConectado ? 'WebSocket Activo' : 'Desconectado'}</span>
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
+            <span className="text-slate-400">Pulseras:</span>
+            <span className="text-cyan-400 font-bold">{pulserasFiltradas.length}</span>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
@@ -206,66 +277,72 @@ export const DashboardBiomedico: React.FC = () => {
 
       {/* Grid Dinamico de Tarjetas de Pulseras */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {Object.values(pulseras).map((p) => (
-          <div
-            key={p.id_pulsera}
-            className={`rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between relative overflow-hidden backdrop-blur-md ${
-              p.alerta === 1
-                ? 'bg-rose-950/30 border-2 border-rose-500 animate-pulse shadow-lg shadow-rose-900/30'
-                : 'bg-slate-900/80 border border-slate-800 hover:border-slate-700'
-            }`}
-          >
-            {/* Header de la Tarjeta */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono font-bold text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
-                {p.id_pulsera}
-              </span>
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                  p.alerta === 1
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                }`}
-              >
-                {p.alerta === 1 ? 'ALERTA' : 'NORMAL'}
-              </span>
-            </div>
-
-            {/* Metricas Principales */}
-            <div className="flex items-baseline justify-between mt-1 mb-2">
-              <div>
-                <span className="text-3xl font-extrabold font-mono text-rose-400 tracking-tight">{p.bpm}</span>
-                <span className="text-[10px] font-semibold text-slate-400 ml-1">BPM</span>
-              </div>
-              <div className="text-right text-xs">
-                <div className="text-cyan-400 font-bold">{p.spo2}% <span className="text-slate-500 font-normal">SpO2</span></div>
-                <div className="text-amber-400 font-bold">{p.temp.toFixed(1)}°C</div>
-              </div>
-            </div>
-
-            {/* Sparkline de Ritmo Cardiaco (Recharts) */}
-            <div className="h-16 w-full mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={p.historialBpm}>
-                  <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
-                  <Line
-                    type="monotone"
-                    dataKey="bpm"
-                    stroke={p.alerta === 1 ? '#ef4444' : '#f43f5e'}
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="mt-2 pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500 font-mono">
-              <span>Sync: {p.ultimaLectura}</span>
-              <span>100Hz I2C</span>
-            </div>
+        {pulserasFiltradas.length === 0 ? (
+          <div className="col-span-full py-16 text-center text-slate-500 text-sm">
+            Esperando telemetria de brazaletes para la sede seleccionada...
           </div>
-        ))}
+        ) : (
+          pulserasFiltradas.map((p) => (
+            <div
+              key={p.id_pulsera}
+              className={`rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between relative overflow-hidden backdrop-blur-md ${
+                p.alerta === 1
+                  ? 'bg-rose-950/30 border-2 border-rose-500 animate-pulse shadow-lg shadow-rose-900/30'
+                  : 'bg-slate-900/80 border border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              {/* Header de la Tarjeta */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-bold text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                  {p.id_pulsera}
+                </span>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                    p.alerta === 1
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  }`}
+                >
+                  {p.alerta === 1 ? 'ALERTA' : 'NORMAL'}
+                </span>
+              </div>
+
+              {/* Metricas Principales */}
+              <div className="flex items-baseline justify-between mt-1 mb-2">
+                <div>
+                  <span className="text-3xl font-extrabold font-mono text-rose-400 tracking-tight">{p.bpm}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 ml-1">BPM</span>
+                </div>
+                <div className="text-right text-xs">
+                  <div className="text-cyan-400 font-bold">{p.spo2}% <span className="text-slate-500 font-normal">SpO2</span></div>
+                  <div className="text-amber-400 font-bold">{p.temp.toFixed(1)}°C</div>
+                </div>
+              </div>
+
+              {/* Sparkline de Ritmo Cardiaco (Recharts) */}
+              <div className="h-16 w-full mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={p.historialBpm}>
+                    <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
+                    <Line
+                      type="monotone"
+                      dataKey="bpm"
+                      stroke={p.alerta === 1 ? '#ef4444' : '#f43f5e'}
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-2 pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                <span>Sync: {p.ultimaLectura}</span>
+                <span>100Hz I2C</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

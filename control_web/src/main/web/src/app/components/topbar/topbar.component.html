@@ -21,11 +21,25 @@
   </div>
 
   <!-- ESTADO DE LA RED Y USUARIO -->
-  <div class="d-flex align-items-center gap-3">
-    <!-- ESTATUS DE RED -->
-    <div class="d-none d-md-flex align-items-center bg-light px-3 py-1 rounded-pill border">
-      <span class="status-indicator me-2 bg-success rounded-circle" style="width: 8px; height: 8px;"></span>
-      <span class="small text-secondary fw-semibold">Torniquetes Online (Wi-Fi Activo)</span>
+  <div class="d-flex align-items-center gap-2 gap-md-3">
+    <!-- SELECTOR CENTRALIZADO DE SEDE -->
+    <div class="d-flex align-items-center bg-light border rounded-pill px-2 px-md-3 py-1 shadow-sm">
+      <i class="bi bi-geo-alt-fill text-primary me-1"></i>
+      <span class="small fw-bold text-secondary d-none d-lg-inline me-1">Sede:</span>
+      <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-dark py-0" 
+              style="font-size: 0.85rem; cursor: pointer; min-width: 140px; max-width: 220px;"
+              [disabled]="sedeBloqueada"
+              [title]="sedeBloqueada ? 'Sede asignada a su usuario' : 'Filtrar por sede en todo el sistema'"
+              [(ngModel)]="sedeSeleccionadaId" 
+              (ngModelChange)="onSedeChange($event)">
+        <option [ngValue]="null">Todas las Sedes</option>
+        <option *ngFor="let s of sedesList" [ngValue]="s.id">
+          {{ s.sede }}
+        </option>
+      </select>
+      <span *ngIf="sedeBloqueada" class="badge bg-secondary rounded-pill ms-1" title="Sede fijada por rol">
+        <i class="bi bi-lock-fill text-white" style="font-size: 0.7rem;"></i>
+      </span>
     </div>
 
     <!-- WIDGET BCV MULTIMONEDA -->

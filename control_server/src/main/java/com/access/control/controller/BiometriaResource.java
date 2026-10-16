@@ -23,19 +23,40 @@ public class BiometriaResource {
 
     private static final String[] BRIDGE_HOSTS = {
         "http://host.docker.internal:8085",
+        "http://127.0.0.1:8085",
+        "http://localhost:8085",
         "http://172.18.0.1:8085",
         "http://172.17.0.1:8085",
         "http://192.168.1.140:8085"
     };
 
+    private List<String> buildTargetHosts(String customHost) {
+        List<String> list = new ArrayList<>();
+        if (customHost != null && !customHost.trim().isEmpty()) {
+            String clean = customHost.trim();
+            if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+                clean = "http://" + clean;
+            }
+            list.add(clean);
+        }
+        for (String b : BRIDGE_HOSTS) {
+            if (!list.contains(b)) {
+                list.add(b);
+            }
+        }
+        return list;
+    }
+
     @GET
     @Path("/suprema/status")
-    public Response getSupremaStatus() {
+    public Response getSupremaStatus(@QueryParam("host") String host) {
         java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-        for (String base : BRIDGE_HOSTS) {
+        List<String> targets = buildTargetHosts(host);
+
+        for (String base : targets) {
             try {
                 java.net.URI uri = java.net.URI.create(base + "/api/suprema/status");
-                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(uri).timeout(java.time.Duration.ofMillis(600)).build();
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(uri).timeout(java.time.Duration.ofMillis(700)).build();
                 java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (resp.statusCode() == 200) {
                     return Response.status(resp.statusCode()).entity(resp.body()).build();
@@ -48,23 +69,29 @@ public class BiometriaResource {
         offline.put("conectado", false);
         offline.put("dispositivo", null);
         offline.put("estado", "DESCONECTADO");
-        offline.put("mensaje", "Sensor no responde o esta desconectado");
+        offline.put("mensaje", "Sensor no responde o esta desconectado en " + (host != null ? host : "localhost:8085"));
         return Response.ok(offline).build();
     }
 
     @GET
     @Path("/suprema/capturar")
-    public Response capturarHuellaSuprema(@QueryParam("forzarMatch") String forzarMatch, @QueryParam("documento") String documento) {
-        String queryString = "";
-        if (forzarMatch != null || documento != null) {
-            queryString = "?" + (forzarMatch != null ? "forzarMatch=" + forzarMatch : "") + (documento != null ? "&documento=" + documento : "");
-        }
+    public Response capturarHuellaSuprema(@QueryParam("forzarMatch") String forzarMatch,
+                                          @QueryParam("documento") String documento,
+                                          @QueryParam("dedo") Integer dedo,
+                                          @QueryParam("host") String host) {
+        StringBuilder queryBuilder = new StringBuilder();
+        if (dedo != null) queryBuilder.append("dedo=").append(dedo).append("&");
+        if (forzarMatch != null) queryBuilder.append("forzarMatch=").append(forzarMatch).append("&");
+        if (documento != null) queryBuilder.append("documento=").append(documento).append("&");
+        String queryString = queryBuilder.length() > 0 ? "?" + queryBuilder.substring(0, queryBuilder.length() - 1) : "";
 
         java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-        for (String base : BRIDGE_HOSTS) {
+        List<String> targets = buildTargetHosts(host);
+
+        for (String base : targets) {
             try {
                 java.net.URI uri = java.net.URI.create(base + "/api/suprema/capturar" + queryString);
-                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(uri).timeout(java.time.Duration.ofMillis(2500)).build();
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(uri).timeout(java.time.Duration.ofMillis(3000)).build();
                 java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (resp.statusCode() == 200) {
                     return Response.status(resp.statusCode()).entity(resp.body()).build();
@@ -86,7 +113,42 @@ public class BiometriaResource {
         sim.put("minucias", template384);
         sim.put("puntosMinucias", 42);
         sim.put("formato", "SUPREMA_PROPRIETARY_384B");
+        sim.put("host", host != null ? host : "127.0.0.1:8085");
         return Response.ok(sim).build();
+    }
+
+    @GET
+    @Path("/camara/snapshot")
+    @Produces({"image/jpeg", "application/json"})
+    public Response getCamaraSnapshot(@QueryParam("ip") String ip,
+                                      @QueryParam("port") Integer port,
+                                      @QueryParam("path") String path) {
+        if (ip == null || ip.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "IP de camara requerida")).build();
+        }
+        int targetPort = (port != null && port > 0) ? port : 80;
+        String targetPath = (path != null && !path.trim().isEmpty()) ? path.trim() : "/snapshot.jpg";
+        if (!targetPath.startsWith("/")) {
+            targetPath = "/" + targetPath;
+        }
+
+        String url = "http://" + ip.trim() + ":" + targetPort + targetPath;
+        java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+        try {
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+                    .timeout(java.time.Duration.ofMillis(2000))
+                    .build();
+            java.net.http.HttpResponse<byte[]> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+            if (resp.statusCode() == 200) {
+                return Response.ok(resp.body(), "image/jpeg").build();
+            }
+        } catch (Exception ignored) {
+        }
+
+        return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                .entity(Map.of("error", "Camara IP no disponible", "url", url))
+                .type(MediaType.APPLICATION_JSON)
+                .build();
     }
 
 

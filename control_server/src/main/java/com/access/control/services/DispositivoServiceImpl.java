@@ -59,6 +59,11 @@ public class DispositivoServiceImpl implements DispositivoService {
         if (dispositivo.getSistemaOperativo() == null) {
             dispositivo.setSistemaOperativo(inferirSOPorDefecto(dispositivo));
         }
+        if (dispositivo.getPisoId() != null) {
+            dispositivo.setPiso(pisoRepository.findById(dispositivo.getPisoId()));
+        } else if (dispositivo.getPiso() != null && dispositivo.getPiso().getId() != null) {
+            dispositivo.setPiso(pisoRepository.findById(dispositivo.getPiso().getId()));
+        }
         dispositivoRepository.persist(dispositivo);
         return dispositivo;
     }
@@ -68,8 +73,15 @@ public class DispositivoServiceImpl implements DispositivoService {
     public Dispositivo updateDispositivo(Dispositivo dispositivo, Long id) {
         Dispositivo d = dispositivoRepository.findById(id);
         if (d != null) {
-            d.setDescripcion(dispositivo.getDescripcion() != null ? dispositivo.getDescripcion() : dispositivo.getNombre());
-            d.setIp(dispositivo.getIp());
+            String desc = (dispositivo.getDescripcion() != null && !dispositivo.getDescripcion().trim().isEmpty())
+                    ? dispositivo.getDescripcion()
+                    : dispositivo.getNombre();
+            if (desc != null) {
+                d.setDescripcion(desc);
+            }
+            if (dispositivo.getIp() != null) {
+                d.setIp(dispositivo.getIp());
+            }
             if (dispositivo.getPort() != null) {
                 d.setPort(dispositivo.getPort());
             }
@@ -79,16 +91,25 @@ public class DispositivoServiceImpl implements DispositivoService {
             if (dispositivo.getPing() != null) {
                 d.setPing(dispositivo.getPing());
             }
-            if (dispositivo.getPisoId() != null) {
-                d.setPiso(pisoRepository.findById(dispositivo.getPisoId()));
-            } else if (dispositivo.getPiso() != null) {
-                d.setPiso(dispositivo.getPiso());
+
+            Long targetPisoId = dispositivo.getPisoId();
+            if (targetPisoId == null && dispositivo.getPiso() != null && dispositivo.getPiso().getId() != null) {
+                targetPisoId = dispositivo.getPiso().getId();
             }
+            if (targetPisoId != null) {
+                d.setPiso(pisoRepository.findById(targetPisoId));
+            } else if (dispositivo.getPiso() == null && dispositivo.getPisoId() == null) {
+                d.setPiso(null);
+            }
+
             if (dispositivo.getState() != null) {
                 d.setState(dispositivo.getState());
             }
-            if (dispositivo.getTipoDispositivo() != null) {
-                d.setTipoDispositivo(dispositivo.getTipoDispositivo());
+            String tipo = (dispositivo.getTipoDispositivo() != null && !dispositivo.getTipoDispositivo().trim().isEmpty())
+                    ? dispositivo.getTipoDispositivo()
+                    : dispositivo.getTipo();
+            if (tipo != null) {
+                d.setTipoDispositivo(tipo);
             }
             if (dispositivo.getSistemaOperativo() != null) {
                 d.setSistemaOperativo(dispositivo.getSistemaOperativo());

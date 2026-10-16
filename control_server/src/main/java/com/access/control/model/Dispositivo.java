@@ -1,6 +1,8 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -33,6 +35,7 @@ public class Dispositivo extends AbstractEntity {
     private Piso piso;
 
     @Transient
+    @JsonAlias({"piso_id", "pisoId"})
     private Long pisoId;
 
     public Long getPisoId() {
@@ -40,6 +43,7 @@ public class Dispositivo extends AbstractEntity {
         return (piso != null) ? piso.getId() : null;
     }
 
+    @JsonAlias({"piso_id", "pisoId"})
     public void setPisoId(Long pisoId) {
         this.pisoId = pisoId;
     }
@@ -92,12 +96,15 @@ public class Dispositivo extends AbstractEntity {
         this.piso = piso;
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getNombre() {
         return descripcion;
     }
 
     public void setNombre(String nombre) {
-        this.descripcion = nombre;
+        if (this.descripcion == null || this.descripcion.trim().isEmpty()) {
+            this.descripcion = nombre;
+        }
     }
 
     public Boolean getEstadoConexion() {
@@ -124,14 +131,18 @@ public class Dispositivo extends AbstractEntity {
         this.sistemaOperativo = sistemaOperativo;
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getTipo() {
         return tipoDispositivo != null ? tipoDispositivo : "TORNIQUETE";
     }
 
     public void setTipo(String tipo) {
-        this.tipoDispositivo = tipo;
+        if (this.tipoDispositivo == null || this.tipoDispositivo.trim().isEmpty()) {
+            this.tipoDispositivo = tipo;
+        }
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getUbicacion() {
         return piso != null ? piso.getPiso() : "General";
     }
@@ -139,6 +150,7 @@ public class Dispositivo extends AbstractEntity {
     public void setUbicacion(String ubicacion) {
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getColor() {
         return (ping != null && ping) ? "verde" : "rojo";
     }

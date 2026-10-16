@@ -7,6 +7,9 @@ import { ClienteService } from '../../shared/cliente/cliente.service';
 import { Cliente } from '../../shared/cliente/cliente.model';
 import { Subscription } from 'rxjs';
 
+import { SedeService, Sede } from '../../shared/sede/sede.service';
+import { SedeStateService } from '../../shared/sede/sede-state.service';
+
 export interface PulseraCard {
   idPulsera: string;
   clienteNombre: string;
@@ -46,6 +49,11 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   clientesMap: Map<string, Cliente> = new Map(); // Pulsera (upper) -> Cliente
   clientesIdMap: Map<number, Cliente> = new Map(); // ClienteId -> Cliente
 
+  // Gestion de Sedes
+  sedes: Sede[] = [];
+  filtroSedeId: number | null = null;
+  sedeBloqueada: boolean = false;
+
   // Tarjetas vivas por pulsera (Unica vez por cada id_pulsera, actualizadas dinamicamente)
   pulserasMap: Map<string, PulseraCard> = new Map();
   pulserasList: PulseraCard[] = [];
@@ -80,16 +88,44 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   mostrarAyudaTarjetas: boolean = false;
 
   private wsSub?: Subscription;
+  private sedeSub?: Subscription;
+  private sedeBloqueadaSub?: Subscription;
 
   constructor(
     private signosService: SignosVitalesService,
     private wsService: WebSocketService,
-    private clienteService: ClienteService
+    private clienteService: ClienteService,
+    private sedeService: SedeService,
+    private sedeStateService: SedeStateService
   ) {}
 
   ngOnInit(): void {
+    this.iniciarGestionSedes();
     this.cargarClientes();
     this.iniciarWebSocket();
+  }
+
+  iniciarGestionSedes(): void {
+    this.sedeService.getListSedes().subscribe({
+      next: (data) => (this.sedes = data || []),
+      error: (err) => console.warn('Error cargando sedes en monitor-salud:', err)
+    });
+
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+      this.filtroSedeId = id;
+      this.aplicarFiltros();
+    });
+
+    this.sedeBloqueadaSub = this.sedeStateService.sedeBloqueada$.subscribe(bloqueada => {
+      this.sedeBloqueada = bloqueada;
+    });
+  }
+
+  onSedeChange(val: any): void {
+    const id = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+    this.filtroSedeId = id;
+    this.sedeStateService.seleccionarSede(id);
+    this.aplicarFiltros();
   }
 
   cargarClientes(): void {
@@ -271,17 +307,36 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
 
   private actualizarListaTarjetas(): void {
     const list = Array.from(this.pulserasMap.values());
-    // Filtrar tarjetas segun filtros activos
+    // Filtrar tarjetas segun filtros activos y sede
     this.pulserasList = list.filter(card => {
       const matchP = !this.filtroPulsera || card.idPulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
       const matchC = !this.filtroCliente || card.clienteNombre.toLowerCase().includes(this.filtroCliente.toLowerCase());
-      return matchP && matchC;
+      
+      let matchSede = true;
+      if (this.filtroSedeId !== null) {
+        const cliente = card.clienteId ? this.clientesIdMap.get(card.clienteId) : this.clientesMap.get(card.idPulsera.toUpperCase());
+        const sId = cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null;
+        matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
+      }
+
+      return matchP && matchC && matchSede;
     });
+
+    this.recalcularMetricasGlobales();
   }
 
   private recalcularMetricasGlobales(): void {
-    const items = Array.from(this.pulserasMap.values());
-    if (items.length === 0) return;
+    const items = this.pulserasList;
+    if (items.length === 0) {
+      this.resumenGlobal = {
+        bpmPromedio: 0,
+        spo2Promedio: 0,
+        tempPromedio: 0,
+        pulserasActivas: 0,
+        alertasCriticas: 0
+      };
+      return;
+    }
 
     let sumaBpm = 0;
     let sumaSpo2 = 0;
@@ -326,7 +381,14 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
         matchFecha = h.timestamp.startsWith(this.filtroFecha);
       }
 
-      return matchPulsera && matchCliente && matchFecha;
+      let matchSede = true;
+      if (this.filtroSedeId !== null) {
+        const cliente = h.cliente_id ? this.clientesIdMap.get(h.cliente_id) : this.clientesMap.get(h.id_pulsera.toUpperCase());
+        const sId = cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null;
+        matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
+      }
+
+      return matchPulsera && matchCliente && matchFecha && matchSede;
     });
 
     this.paginaHistorial = 1;
@@ -357,6 +419,12 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.wsSub) {
       this.wsSub.unsubscribe();
+    }
+    if (this.sedeSub) {
+      this.sedeSub.unsubscribe();
+    }
+    if (this.sedeBloqueadaSub) {
+      this.sedeBloqueadaSub.unsubscribe();
     }
   }
 }

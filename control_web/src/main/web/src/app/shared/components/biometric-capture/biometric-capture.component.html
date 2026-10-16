@@ -21,8 +21,25 @@
           </div>
         </div>
 
-        <!-- SELECTOR DE CAMARAS EN CASO DE HABER MULTIPLES -->
-        <div *ngIf="dispositivosCamara.length > 1" class="mb-2">
+        <!-- SELECTOR DE FUENTE DE VIDEO: CAMARA WEB / CAMARA IP -->
+        <div class="mb-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light fw-semibold text-secondary" title="Fuente de video para captura facial">
+              <i class="bi bi-camera-video me-1 text-info"></i> Fuente:
+            </span>
+            <select class="form-select form-select-sm" [ngModel]="camaraSeleccionadaId" (ngModelChange)="onCamaraSelect($event)">
+              <option *ngFor="let c of listaCamaras" [value]="c.id">
+                {{ c.nombre }}
+              </option>
+            </select>
+            <button *ngIf="esCamaraIpActiva" type="button" class="btn btn-outline-info btn-xs px-2" (click)="refrescarSnapshotCamaraIp()" title="Refrescar captura IP">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- SELECTOR DE DISPOSITIVOS WEBCAM NATIVOS (SOLO SI SELECCIONADA CAMARA WEB) -->
+        <div *ngIf="!esCamaraIpActiva && dispositivosCamara.length > 1" class="mb-2">
           <select class="form-select form-select-sm" [ngModel]="camaraIdActual" (ngModelChange)="cambiarCamara($event)">
             <option *ngFor="let cam of dispositivosCamara; let idx = index" [value]="cam.deviceId">
               {{ cam.label || ('Camara ' + (idx + 1)) }}
@@ -32,8 +49,19 @@
 
         <div
           class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center"
-          [class.mirrored]="esModoEspejo" [style.height.px]="alturaCamaraPx" style="overflow: hidden;">
-          <webcam [trigger]="triggerObservable" [switchCamera]="nextWebcamObservable" [videoOptions]="videoOptions"
+          [class.mirrored]="esModoEspejo && !esCamaraIpActiva" [style.height.px]="alturaCamaraPx" style="overflow: hidden;">
+          
+          <!-- CONTENEDOR STREAMING / SNAPSHOT SI ES CAMARA IP -->
+          <div *ngIf="esCamaraIpActiva" class="w-100 h-100 position-relative d-flex justify-content-center align-items-center">
+            <img [src]="urlCamaraIpSnapshot" style="width: 100%; height: 100%; object-fit: cover;" (error)="urlCamaraIpSnapshot=''" />
+            <div *ngIf="!urlCamaraIpSnapshot" class="text-warning small text-center p-3">
+              <i class="bi bi-broadcast fs-3 d-block mb-1"></i>
+              Conectando a Camara IP en red...
+            </div>
+          </div>
+
+          <!-- CONTENEDOR WEBCAM LOCAL (POR DEFECTO) -->
+          <webcam *ngIf="!esCamaraIpActiva" [trigger]="triggerObservable" [switchCamera]="nextWebcamObservable" [videoOptions]="videoOptions"
             [allowCameraSwitch]="true" (cameraSwitched)="cameraSwitched($event)" (imageCapture)="handleImage($event)">
           </webcam>
 
@@ -192,13 +220,27 @@
     <div class="col-md-6" *ngIf="!soloFacial">
       <div class="p-2 text-center">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="fw-bold text-secondary mb-0">Digitalización de Huellas</h6>
+          <h6 class="fw-bold text-secondary mb-0">Digitalizacion de Huellas</h6>
           <!-- BADGE DE SENSOR BIOMETRICO EN TIEMPO REAL -->
           <span class="badge" [ngClass]="sensorConectado ? 'bg-success text-white' : 'bg-warning text-dark'"
             title="Estado del lector USB conectado">
             <i class="bi bi-usb-symbol me-1"></i>
-            {{ sensorConectado ? 'Sensor En Línea' : 'Sensor Desconectado' }}
+            {{ sensorConectado ? 'Sensor En Linea' : 'Sensor Desconectado' }}
           </span>
+        </div>
+
+        <!-- SELECTOR DE CAPTAHUELLAS ASIGNADO -->
+        <div class="mb-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light fw-semibold text-secondary" title="Dispositivo captahuellas USB o de red">
+              <i class="bi bi-fingerprint me-1 text-primary"></i> Lector:
+            </span>
+            <select class="form-select form-select-sm" [ngModel]="captahuellasSeleccionadoId" (ngModelChange)="onCaptahuellasSelect($event)">
+              <option *ngFor="let cap of listaCaptahuellas" [value]="cap.id">
+                {{ cap.nombre }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div

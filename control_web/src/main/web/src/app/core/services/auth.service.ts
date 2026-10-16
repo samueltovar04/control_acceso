@@ -6,8 +6,10 @@ import { tap } from 'rxjs/operators';
 export interface UserAuth {
   token: string;
   username: string;
-  role: 'ADMIN' | 'EMPLEADO' | 'CLIENTE' | 'RECEPCION';
+  role: 'ADMIN' | 'EMPLEADO' | 'CLIENTE' | 'RECEPCION' | 'SUPER_ADMIN' | string;
   clienteId?: number;
+  sedeId?: number;
+  sede?: any;
 }
 
 @Injectable({

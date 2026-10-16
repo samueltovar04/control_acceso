@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { WebcamModule, WebcamImage } from 'ngx-webcam';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, Subscription } from 'rxjs';
 import jsQR from 'jsqr';
+import { SedeStateService } from '../../shared/sede/sede-state.service';
+import { BiometricDeviceStateService, DispositivoBiometrico } from '../../shared/dispositivo/biometric-device-state.service';
 
 export interface DispositivoItem {
   id: number;
@@ -16,6 +18,7 @@ export interface DispositivoItem {
   state?: number;
   ubicacion?: string;
   estadoConexion?: boolean;
+  piso?: any;
 }
 
 import { BiometricCaptureComponent } from '../../shared/components/biometric-capture/biometric-capture.component';
@@ -46,11 +49,20 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   public datosPersonaIdentificada: any = null;
   public origenIdentificacion: string = '';
 
+  @Input() filtroSedeId: number | null = null;
+
   // Control de Torniquetes y Dispositivos
   public todosDispositivos: DispositivoItem[] = [];
   public torniquetesDisponibles: DispositivoItem[] = [];
   public dispositivosRedFiltrados: DispositivoItem[] = [];
   public dispositivoSeleccionadoId?: number;
+
+  // Seleccion dinamica de hardware biometrico
+  public captahuellasDisponibles: DispositivoBiometrico[] = [];
+  public camarasDisponibles: DispositivoBiometrico[] = [];
+  public captahuellasSeleccionadoId: string | number = 'LOCAL_8085';
+  public camaraSeleccionadaId: string | number = 'LOCAL_WEBCAM';
+  private bioDevSubs: Subscription[] = [];
 
   public estadoTorniquete: string = 'CERRADO';
   public mensajeTorniquete: string = '';
@@ -61,12 +73,52 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   public segundosRestantesResultado: number = 0;
   private timerResultadoSub?: any;
   public hayErrorActivo: boolean = false;
+  private sedeSub?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private sedeStateService: SedeStateService,
+    public biometricDeviceState: BiometricDeviceStateService
+  ) {}
 
   ngOnInit(): void {
     this.cargarDispositivos();
     this.iniciarEscaneoContinuoQr();
+
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+      this.filtroSedeId = id;
+      this.filtrarDispositivosPorSede();
+    });
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.captahuellasDisponibles$.subscribe(list => {
+        this.captahuellasDisponibles = list || [];
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.camarasDisponibles$.subscribe(list => {
+        this.camarasDisponibles = list || [];
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.captahuellasSeleccionado$.subscribe(c => {
+        this.captahuellasSeleccionadoId = c.id;
+      })
+    );
+
+    this.bioDevSubs.push(
+      this.biometricDeviceState.camaraSeleccionada$.subscribe(cam => {
+        this.camaraSeleccionadaId = cam.id;
+      })
+    );
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['filtroSedeId']) {
+      this.filtrarDispositivosPorSede();
+    }
   }
 
   ngOnDestroy(): void {
@@ -76,6 +128,20 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
     if (this.timerResultadoSub) {
       clearInterval(this.timerResultadoSub);
     }
+    if (this.sedeSub) {
+      this.sedeSub.unsubscribe();
+    }
+    this.bioDevSubs.forEach(s => s.unsubscribe());
+  }
+
+  public onCambioCaptahuellas(val: any): void {
+    this.captahuellasSeleccionadoId = val;
+    this.biometricDeviceState.seleccionarCaptahuellas(val);
+  }
+
+  public onCambioCamara(val: any): void {
+    this.camaraSeleccionadaId = val;
+    this.biometricDeviceState.seleccionarCamara(val);
   }
 
   /**
@@ -125,28 +191,7 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
     this.http.get<DispositivoItem[]>('/api/v1/dispositivos').subscribe({
       next: (data) => {
         this.todosDispositivos = data || [];
-
-        // 1. Selector "Torniquete Asignado": solo dispositivos validos tipo torniquete
-        this.torniquetesDisponibles = this.todosDispositivos.filter(d => {
-          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
-          const esActivo = d.state === 1 || d.estadoConexion === true;
-          return esActivo && tipoTexto.includes('torniquete');
-        });
-
-        // 2. Modal/Panel "Dispositivos / Torniquetes en red": solo de tipo torniquetes y lector o huellas
-        this.dispositivosRedFiltrados = this.todosDispositivos.filter(d => {
-          const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
-          return tipoTexto.includes('torniquete') ||
-                 tipoTexto.includes('lector') ||
-                 tipoTexto.includes('huella') ||
-                 tipoTexto.includes('biometric');
-        });
-
-        if (this.torniquetesDisponibles.length > 0) {
-          this.dispositivoSeleccionadoId = this.torniquetesDisponibles[0].id;
-        } else {
-          this.dispositivoSeleccionadoId = undefined;
-        }
+        this.filtrarDispositivosPorSede();
       },
       error: () => {
         this.todosDispositivos = [];
@@ -155,6 +200,46 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
         this.dispositivoSeleccionadoId = undefined;
       }
     });
+  }
+
+  public filtrarDispositivosPorSede(): void {
+    // 1. Selector "Torniquete Asignado": solo dispositivos validos tipo torniquete pertenecientes a la sede
+    this.torniquetesDisponibles = this.todosDispositivos.filter(d => {
+      const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
+      const esActivo = d.state === 1 || d.estadoConexion === true;
+      const esTorniquete = esActivo && tipoTexto.includes('torniquete');
+      if (!esTorniquete) return false;
+
+      if (this.filtroSedeId === null) return true;
+      const sId = d.piso?.sede?.id || d.piso?.sede_id || d.piso?.sedeId;
+      return sId !== undefined && sId !== null && Number(sId) === Number(this.filtroSedeId);
+    });
+
+    // 2. Panel "Dispositivos / Torniquetes en red": solo de tipo torniquetes y lector o huellas pertenecientes a la sede
+    this.dispositivosRedFiltrados = this.todosDispositivos.filter(d => {
+      const tipoTexto = `${d.tipo || ''} ${d.tipoDispositivo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
+      const esRelevante = tipoTexto.includes('torniquete') ||
+                          tipoTexto.includes('lector') ||
+                          tipoTexto.includes('huella') ||
+                          tipoTexto.includes('camara') ||
+                          tipoTexto.includes('cámara') ||
+                          tipoTexto.includes('biometric');
+      if (!esRelevante) return false;
+
+      if (this.filtroSedeId === null) return true;
+      const sId = d.piso?.sede?.id || d.piso?.sede_id || d.piso?.sedeId;
+      return sId !== undefined && sId !== null && Number(sId) === Number(this.filtroSedeId);
+    });
+
+    // Verificar si el dispositivo seleccionado sigue disponible en la lista filtrada
+    const sigueDisponible = this.torniquetesDisponibles.some(d => d.id === this.dispositivoSeleccionadoId);
+    if (!sigueDisponible) {
+      if (this.torniquetesDisponibles.length > 0) {
+        this.dispositivoSeleccionadoId = this.torniquetesDisponibles[0].id;
+      } else {
+        this.dispositivoSeleccionadoId = undefined;
+      }
+    }
   }
 
   public capturarRostro(): void {
@@ -374,11 +459,12 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
    * @param dedo 1: Índice, 2: Pulgar
    */
   public capturarHuellaTerminal(dedo: number = 1): void {
-    const nombreDedo = dedo === 1 ? 'Índice' : 'Pulgar';
+    const nombreDedo = dedo === 1 ? 'Indice' : 'Pulgar';
     this.escaneandoHuella = true;
-    this.mensajeHuella = `Coloque el dedo ${nombreDedo} en el sensor Suprema USB...`;
+    const host = this.biometricDeviceState.getHostCaptahuellasActual();
+    this.mensajeHuella = `Coloque el dedo ${nombreDedo} en el sensor (${host})...`;
 
-    const url = `/api/v1/biometria/suprema/capturar?dedo=${dedo}`;
+    const url = `/api/v1/biometria/suprema/capturar?dedo=${dedo}&host=${encodeURIComponent(host)}`;
     this.http.get<any>(url).subscribe({
       next: (res) => {
         if (!res.success) {

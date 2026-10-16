@@ -15,25 +15,41 @@
         <div class="row g-3">
           <div class="col-md-4">
             <label for="descripcion" class="form-label fw-bold">Nombre / Descripcion:</label>
-            <input type="text" class="form-control" id="descripcion" required [(ngModel)]="dispositivo.descripcion" name="descripcion" placeholder="Ej: Torniquete Entrada Principal">
+            <input type="text" class="form-control" id="descripcion" required [(ngModel)]="dispositivo.descripcion"
+              name="descripcion" placeholder="Ej: Torniquete Entrada Principal">
           </div>
 
           <div class="col-md-4">
             <label for="ip" class="form-label fw-bold">Direccion IP:</label>
-            <input type="text" class="form-control" id="ip" required [(ngModel)]="dispositivo.ip" name="ip" placeholder="Ej: 192.168.1.168">
+            <input type="text" class="form-control" id="ip" required [(ngModel)]="dispositivo.ip" name="ip"
+              placeholder="Ej: 192.168.1.168">
           </div>
 
           <div class="col-md-4">
             <label for="port" class="form-label fw-bold">Puerto:</label>
-            <input type="number" class="form-control" id="port" required [(ngModel)]="dispositivo.port" name="port" placeholder="80">
+            <input type="number" class="form-control" id="port" required [(ngModel)]="dispositivo.port" name="port"
+              placeholder="80">
+          </div>
+
+          <div class="col-md-4">
+            <label for="sede_id" class="form-label fw-bold">Sede:</label>
+            <select class="form-select" id="sede_id" [disabled]="sedeBloqueada" [(ngModel)]="sedeSeleccionadaId"
+              (ngModelChange)="onSedeChange($event)" name="sede_id">
+              <option [ngValue]="null">Todas las Sedes / Seleccione Sede...</option>
+              <option *ngFor="let s of sedesList" [value]="s.id">
+                {{ s.sede }}
+              </option>
+            </select>
           </div>
 
           <div class="col-md-4">
             <label for="piso_id" class="form-label fw-bold">Piso / Nivel Asignado:</label>
-            <select class="form-select" id="piso_id" [(ngModel)]="dispositivo.piso_id" name="piso_id">
+            <select class="form-select" id="piso_id" [(ngModel)]="dispositivo.piso_id"
+              (ngModelChange)="onPisoChange($event)" name="piso_id">
               <option [ngValue]="null">Seleccione un Piso...</option>
-              <option *ngFor="let p of pisosList" [value]="p.id">
-                Piso {{ p.numeroPiso || p.piso }} - {{ p.descripcion || p.area || 'Sin descripcion' }}
+              <option *ngFor="let p of pisosFiltrados" [value]="p.id">
+                {{ p.sede?.sede ? ('[' + p.sede.sede + '] ') : '' }}Piso {{ p.numeroPiso || p.piso }} - {{ p.descripcion
+                || p.area || 'Sin descripcion' }}
               </option>
             </select>
           </div>
@@ -57,18 +73,23 @@
 
           <div class="col-md-6">
             <label for="tipoDispositivo" class="form-label fw-bold">Tipo de Dispositivo Estimado:</label>
-            <select class="form-select" id="tipoDispositivo" [(ngModel)]="dispositivo.tipoDispositivo" name="tipoDispositivo">
+            <select class="form-select" id="tipoDispositivo" [(ngModel)]="dispositivo.tipoDispositivo"
+              name="tipoDispositivo">
               <option value="Torniquete con Relay TCP">Torniquete con Relay TCP</option>
               <option value="Terminal Biometrica Facial">Terminal Biometrica Facial</option>
               <option value="Lector ZKTeco">Lector ZKTeco</option>
               <option value="Terminal Movil">Terminal Movil</option>
+              <option value="Camara Web">Camara Web</option>
+              <option value="Camara IP">Camara IP</option>
+              <option value="Captahuellas USB Generic">Captahuellas USB Generic</option>
               <option value="Servidor de Control">Servidor de Control</option>
             </select>
           </div>
 
           <div class="col-md-6">
             <label for="sistemaOperativo" class="form-label fw-bold">Sistema Operativo / Plataforma:</label>
-            <select class="form-select" id="sistemaOperativo" [(ngModel)]="dispositivo.sistemaOperativo" name="sistemaOperativo">
+            <select class="form-select" id="sistemaOperativo" [(ngModel)]="dispositivo.sistemaOperativo"
+              name="sistemaOperativo">
               <option value="Linux Embedded (ZKOS / HikOS)">Linux Embedded (ZKOS / HikOS)</option>
               <option value="Android/iOS">Android/iOS</option>
               <option value="macOS/Linux 64-bit">macOS/Linux 64-bit</option>

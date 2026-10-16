@@ -13,19 +13,49 @@
         </div>
         <p class="text-muted small mb-3">Identificacion automatica multi-factor: Rostro Facial 128D, Escaneo de Codigo QR (Cedula) o Huella USB Suprema para control de paso y apertura automatica de rele.</p>
 
-        <!-- SELECTOR DE DISPOSITIVO TORNIQUETE -->
-        <div class="input-group mb-3">
-          <span class="input-group-text bg-light fw-bold text-secondary">
-            <i class="bi bi-hdd-network-fill me-2 text-primary"></i> Torniquete Asignado:
-          </span>
-          <select class="form-select fw-bold" [(ngModel)]="dispositivoSeleccionadoId">
-            <option *ngFor="let dispo of torniquetesDisponibles" [value]="dispo.id">
-              {{ dispo.nombre }} — IP: {{ dispo.ip }} ({{ dispo.tipo }})
-            </option>
-          </select>
-          <button class="btn btn-warning text-dark fw-bold px-3" (click)="enviarPulsoApertura('Apertura Manual')">
-            <i class="bi bi-unlock-fill me-1"></i> Abrir Manual
-          </button>
+        <!-- SELECTORES DE HARDWARE: TORNIQUETE, CAMARA Y CAPTAHUELLAS POR SEDE -->
+        <div class="row g-2 mb-3">
+          <div class="col-12">
+            <div class="input-group">
+              <span class="input-group-text bg-light fw-bold text-secondary">
+                <i class="bi bi-hdd-network-fill me-2 text-primary"></i> Torniquete Asignado:
+              </span>
+              <select class="form-select fw-bold" [(ngModel)]="dispositivoSeleccionadoId">
+                <option *ngFor="let dispo of torniquetesDisponibles" [value]="dispo.id">
+                  {{ dispo.nombre }} — IP: {{ dispo.ip }} ({{ dispo.tipo }})
+                </option>
+              </select>
+              <button class="btn btn-warning text-dark fw-bold px-3" (click)="enviarPulsoApertura('Apertura Manual')">
+                <i class="bi bi-unlock-fill me-1"></i> Abrir Manual
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light fw-semibold text-secondary">
+                <i class="bi bi-camera-video-fill me-1 text-info"></i> Camara:
+              </span>
+              <select class="form-select" [ngModel]="camaraSeleccionadaId" (ngModelChange)="onCambioCamara($event)">
+                <option *ngFor="let cam of camarasDisponibles" [value]="cam.id">
+                  {{ cam.nombre }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light fw-semibold text-secondary">
+                <i class="bi bi-fingerprint me-1 text-primary"></i> Captahuellas:
+              </span>
+              <select class="form-select" [ngModel]="captahuellasSeleccionadoId" (ngModelChange)="onCambioCaptahuellas($event)">
+                <option *ngFor="let cap of captahuellasDisponibles" [value]="cap.id">
+                  {{ cap.nombre }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <!-- COMPONENTE REUTILIZABLE UNIFICADO DE FOTOGRAMAS BIOMETRICOS -->

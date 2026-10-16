@@ -1,7 +1,9 @@
 # ARCHITECTURE.md - Architecture & Design Decisions
 
 ## 1. Diseno Arquitectonico Global
+
 El sistema opera bajo principios de Clean Architecture y microservicios desacoplados:
+
 - **Core Access Control**: Backend Quarkus 3.x (Java 17) con base de datos PostgreSQL 15 para control relacional de usuarios, credenciales, membresias y torniquetes.
 - **Biomedical Telemetry**: Modulo IoT NoSQL desacoplado montado sobre MongoDB 6.0 (`biotrack_mongo`) para almacenamiento y streaming en tiempo real de constantes vitales.
 - **Frontend SPA**: Angular 17 servido via Nginx con proxy reverso y componentes modulares.
@@ -12,7 +14,9 @@ El sistema opera bajo principios de Clean Architecture y microservicios desacopl
 ## 2. Aislamiento de Dependencias Binarias de Hardware (`infrastructure/libs/`)
 
 ### Decision Arquitectonica
+
 Para la integracion de drivers y SDKs biometricos propietarios (especificamente el Suprema BioMini SDK v3.8.0.2364 y su biblioteca de enlace dinamico `libUFScanner.dylib` para macOS), se establece una politica estricta de aislamiento de binarios nativos bajo la capa de infraestructura:
+
 ```
 infrastructure/
 └── libs/
@@ -21,7 +25,8 @@ infrastructure/
         └── INSTRUCCIONES.md
 ```
 
-### Justificacion y Principios:
+### Justificacion y Principios
+
 1. **Clean Architecture (Dependency Rule):**
    - Los componentes de dominio y aplicacion no dependen de librerias C/C++ ni de rutas absolutas del sistema operativo (`/usr/local/lib` o `/System/Library`).
    - El puente de integracion de hardware (`BioMiniScanner`) localiza dinamicamente el binario relativo a la raiz del repositorio (`pathlib.Path`), permitiendo que el proyecto sea portable e independiente del entorno de maquina del desarrollador.
@@ -31,3 +36,26 @@ infrastructure/
 3. **Control de Versionado y Seguridad:**
    - Los binarios propietarios no se comitean sin autorizacion de licencia y permanecen encapsulados en `infrastructure/libs/`.
    - Se provee documentacion tecnica de provisionamiento en `INSTRUCCIONES.md` dentro de la carpeta contenedora.
+
+## 5. Motor de Inferencia de Deep Learning (Quarkus + DJL)
+
+**Fecha:** 15-Oct-2026
+**Contexto:** Selección e implementación de la librería para el procesamiento de redes neuronales (detección facial) dentro del backend Java.
+**Decisión:**
+Se descarta OpenCV/JNI puro a favor de **Deep Java Library (DJL)** respaldado por el motor de PyTorch.
+**Justificación:**
+
+1. **Clean Code & Seguridad:** DJL está diseñado con una semántica Java moderna. Los objetos nativos de IA se encapsulan detrás de interfaces de usuario limpias con liberación de memoria automática vía `AutoCloseable`.
+2. **Performance (Event Loop):** DJL gestiona un *Model Zoo* eficiente donde el modelo multihilo se carga una sola vez como Singleton (`ZooModel`) en el `@PostConstruct`, mientras que las inferencias reactivas crean predictores ligeros por petición.
+3. **Despliegue Nativo:** Facilita la creación de contenedores Docker más ligeros sin necesidad de lidiar con compilaciones de C++ como requiere OpenCV.
+
+## 6. Almacenamiento y Búsqueda Vectorial (PostgreSQL + pgvector)
+
+**Fecha:** 15-Oct-2026
+**Contexto:** Necesidad de comparar el *embedding* facial capturado en tiempo real contra la base de datos de usuarios autorizados.
+**Decisión:**
+Se introduce **PostgreSQL con la extensión `pgvector`**, almacenando las identidades biométricas como `vector(512)` y evaluando coincidencias mediante **Distancia del Coseno**.
+**Justificación:**
+
+1. **Performance Algorítmica:** El uso de un índice `hnsw` (Hierarchical Navigable Small World) permite búsquedas de similitud en tiempo logarítmico, evitando un escaneo secuencial (Full Table Scan) a medida que crece la base de datos de empleados.
+2. **Consolidación de Infraestructura:** Evita introducir una base de datos vectorial dedicada (como Milvus o Pinecone), manteniendo la biometría y los datos relacionales (ej. horarios, roles, departamentos) en un mismo motor ACID y simplificando el despliegue con Docker.
