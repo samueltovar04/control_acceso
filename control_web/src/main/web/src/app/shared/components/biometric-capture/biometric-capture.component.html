@@ -21,8 +21,8 @@
           </div>
         </div>
 
-        <!-- SELECTOR DE FUENTE DE VIDEO: CAMARA WEB / CAMARA IP -->
-        <div class="mb-2">
+        <!-- SELECTOR DE FUENTE DE VIDEO: CAMARA WEB / CAMARA IP (SOLO SI NO ESTA EN MODO IDENTIFICACION DONDE YA EXISTE EL SELECTOR PRINCIPAL DE CAMARA) -->
+        <div *ngIf="!modoIdentificacion" class="mb-2">
           <div class="input-group input-group-sm">
             <span class="input-group-text bg-light fw-semibold text-secondary" title="Fuente de video para captura facial">
               <i class="bi bi-camera-video me-1 text-info"></i> Fuente:
@@ -53,8 +53,16 @@
           
           <!-- CONTENEDOR STREAMING / SNAPSHOT SI ES CAMARA IP -->
           <div *ngIf="esCamaraIpActiva" class="w-100 h-100 position-relative d-flex justify-content-center align-items-center">
-            <img [src]="urlCamaraIpSnapshot" style="width: 100%; height: 100%; object-fit: cover;" (error)="urlCamaraIpSnapshot=''" />
-            <div *ngIf="!urlCamaraIpSnapshot" class="text-warning small text-center p-3">
+            <!-- REPRODUCTOR WEBRTC DIRECTO PARA MEDIAMTX (HTTP://IP:8889/CAM1/) -->
+            <iframe *ngIf="esStreamWebRtc && urlCamaraStreamWebRTC"
+                    [src]="safeStreamUrl"
+                    style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none;"
+                    allow="autoplay">
+            </iframe>
+
+            <!-- IMAGEN SNAPSHOT HTTP SI NO ES WEBRTC O FALLBACK -->
+            <img *ngIf="!esStreamWebRtc && urlCamaraIpSnapshot" [src]="urlCamaraIpSnapshot" style="width: 100%; height: 100%; object-fit: cover;" (error)="urlCamaraIpSnapshot=''" />
+            <div *ngIf="!esStreamWebRtc && !urlCamaraIpSnapshot" class="text-warning small text-center p-3">
               <i class="bi bi-broadcast fs-3 d-block mb-1"></i>
               Conectando a Camara IP en red...
             </div>
@@ -65,10 +73,23 @@
             [allowCameraSwitch]="true" (cameraSwitched)="cameraSwitched($event)" (imageCapture)="handleImage($event)">
           </webcam>
 
-          <!-- RETICULA / GUIA LINEAL DE ENFOQUE FACIAL -->
-          <div class="face-target-guide position-absolute" pointer-events="none">
+          <!-- RETICULA GUIA DE CENTRADO (SOLO VISIBLE CUANDO NO SE HA DETECTADO ROSTRO) -->
+          <div *ngIf="!faceDetectado && !faceBox" class="face-target-guide position-absolute" pointer-events="none">
             <div class="target-crosshair"></div>
             <div class="target-oval"></div>
+          </div>
+
+          <!-- RECUADRO DINAMICO DE BUSQUEDA Y ENFOQUE FACIAL (BOUNDING BOX ACTIVO) -->
+          <div *ngIf="faceBox"
+               class="position-absolute border border-3 border-success rounded-3 shadow face-bounding-box"
+               [style.top.%]="faceBox.top"
+               [style.left.%]="faceBox.left"
+               [style.width.%]="faceBox.width"
+               [style.height.%]="faceBox.height"
+               style="pointer-events: none; z-index: 12; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 0 20px rgba(0, 230, 118, 0.75) !important;">
+            <div class="position-absolute top-0 start-0 translate-middle-y bg-success text-white px-2 py-0 small rounded-1 fw-bold shadow-sm d-flex align-items-center" style="font-size: 11px;">
+              <i class="bi bi-person-bounding-box me-1"></i>Rostro Detectado
+            </div>
           </div>
 
           <!-- OVERLAY DE ASISTENTE DE MOVIMIENTO DE CABEZA / MULTI-ANGULO (LIMPIO SIN TAPAR EL ROSTRO) -->
@@ -164,8 +185,31 @@
         </div>
 
         <div *ngIf="faceVectorGenerado && mostrarBotonCaptura && fotogramasColeccion.length === 0"
-          class="alert alert-success py-1 px-2 small mb-0">
-          <i class="bi bi-check-circle-fill me-1"></i> Fotograma y Vector 128D generados correctamente
+          class="alert alert-success py-1 px-2 small mb-1">
+          <i class="bi bi-check-circle-fill me-1"></i> Fotograma y Vector facial generados correctamente
+        </div>
+
+        <!-- INDICADOR DE DETECCION EN TIEMPO REAL CONTRA BASE DE DATOS (SOLO EN ENROLAMIENTO PARA EVITAR DUPLICIDAD; EN IDENTIFICACION SE USA LA BITACORA Y MODAL) -->
+        <div *ngIf="!modoIdentificacion && verificandoPersonaBD" class="alert alert-info py-1 px-2 small mb-0 d-flex align-items-center justify-content-center">
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <span>Consultando base de datos biométrica...</span>
+        </div>
+
+        <div *ngIf="!modoIdentificacion && !verificandoPersonaBD && personaDetectadaBD" class="alert alert-warning py-2 px-2 small mb-0 shadow-sm border border-warning text-start">
+          <div class="d-flex align-items-center mb-1">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2 fs-5"></i>
+            <span class="fw-bold text-dark">¡Persona ya registrada en Base de Datos!</span>
+          </div>
+          <div class="small text-muted ms-4">
+            <strong>Nombre:</strong> {{ personaDetectadaBD.nombre }} ({{ personaDetectadaBD.tipo }})<br>
+            <span *ngIf="personaDetectadaBD.documento"><strong>Doc:</strong> {{ personaDetectadaBD.documento }} | </span>
+            <strong>Coincidencia:</strong> {{ (personaDetectadaBD.similitud * 100) | number:'1.1-1' }}%
+            <span class="badge bg-secondary ms-1 font-monospace">{{ personaDetectadaBD.metodo }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="!modoIdentificacion && !verificandoPersonaBD && !personaDetectadaBD && faceVectorGenerado && mostrarBotonCaptura" class="alert alert-light border py-1 px-2 small mb-0 text-muted">
+          <i class="bi bi-person-plus text-success me-1"></i> Nuevo sujeto (Sin duplicado en BD)
         </div>
       </div>
     </div>

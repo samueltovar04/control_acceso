@@ -24,6 +24,9 @@ public class Visita extends AbstractEntity {
     @Column(name = "huella2")
     private String huella2;
 
+    @Column(name = "face_vector", columnDefinition = "TEXT")
+    private String faceVector;
+
     @Column(name = "last_name")
     private String lastName;
 
@@ -107,6 +110,14 @@ public class Visita extends AbstractEntity {
 
     public void setHuella2(String huella2) {
         this.huella2 = huella2;
+    }
+
+    public String getFaceVector() {
+        return faceVector;
+    }
+
+    public void setFaceVector(String faceVector) {
+        this.faceVector = faceVector;
     }
 
     public String getLastName() {

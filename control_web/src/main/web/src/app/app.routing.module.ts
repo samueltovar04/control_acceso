@@ -3,6 +3,8 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { HomeComponent } from './components/home/home.component';
 import { LoginComponent } from './features/login/login.component';
+import { AuthGuard } from './core/guards/auth.guard';
+import { AdminRoleGuard } from './core/guards/admin-role.guard';
 import { AdminDashboardComponent } from './features/admin-dashboard/admin-dashboard.component';
 import { MonitorSaludComponent } from './features/monitor-salud/monitor-salud.component';
 import { BiometriaFacialComponent } from './features/biometria-facial/biometria-facial.component';
@@ -44,6 +46,8 @@ const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'admin-dashboard' },
       { path: 'admin-dashboard', component: AdminDashboardComponent },
@@ -97,6 +101,11 @@ const routes: Routes = [
       { 
         path: 'bancos', 
         loadComponent: () => import('./features/bancos/bancos-admin.component').then(m => m.BancosAdminComponent) 
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./modulos/usuarios/usuario-list/usuario-list.component').then(m => m.UsuarioListComponent),
+        canActivate: [AdminRoleGuard]
       }
     ]
   }

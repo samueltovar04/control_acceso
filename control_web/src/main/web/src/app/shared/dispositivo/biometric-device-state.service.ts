@@ -10,6 +10,8 @@ export interface DispositivoBiometrico {
   ip: string;
   port: number;
   host: string;
+  ruta?: string;
+  urlCompleta?: string;
   tipo: string;
   sedeId?: number | null;
   sedeNombre?: string;
@@ -110,14 +112,18 @@ export class BiometricDeviceStateService {
         items.forEach(d => {
           const ip = d.ip || '';
           const port = d.port || 80;
+          const ruta = d.ruta ? (d.ruta.startsWith('/') ? d.ruta : `/${d.ruta}`) : '';
           const host = ip ? `${ip}:${port}` : '';
+          const urlCompleta = ip ? `${ip}:${port}${ruta}` : '';
           const sedeNom = d.piso?.sede?.sede || d.piso?.sede?.nombre || '';
           filtradas.push({
             id: d.id,
-            nombre: `${d.descripcion || d.nombre || 'Camara IP'} (${host || 'Web'})${sedeNom ? ' [' + sedeNom + ']' : ''}`,
+            nombre: `${d.descripcion || d.nombre || 'Camara IP'} (${urlCompleta || host || 'Web'})${sedeNom ? ' [' + sedeNom + ']' : ''}`,
             ip,
             port,
             host,
+            ruta: d.ruta,
+            urlCompleta,
             tipo: d.tipoDispositivo || 'Camara IP',
             sedeId: d.piso?.sede?.id || d.piso?.sede_id || null,
             sedeNombre: sedeNom
@@ -194,13 +200,17 @@ export class BiometricDeviceStateService {
     if (encontrado) {
       const ip = encontrado.ip || '';
       const port = encontrado.port || 80;
+      const ruta = encontrado.ruta ? (encontrado.ruta.startsWith('/') ? encontrado.ruta : `/${encontrado.ruta}`) : '';
       const host = ip ? `${ip}:${port}` : '';
+      const urlCompleta = ip ? `${ip}:${port}${ruta}` : '';
       const item: DispositivoBiometrico = {
         id: encontrado.id,
-        nombre: `${encontrado.descripcion || encontrado.nombre} (${host || 'Web'})`,
+        nombre: `${encontrado.descripcion || encontrado.nombre} (${urlCompleta || host || 'Web'})`,
         ip,
         port,
         host,
+        ruta: encontrado.ruta,
+        urlCompleta,
         tipo: encontrado.tipoDispositivo || 'Camara IP'
       };
       this.camaraSeleccionadaSubject.next(item);

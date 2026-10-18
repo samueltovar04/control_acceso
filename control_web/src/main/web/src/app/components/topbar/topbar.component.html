@@ -82,16 +82,19 @@
     </a>
 
     <!-- PERFIL Y SALIR -->
-    <div class="d-flex align-items-center border-start ps-3">
-      <div class="avatar-circle bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 34px; height: 34px;">
+    <div class="d-flex align-items-center border-start ps-3 gap-2">
+      <div class="avatar-circle bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-1" style="width: 34px; height: 34px;">
         <i class="bi bi-person-fill"></i>
       </div>
-      <div class="d-none d-sm-block me-3 text-start">
+      <div class="d-none d-sm-block me-2 text-start">
         <div class="small fw-bold text-dark lh-1">{{ usuarioActivo }}</div>
-        <small class="text-muted" style="font-size: 0.7rem;">Operador / Admin</small>
+        <small class="text-muted" style="font-size: 0.7rem;">Sesion Activa</small>
       </div>
-      <button class="btn btn-light btn-sm text-danger rounded-circle p-2" title="Cerrar Sesión" (click)="cerrarSesion()">
-        <i class="bi bi-box-arrow-right"></i>
+      <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 fw-bold px-2 px-md-3 py-1 shadow-sm"
+              title="Cerrar Sesión del Sistema" 
+              (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right fs-6"></i>
+        <span class="d-none d-md-inline">Cerrar Sesión</span>
       </button>
     </div>
   </div>

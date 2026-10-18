@@ -26,6 +26,9 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Inject
     com.access.control.repository.PisoRepository pisoRepository;
 
+    @Inject
+    com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
+
     @Override
     public Empleado getEmpleadoById(Long id) {
         return empleadoRepository.findById(id);
@@ -74,6 +77,9 @@ public class EmpleadosServiceImpl implements EmpleadosService {
             e.setPisosPermitidos(pisos);
         }
         empleadoRepository.persist(e);
+        if (dto.getFaceVector() != null) {
+            biometriaVectorRepository.updateFaceEmbeddingFromString("empleados", e.getId(), dto.getFaceVector());
+        }
         return e;
     }
 
@@ -103,6 +109,7 @@ public class EmpleadosServiceImpl implements EmpleadosService {
             }
             if (dto.getFaceVector() != null) {
                 e.setFaceVector(dto.getFaceVector());
+                biometriaVectorRepository.updateFaceEmbeddingFromString("empleados", e.getId(), dto.getFaceVector());
             }
             if (dto.getHuella1() != null) {
                 e.setHuella1(dto.getHuella1());

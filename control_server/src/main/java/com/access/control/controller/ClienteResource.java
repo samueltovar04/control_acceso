@@ -19,6 +19,9 @@ public class ClienteResource {
     @Inject
     ClienteRepository clienteRepository;
 
+    @Inject
+    com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
+
     @GET
     public List<Cliente> getAllClientes() {
         return clienteRepository.listAll();
@@ -53,6 +56,9 @@ public class ClienteResource {
             cliente.setEstadoSuscripcion("ACTIVA");
         }
         clienteRepository.persist(cliente);
+        if (cliente.getFaceVector() != null) {
+            biometriaVectorRepository.updateFaceEmbeddingFromString("clientes", cliente.getId(), cliente.getFaceVector());
+        }
         return Response.status(Response.Status.CREATED).entity(cliente).build();
     }
 
@@ -124,6 +130,9 @@ public class ClienteResource {
                 cliente.setFechaProximoCobro(clienteDetails.getFechaProximoCobro());
             }
             clienteRepository.persist(cliente);
+            if (cliente.getFaceVector() != null) {
+                biometriaVectorRepository.updateFaceEmbeddingFromString("clientes", cliente.getId(), cliente.getFaceVector());
+            }
             return Response.ok(cliente).build();
         } catch (Exception e) {
             System.err.println("[ClienteResource] Error en updateCliente: " + e.getMessage());
@@ -144,7 +153,10 @@ public class ClienteResource {
         }
         if (biometriaData.getHuella1() != null) cliente.setHuella1(biometriaData.getHuella1());
         if (biometriaData.getHuella2() != null) cliente.setHuella2(biometriaData.getHuella2());
-        if (biometriaData.getFaceVector() != null) cliente.setFaceVector(biometriaData.getFaceVector());
+        if (biometriaData.getFaceVector() != null) {
+            cliente.setFaceVector(biometriaData.getFaceVector());
+            biometriaVectorRepository.updateFaceEmbeddingFromString("clientes", cliente.getId(), biometriaData.getFaceVector());
+        }
         return Response.ok(cliente).build();
     }
 

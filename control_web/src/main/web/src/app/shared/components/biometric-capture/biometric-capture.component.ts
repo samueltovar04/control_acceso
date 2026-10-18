@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { WebcamImage, WebcamInitError, WebcamModule, WebcamUtil } from 'ngx-webcam';
 import { Observable, Subject, Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { BiometricDeviceStateService, DispositivoBiometrico } from '../../dispositivo/biometric-device-state.service';
 
 @Component({
@@ -34,6 +35,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     fotoUrl: string;
     faceVector: string;
   }>();
+  @Output() faceDetected = new EventEmitter<{ faceBox: any }>();
 
   // Estado de Facial y Multi-Ángulo
   public webcamImage: WebcamImage | null = null;
@@ -87,16 +89,37 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   public captahuellasHost: string = '127.0.0.1:8085';
   public esCamaraIpActiva: boolean = false;
   public urlCamaraIpSnapshot: string = '';
+  public urlCamaraStreamWebRTC: string = '';
+  public esStreamWebRtc: boolean = false;
+  public cargandoSnapshotTracker: boolean = false;
   private bioDevSubs: Subscription[] = [];
+
+  public safeStreamUrl: SafeResourceUrl | null = null;
+
+  // Auto-enfoque facial dinamico (Bounding Box inteligente)
+  @Input() autoEnfoqueDinamico: boolean = false;
+  public faceBox: { top: number; left: number; width: number; height: number } | null = null;
+  public faceDetectado: boolean = false;
+  private faceTrackerSub?: any;
+
+  // Deteccion en tiempo real contra base de datos
+  public personaDetectadaBD: any = null;
+  public verificandoPersonaBD: boolean = false;
+  public mensajeCoincidenciaBD: string = '';
 
   constructor(
     private http: HttpClient,
-    public biometricDeviceState: BiometricDeviceStateService
+    public biometricDeviceState: BiometricDeviceStateService,
+    private sanitizer: DomSanitizer,
+    private elRef: ElementRef
   ) {}
 
   ngOnInit(): void {
     this.iniciarMonitoreoTiempoRealSensor();
     this.detectarCamarasDisponibles();
+    if (this.autoEnfoqueDinamico) {
+      this.iniciarAutoEnfoqueFacialDinamico();
+    }
 
     this.bioDevSubs.push(
       this.biometricDeviceState.captahuellasDisponibles$.subscribe(list => {
@@ -123,13 +146,31 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
         this.camaraSeleccionadaId = cam.id;
         this.esCamaraIpActiva = cam.id !== 'LOCAL_WEBCAM' && !!cam.ip;
         if (this.esCamaraIpActiva) {
-          this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&t=${Date.now()}`;
+          const ruta = cam.ruta ? (cam.ruta.startsWith('/') ? cam.ruta : `/${cam.ruta}`) : '';
+          const pathParam = encodeURIComponent(ruta || '/snapshot.jpg');
+          this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&path=${pathParam}&t=${Date.now()}`;
+
+          // Si el puerto es 8889 (MediaMTX WebRTC) o la ruta es de streaming, embeber reproductor WebRTC directo
+          const rutaConBarra = ruta.endsWith('/') ? ruta : `${ruta}/`;
+          this.esStreamWebRtc = (cam.port === 8889 || ruta.includes('cam') || ruta.includes('whep') || ruta.includes('stream') || ruta.includes('entrada'));
+          const nuevaUrl = `http://${cam.ip}:${cam.port}${rutaConBarra}?controls=1&autoplay=1&muted=1`;
+          if (this.urlCamaraStreamWebRTC !== nuevaUrl) {
+            this.urlCamaraStreamWebRTC = nuevaUrl;
+            this.safeStreamUrl = this.sanitizer.bypassSecurityTrustResourceUrl(nuevaUrl);
+          }
+        } else {
+          this.esStreamWebRtc = false;
+          this.urlCamaraStreamWebRTC = '';
+          this.safeStreamUrl = null;
         }
       })
     );
   }
 
   ngOnDestroy(): void {
+    if (this.faceTrackerSub) {
+      clearInterval(this.faceTrackerSub);
+    }
     if (this.sensorPollingSub) {
       this.sensorPollingSub.unsubscribe();
     }
@@ -149,7 +190,146 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   public refrescarSnapshotCamaraIp(): void {
     const cam = this.biometricDeviceState.getCamaraActual();
     if (cam && cam.ip) {
-      this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&t=${Date.now()}`;
+      const pathParam = cam.ruta ? encodeURIComponent(cam.ruta.startsWith('/') ? cam.ruta : `/${cam.ruta}`) : '';
+      this.urlCamaraIpSnapshot = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}${pathParam ? '&path=' + pathParam : ''}&t=${Date.now()}`;
+    }
+  }
+
+  /**
+   * Rastreo facial en tiempo real sobre la camara activa (WebRTC o Webcam)
+   */
+  public iniciarAutoEnfoqueFacialDinamico(): void {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    this.faceTrackerSub = setInterval(() => {
+      // 1. Si es webcam local nativa
+      if (!this.esCamaraIpActiva) {
+        const videoEl = (this.elRef?.nativeElement?.querySelector('video') || document.querySelector('webcam video') || document.querySelector('video')) as HTMLVideoElement;
+        if (videoEl && videoEl.videoWidth > 0) {
+          canvas.width = 160;
+          canvas.height = 120;
+          if (ctx) {
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            this.analizarRostroEnCanvas(canvas, ctx);
+          }
+        }
+      } else {
+        // 2. Si es Camara IP en vivo, intentar extraer cuadro desde snapshot para analizar presencia de rostro real
+        const cam = this.biometricDeviceState.getCamaraActual();
+        if (cam && cam.ip && ctx && !this.cargandoSnapshotTracker) {
+          this.cargandoSnapshotTracker = true;
+          const pathParam = cam.ruta ? encodeURIComponent(cam.ruta.startsWith('/') ? cam.ruta : `/${cam.ruta}`) : '';
+          const url = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}${pathParam ? '&path=' + pathParam : ''}&t=${Date.now()}`;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            this.cargandoSnapshotTracker = false;
+            canvas.width = 160;
+            canvas.height = 120;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            this.analizarRostroEnCanvas(canvas, ctx);
+          };
+          img.onerror = () => {
+            this.cargandoSnapshotTracker = false;
+            this.faceDetectado = false;
+            this.faceBox = null;
+          };
+          img.src = url;
+          return;
+        }
+      }
+    }, 300);
+  }
+
+  private cuadrosSinRostro: number = 0;
+  private cuadrosConRostroConsecutivos: number = 0;
+
+  private analizarRostroEnCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+    try {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
+      let countSkinPixels = 0;
+
+      // Escaneo en resolucion del canvas con discriminador YCbCr + RGB adaptado a webcams
+      for (let y = 0; y < canvas.height; y += 2) {
+        for (let x = 0; x < canvas.width; x += 2) {
+          const idx = (y * canvas.width + x) * 4;
+          const r = imgData[idx];
+          const g = imgData[idx + 1];
+          const b = imgData[idx + 2];
+
+          // Conversion YCbCr
+          const yVal = 0.299 * r + 0.587 * g + 0.114 * b;
+          const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+          const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+
+          // Discriminador adaptativo de tonalidad de piel facial en diversas condiciones de luz
+          const esPielYCbCr = (cr >= 130 && cr <= 180 && cb >= 75 && cb <= 135 && yVal >= 35 && yVal <= 245);
+          const esPielRGB = (r > 50 && g > 30 && b > 15 && r > g && (r - b) > 10);
+
+          if (esPielYCbCr && esPielRGB) {
+            countSkinPixels++;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      const totalPixelsEvaluados = (canvas.width / 2) * (canvas.height / 2);
+      const density = countSkinPixels / totalPixelsEvaluados;
+
+      // Filtro de presencia: requiere masa facial coherente (densidad de piel entre 2.5% y 75%)
+      if (countSkinPixels >= 35 && density >= 0.025 && density <= 0.75 && maxX > minX && maxY > minY) {
+        let rawWidth = ((maxX - minX) / canvas.width) * 100;
+        let rawHeight = ((maxY - minY) / canvas.height) * 100;
+        let rawLeft = (minX / canvas.width) * 100;
+        let rawTop = (minY / canvas.height) * 100;
+
+        // Proporcion antropometrica facial: alto/ancho entre 0.85 y 1.90
+        const ratioAspecto = (maxY - minY) / Math.max(1, (maxX - minX));
+
+        if (rawWidth >= 10 && rawWidth <= 85 && rawHeight >= 12 && rawHeight <= 90 && ratioAspecto >= 0.85 && ratioAspecto <= 1.90) {
+          const faceWidth = Math.min(Math.max(rawWidth, 18), 75);
+          const faceHeight = Math.min(faceWidth * 1.25, 80);
+
+          let centerX = rawLeft + (rawWidth / 2);
+          let calculatedLeft = centerX - (faceWidth / 2);
+          let calculatedTop = Math.max(2, rawTop);
+
+          if (this.esModoEspejo && !this.esCamaraIpActiva) {
+            calculatedLeft = 100 - (calculatedLeft + faceWidth);
+          }
+
+          this.cuadrosConRostroConsecutivos++;
+          this.cuadrosSinRostro = 0;
+
+          // Activacion dinamica del recuadro de rostro
+          this.faceBox = {
+            top: Math.max(2, Math.min(85, Math.round(calculatedTop))),
+            left: Math.max(2, Math.min(88, Math.round(calculatedLeft))),
+            width: Math.round(faceWidth),
+            height: Math.round(faceHeight)
+          };
+          this.faceDetectado = true;
+          this.faceDetected.emit({ faceBox: this.faceBox });
+          return;
+        }
+      }
+
+      // Si no hay rostro, retirar tras tolerancia
+      this.cuadrosSinRostro++;
+      this.cuadrosConRostroConsecutivos = Math.max(0, this.cuadrosConRostroConsecutivos - 1);
+      if (this.cuadrosSinRostro >= 2) {
+        this.faceDetectado = false;
+        this.faceBox = null;
+      }
+    } catch (e) {
+      this.faceDetectado = false;
+      this.faceBox = null;
+      this.cuadrosConRostroConsecutivos = 0;
     }
   }
 
@@ -247,7 +427,8 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       this.trigger.next();
       return;
     }
-    const url = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&path=/snapshot.jpg&t=${Date.now()}`;
+    const pathParam = cam.ruta ? encodeURIComponent(cam.ruta.startsWith('/') ? cam.ruta : `/${cam.ruta}`) : '/snapshot.jpg';
+    const url = `/api/v1/biometria/camara/snapshot?ip=${cam.ip}&port=${cam.port}&path=${pathParam}&t=${Date.now()}`;
     this.http.get(url, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         const reader = new FileReader();
@@ -268,8 +449,8 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.capturandoFotoPerfil = false;
-        this.generarVectorFallback();
-        this.reproducirSonidoCamara();
+        this.faceVectorGenerado = '';
+        this.emitChanges();
       }
     });
   }
@@ -410,19 +591,28 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     try {
       const img = new Image();
       img.onload = () => {
-        // Recortar la region enfocada del rostro (circulo central)
         const canvas = document.createElement('canvas');
         canvas.width = 64;
         canvas.height = 64;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          // Extraer el area circular/oval central del fotograma original
-          const minDim = Math.min(img.width, img.height);
-          const cropSize = minDim * 0.65; // Tomar el 65% central enfocado en el circulo
-          const sx = (img.width - cropSize) / 2;
-          const sy = (img.height - cropSize) / 2;
+          // Si hay un rostro detectado en cualquier cuadrante del iframe, recortar en esa coordenada
+          let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+          if (this.faceBox) {
+            sx = Math.max(0, (this.faceBox.left / 100) * img.width);
+            sy = Math.max(0, (this.faceBox.top / 100) * img.height);
+            sWidth = Math.min(img.width - sx, (this.faceBox.width / 100) * img.width);
+            sHeight = Math.min(img.height - sy, (this.faceBox.height / 100) * img.height);
+          } else {
+            const minDim = Math.min(img.width, img.height);
+            const cropSize = minDim * 0.75;
+            sx = (img.width - cropSize) / 2;
+            sy = (img.height - cropSize) / 2;
+            sWidth = cropSize;
+            sHeight = cropSize;
+          }
 
-          ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, 64, 64);
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, 64, 64);
           const imgData = ctx.getImageData(0, 0, 64, 64).data;
           
           // Generar embedding facial de 128 descriptores exclusivamente del area del rostro
@@ -444,41 +634,27 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
           this.faceVectorGenerado = vectorIndividual;
           if (!this.modoIdentificacion) {
             this.registrarPoseEnColeccion(dataUrl, vectorIndividual);
+            this.verificarCoincidenciaEnBaseDatos(vectorIndividual);
           }
         } else {
-          this.generarVectorFallback();
-          if (!this.modoIdentificacion) {
-            this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
-          }
+          this.faceVectorGenerado = '';
         }
         this.emitChanges();
-        this.fotogramaCapturado.emit({
-          fotoUrl: dataUrl,
-          faceVector: this.faceVectorGenerado
-        });
+        if (this.faceVectorGenerado) {
+          this.fotogramaCapturado.emit({
+            fotoUrl: dataUrl,
+            faceVector: this.faceVectorGenerado
+          });
+        }
       };
       img.onerror = () => {
-        this.generarVectorFallback();
-        if (!this.modoIdentificacion) {
-          this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
-        }
+        this.faceVectorGenerado = '';
         this.emitChanges();
-        this.fotogramaCapturado.emit({
-          fotoUrl: dataUrl,
-          faceVector: this.faceVectorGenerado
-        });
       };
       img.src = dataUrl;
     } catch (e) {
-      this.generarVectorFallback();
-      if (!this.modoIdentificacion) {
-        this.registrarPoseEnColeccion(dataUrl, this.faceVectorGenerado);
-      }
+      this.faceVectorGenerado = '';
       this.emitChanges();
-      this.fotogramaCapturado.emit({
-        fotoUrl: dataUrl,
-        faceVector: this.faceVectorGenerado
-      });
     }
   }
 
@@ -489,6 +665,39 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       sampleDescriptors.push(parseFloat(val));
     }
     this.faceVectorGenerado = sampleDescriptors.join(',');
+  }
+
+  /**
+   * Valida en tiempo real si el vector facial corresponde a una persona existente en la base de datos
+   */
+  public verificarCoincidenciaEnBaseDatos(vector: string): void {
+    if (!vector) return;
+    this.verificandoPersonaBD = true;
+    this.http.post<any>('/api/v1/biometria/verificar-rostro', { faceVector: vector }).subscribe({
+      next: (res) => {
+        this.verificandoPersonaBD = false;
+        if (res.match && res.persona) {
+          this.personaDetectadaBD = {
+            id: res.persona.id,
+            nombre: `${res.persona.nombre || res.persona.name || ''} ${res.persona.apellido || res.persona.lastName || ''}`.trim(),
+            documento: res.persona.documento || res.persona.document || '',
+            tipo: res.tipo,
+            similitud: res.similitud,
+            autorizado: res.autorizado,
+            metodo: res.metodo || 'RECONOCIMIENTO_FACIAL'
+          };
+          this.mensajeCoincidenciaBD = `Persona identificada en BD: ${this.personaDetectadaBD.nombre} (${res.tipo}) - Similitud: ${(res.similitud * 100).toFixed(1)}%`;
+        } else {
+          this.personaDetectadaBD = null;
+          this.mensajeCoincidenciaBD = 'Rostro no registrado previamente en base de datos (Nuevo registro)';
+        }
+      },
+      error: () => {
+        this.verificandoPersonaBD = false;
+        this.personaDetectadaBD = null;
+        this.mensajeCoincidenciaBD = 'Rostro no registrado previamente en base de datos (Nuevo registro)';
+      }
+    });
   }
 
   iniciarEscaneoHuella(indice: 1 | 2): void {

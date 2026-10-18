@@ -15,6 +15,7 @@ export class Dispositivo
     public estadoConexion?: boolean;
     public tipoDispositivo?: string;
     public sistemaOperativo?: string;
+    public ruta?: string;
     public tipo?: string;
     public ubicacion?: string;
 }

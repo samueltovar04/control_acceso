@@ -59,3 +59,19 @@ Se introduce **PostgreSQL con la extensión `pgvector`**, almacenando las identi
 
 1. **Performance Algorítmica:** El uso de un índice `hnsw` (Hierarchical Navigable Small World) permite búsquedas de similitud en tiempo logarítmico, evitando un escaneo secuencial (Full Table Scan) a medida que crece la base de datos de empleados.
 2. **Consolidación de Infraestructura:** Evita introducir una base de datos vectorial dedicada (como Milvus o Pinecone), manteniendo la biometría y los datos relacionales (ej. horarios, roles, departamentos) en un mismo motor ACID y simplificando el despliegue con Docker.
+
+## 7. Infraestructura Biometrica Opt-in (pgvector + MediaMTX)
+
+**Fecha:** 16-Oct-2026
+**Decision:**
+- El stack principal (`docker-compose.yml`) no se modifica. La infraestructura biometrica vive en `docker-compose.biometria.yml` y se activa con `make bio-up`.
+- pgvector v0.5.0 se compila sobre `postgres:15-alpine` (`infrastructure/db/Dockerfile`) en lugar de usar `ankane/pgvector:v0.5.0`.
+- MediaMTX publica la camara Hikvision 192.168.1.197 como `cam1` (WHEP: `http://127.0.0.1:8889/cam1/whep`) usando el substream `/Streaming/Channels/102` (H264 704x576).
+- Credenciales RTSP solo en `.env` (git-ignored); `.env.example` versionado sin secretos.
+
+**Justificacion:**
+1. **Integridad del volumen:** `ankane/pgvector:v0.5.0` es Postgres 15.4 sobre Debian (glibc); el volumen existente fue creado con 15.19 sobre Alpine (musl). Cambiar de libc altera el orden de collation `en_US.utf8` y puede corromper indices de texto. Compilar la extension sobre la misma base elimina el riesgo.
+2. **Compatibilidad WebRTC:** el main stream (`/101`) es HEVC, no soportado de forma consistente por Chrome/Firefox. El substream H264 es universal y suficiente para deteccion facial.
+3. **Arranque bajo demanda:** `sourceOnDemand` evita mantener la sesion RTSP abierta sin consumidores.
+
+**Restriccion conocida:** recrear `access_control_db` con el backend en marcha deja conexiones muertas en el pool de Agroal (`57P01`); requiere reiniciar `access_control_backend` hasta que se configure validacion de conexiones.

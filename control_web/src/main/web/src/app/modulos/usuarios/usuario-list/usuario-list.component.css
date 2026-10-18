@@ -1,0 +1,7 @@
+.avatar-circle {
+  font-size: 0.85rem;
+  font-family: monospace;
+}
+.modal-backdrop.show {
+  opacity: 0.5;
+}

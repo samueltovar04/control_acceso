@@ -1,6 +1,8 @@
 services:
   access_control_db:
-    image: postgres:15-alpine
+    build:
+      context: ./infrastructure/db
+    image: control_acceso-db-pgvector:15-alpine
     container_name: access_control_db
     restart: always
     environment:
@@ -16,6 +18,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  mediamtx_gateway:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx_gateway
+    restart: always
+    volumes:
+      - ./infrastructure/mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    ports:
+      - "8554:8554"
+      - "8889:8889"
+      - "8189:8189/udp"
 
   access_control_backend:
     build:
@@ -34,6 +47,10 @@ services:
       QUARKUS_MONGODB_CONNECTION_STRING: mongodb://biotrack_user:biotrack_secret123@biotrack_mongo:27017/biotrack_db?authSource=admin
       QUARKUS_MONGODB_DATABASE: biotrack_db
       QUARKUS_SMALLRYE_JWT_ENABLED: "false"
+      MEDIAMTX_API_URL: http://mediamtx_gateway:9997
+      CAMARA_RTSP_USER: ${CAM_RTSP_USER:-}
+      CAMARA_RTSP_PASSWORD: ${CAM_RTSP_PASSWORD:-}
+      CAMARA_RTSP_CHANNEL: ${CAM_RTSP_CHANNEL:-102}
     volumes:
       - /tmp:/host_tmp:ro
     extra_hosts:
@@ -42,6 +59,8 @@ services:
       access_control_db:
         condition: service_healthy
       biotrack_mongo:
+        condition: service_started
+      mediamtx_gateway:
         condition: service_started
 
   biotrack_mongo:

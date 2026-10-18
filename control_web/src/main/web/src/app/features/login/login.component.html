@@ -5,14 +5,14 @@
         <i class="bi bi-shield-lock-fill fs-3"></i>
       </div>
       <h3 class="fw-bold text-dark">Control de Acceso</h3>
-      <p class="text-muted small">Plataforma Biométrica de Seguridad y Torniquetes</p>
+      <p class="text-muted small">Plataforma Biometrica de Seguridad y Torniquetes</p>
     </div>
 
-    <!-- PESTAÑAS DE MODALIDAD DE ACCESO -->
-    <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-3">
+    <!-- PESTAÑAS DE MODALIDAD DE ACCESO (SI NO ESTA EN CAMBIO DE CLAVE) -->
+    <ul *ngIf="!forzarCambioClave" class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-3">
       <li class="nav-item">
         <button class="nav-link py-2 small fw-bold" [ngClass]="{'active': modoAuth === 'credenciales'}" (click)="modoAuth = 'credenciales'">
-          <i class="bi bi-key-fill d-block fs-5"></i> Contraseña
+          <i class="bi bi-key-fill d-block fs-5"></i> Contrasena
         </button>
       </li>
       <li class="nav-item">
@@ -32,59 +32,105 @@
       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorLogin }}
     </div>
 
+    <!-- VISTA OBLIGATORIA DE CAMBIO DE CLAVE -->
+    <div *ngIf="forzarCambioClave" class="border rounded-3 p-3 bg-light mb-3">
+      <div class="d-flex align-items-center mb-2 text-warning">
+        <i class="bi bi-shield-exclamation fs-4 me-2"></i>
+        <h6 class="mb-0 fw-bold text-dark">Cambio Obligatorio de Clave</h6>
+      </div>
+      <p class="small text-muted mb-3">{{ mensajeCambioClave }}</p>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-secondary">Usuario</label>
+        <input type="text" class="form-control form-control-sm" [value]="usuarioReseteo" disabled>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-secondary">Nueva Contrasena</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+          <input type="password" class="form-control" [(ngModel)]="nuevaClave" placeholder="Minimo 6 caracteres">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-secondary">Confirmar Nueva Contrasena</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-check-circle-fill"></i></span>
+          <input type="password" class="form-control" [(ngModel)]="confirmacionClave" placeholder="Repita la nueva contrasena">
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary w-50" (click)="cancelarCambioClave()" [disabled]="cargando">
+          Cancelar
+        </button>
+        <button class="btn btn-sm btn-primary w-50 fw-bold" (click)="ejecutarCambioClave()" [disabled]="cargando">
+          <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+          Actualizar Clave
+        </button>
+      </div>
+    </div>
+
     <!-- MODO 1: CONTRASEÑA -->
-    <div *ngIf="modoAuth === 'credenciales'">
+    <div *ngIf="!forzarCambioClave && modoAuth === 'credenciales'">
       <div class="mb-3">
         <label class="form-label small fw-bold text-secondary">Usuario o Documento</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-person"></i></span>
-          <input type="text" class="form-control" [(ngModel)]="usuario" placeholder="Ej: admin">
+          <input type="text" class="form-control" [(ngModel)]="usuario" (keyup.enter)="loginCredenciales()" placeholder="Ej: admin">
         </div>
       </div>
       <div class="mb-4">
-        <label class="form-label small fw-bold text-secondary">Contraseña</label>
+        <label class="form-label small fw-bold text-secondary">Contrasena</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input type="password" class="form-control" [(ngModel)]="contrasena" placeholder="••••••••">
+          <input type="password" class="form-control" [(ngModel)]="contrasena" (keyup.enter)="loginCredenciales()" placeholder="••••••••">
         </div>
       </div>
-      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="loginCredenciales()">
-        Iniciar Sesión
+      <button class="btn btn-primary w-100 py-2 fw-bold" [disabled]="cargando" (click)="loginCredenciales()">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        Iniciar Sesion
       </button>
     </div>
 
     <!-- MODO 2: RECONOCIMIENTO FACIAL -->
-    <div *ngIf="modoAuth === 'facial'" class="text-center">
+    <div *ngIf="!forzarCambioClave && modoAuth === 'facial'" class="text-center">
       <div class="camera-login border rounded-3 bg-dark mb-3 position-relative d-flex justify-content-center align-items-center" style="height: 220px; overflow: hidden;">
         <webcam [trigger]="triggerObservable" (imageCapture)="handleImageLogin($event)"></webcam>
         <div *ngIf="procesandoFacial" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark bg-opacity-75 text-white">
-          <div class="spinner-border text-primary mb-2"></div>
-          <span class="small">Verificando rasgos faciales...</span>
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <span class="small fw-bold">Comparando vector biometrico...</span>
         </div>
       </div>
-      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="iniciarLoginFacial()" [disabled]="procesandoFacial">
-        <i class="bi bi-camera-fill me-2"></i> Escanear Rostro
+
+      <p class="small text-muted mb-3">{{ mensajeFacial || 'Mire fijamente a la camara para autenticarse.' }}</p>
+
+      <button class="btn btn-success w-100 py-2 fw-bold" [disabled]="procesandoFacial" (click)="iniciarLoginFacial()">
+        <i class="bi bi-camera me-1"></i> Capturar y Acceder
       </button>
     </div>
 
     <!-- MODO 3: HUELLA DACTILAR -->
-    <div *ngIf="modoAuth === 'huella'" class="text-center">
-      <div class="border rounded-3 bg-light p-4 mb-3 d-flex flex-column align-items-center justify-content-center" style="height: 220px;">
-        <div class="fingerprint-scan-area position-relative mb-3 cursor-pointer" (click)="iniciarLoginHuella()">
-          <i class="bi bi-fingerprint display-1" [ngClass]="escaneandoHuella ? 'text-primary' : 'text-secondary'"></i>
-          <div *ngIf="escaneandoHuella" class="spinner-border text-primary position-absolute top-50 start-50 translate-middle"></div>
-        </div>
-        <div *ngIf="escaneandoHuella" class="w-100">
+    <div *ngIf="!forzarCambioClave && modoAuth === 'huella'" class="text-center py-2">
+      <div class="fingerprint-scan-box border rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3 shadow-inner position-relative" style="width: 120px; height: 120px;">
+        <i class="bi bi-fingerprint text-primary" [ngClass]="{'opacity-50': !escaneandoHuella}" style="font-size: 4rem;"></i>
+        <div *ngIf="escaneandoHuella" class="position-absolute bottom-0 w-100 px-3 pb-2">
           <div class="progress" style="height: 6px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" [style.width.%]="progresoHuella"></div>
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" [style.width.%]="progresoHuella"></div>
           </div>
-          <small class="text-muted mt-2 d-block">Identificando minutas dactilares...</small>
         </div>
-        <span *ngIf="!escaneandoHuella" class="text-muted small">Haga clic o coloque su huella en el lector</span>
       </div>
-      <button class="btn btn-primary w-100 py-2 fw-bold" (click)="iniciarLoginHuella()" [disabled]="escaneandoHuella">
-        <i class="bi bi-fingerprint me-2"></i> Capturar Huella
+
+      <p class="small text-muted mb-4">{{ mensajeHuella || 'Apoye su dedo registrado en el lector digital USB.' }}</p>
+
+      <button class="btn btn-outline-primary w-100 py-2 fw-bold" [disabled]="escaneandoHuella" (click)="iniciarLoginHuella()">
+        <i class="bi bi-hand-index-thumb me-1"></i> Leer Sensor Huella
       </button>
+    </div>
+
+    <div class="text-center mt-4 border-top pt-3">
+      <small class="text-secondary">&copy; 2026 Access Control System • Pro Edition</small>
     </div>
   </div>
 </div>

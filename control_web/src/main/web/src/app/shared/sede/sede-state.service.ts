@@ -43,9 +43,8 @@ export class SedeStateService {
   }
 
   private aplicarReglasUsuario(user: UserAuth | null): void {
-    if (user && user.role) {
-      const rol = String(user.role).toUpperCase();
-      const esAdmin = rol === 'ADMIN' || rol === 'SUPER_ADMIN' || rol === 'SUPERADMIN';
+    if (user) {
+      const esAdmin = this.authService.isAdminOrSuperAdmin();
 
       if (esAdmin) {
         this.sedeBloqueadaSubject.next(false);

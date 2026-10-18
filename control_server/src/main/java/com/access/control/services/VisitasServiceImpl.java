@@ -17,6 +17,9 @@ public class VisitasServiceImpl implements VisitasService {
     @Inject
     com.access.control.repository.PisoRepository pisoRepository;
 
+    @Inject
+    com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
+
     @Override
     public List<Visita> getListVisitas() {
         return visitaRepository.listAll();
@@ -40,6 +43,9 @@ public class VisitasServiceImpl implements VisitasService {
         if (dto.getFoto() != null) {
             v.setFoto(dto.getFoto());
         }
+        if (dto.getFaceVector() != null) {
+            v.setFaceVector(dto.getFaceVector());
+        }
         v.setVisitDate(dto.getFechaIngreso() != null ? dto.getFechaIngreso() : new java.util.Date());
         if (dto.getEmpleadoId() != null) {
             v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
@@ -48,6 +54,9 @@ public class VisitasServiceImpl implements VisitasService {
             v.setPisosPermitidos(pisoRepository.list("id in ?1", dto.getPisoIds()));
         }
         visitaRepository.persist(v);
+        if (dto.getFaceVector() != null) {
+            biometriaVectorRepository.updateFaceEmbeddingFromString("visitantes", v.getId(), dto.getFaceVector());
+        }
         return v;
     }
 
@@ -68,6 +77,10 @@ public class VisitasServiceImpl implements VisitasService {
             }
             if (dto.getFoto() != null) {
                 v.setFoto(dto.getFoto());
+            }
+            if (dto.getFaceVector() != null) {
+                v.setFaceVector(dto.getFaceVector());
+                biometriaVectorRepository.updateFaceEmbeddingFromString("visitantes", v.getId(), dto.getFaceVector());
             }
             if (dto.getEmpleadoId() != null) {
                 v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));

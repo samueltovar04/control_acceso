@@ -114,6 +114,9 @@ public class DispositivoServiceImpl implements DispositivoService {
             if (dispositivo.getSistemaOperativo() != null) {
                 d.setSistemaOperativo(dispositivo.getSistemaOperativo());
             }
+            if (dispositivo.getRuta() != null) {
+                d.setRuta(dispositivo.getRuta());
+            }
         }
         return d;
     }

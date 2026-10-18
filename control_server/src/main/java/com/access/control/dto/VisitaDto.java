@@ -17,6 +17,7 @@ public class VisitaDto {
     private Date fechaSalida;
     private Long empleadoId;
     private List<Long> pisoIds;
+    private String faceVector;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -56,4 +57,7 @@ public class VisitaDto {
 
     public List<Long> getPisoIds() { return pisoIds; }
     public void setPisoIds(List<Long> pisoIds) { this.pisoIds = pisoIds; }
+
+    public String getFaceVector() { return faceVector; }
+    public void setFaceVector(String faceVector) { this.faceVector = faceVector; }
 }

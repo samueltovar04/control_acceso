@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
 import { TasaCambioService } from '../../core/services/tasa-cambio.service';
+import { AuthService } from '../../core/services/auth.service';
 import { SidebarService } from '../../shared/services/sidebar.service';
 import { SedeStateService } from '../../shared/sede/sede-state.service';
 import { Sede } from '../../shared/sede/sede.service';
@@ -30,6 +31,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private router: Router,
+    public authService: AuthService,
     public tasaService: TasaCambioService,
     public sidebarService: SidebarService,
     public sedeStateService: SedeStateService
@@ -75,8 +77,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   cerrarSesion(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('usuario_activo');
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

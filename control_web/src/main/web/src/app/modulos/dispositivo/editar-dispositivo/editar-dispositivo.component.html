@@ -31,6 +31,20 @@
               placeholder="80">
           </div>
 
+          <div class="col-md-12">
+            <label for="ruta" class="form-label fw-bold">Ruta / Endpoint Adicional (Opcional):</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted font-monospace">
+                {{ dispositivo.ip ? dispositivo.ip : 'ip' }}:{{ dispositivo.port ? dispositivo.port : 'puerto' }}
+              </span>
+              <input type="text" class="form-control font-monospace" id="ruta" [(ngModel)]="dispositivo.ruta" name="ruta"
+                placeholder="/cam1/whep o /snapshot.jpg o /stream/channel1">
+            </div>
+            <div class="form-text small text-muted">
+              Concatenacion URL resultante: <code>http://{{ dispositivo.ip || '127.0.0.1' }}:{{ dispositivo.port || '80' }}{{ dispositivo.ruta ? (dispositivo.ruta.startsWith('/') ? dispositivo.ruta : '/' + dispositivo.ruta) : '' }}</code>
+            </div>
+          </div>
+
           <div class="col-md-4">
             <label for="sede_id" class="form-label fw-bold">Sede:</label>
             <select class="form-select" id="sede_id" [disabled]="sedeBloqueada" [(ngModel)]="sedeSeleccionadaId"

@@ -1,4 +1,8 @@
-.PHONY: help build-all docker-build docker-up docker-down up down discover-devices mobile-build test-all clean suprema-build suprema-up suprema-down qemu-up qemu-down qemu-status
+.PHONY: help build-all docker-build docker-up docker-down up down discover-devices mobile-build test-all clean suprema-build suprema-up suprema-down qemu-up qemu-down qemu-status db-migrate
+
+DB_CONTAINER = access_control_db
+DB_USER = admin
+DB_NAME = access_control
 
 help:
 	@echo "Control de Acceso - Comandos Disponibles:"
@@ -30,15 +34,24 @@ docker-build:
 docker-up:
 	@echo "==> Iniciando servicios con Docker Compose..."
 	docker compose up -d
-	@echo "==> Servicios iniciados: PostgreSQL (5432), Quarkus (8080), Angular (80)."
+	@echo "==> Servicios iniciados: PostgreSQL+pgvector (5432), Quarkus (8080), Angular (80), MediaMTX WebRTC (8889)."
 
 docker-down:
-	@echo "==> Deteniendo servicios con Docker Compose..."
-	docker compose down -v
+	@echo "==> Deteniendo servicios (los volumenes de datos se conservan)..."
+	docker compose down
 
 up: docker-up suprema-up
 
 down: docker-down suprema-down
+
+db-migrate:
+	@echo "==> Verificando DDL vectorial..."
+	@if [ -f scripts/migrations/01_pgvector_setup.sql ]; then \
+		until docker exec $(DB_CONTAINER) pg_isready -U $(DB_USER) -d $(DB_NAME) >/dev/null 2>&1; do sleep 1; done; \
+		docker exec -i $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -v ON_ERROR_STOP=1 < scripts/migrations/01_pgvector_setup.sql; \
+	else \
+		echo "==> Migracion no requerida (campos vectoriales ya existentes en BD)."; \
+	fi
 
 # Docker path resolution
 DOCKER_BIN ?= PATH="$$PATH:/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin"

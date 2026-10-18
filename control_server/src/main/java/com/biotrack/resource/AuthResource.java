@@ -1,5 +1,11 @@
 package com.biotrack.resource;
 
+import com.access.control.model.Authority;
+import com.access.control.model.SesionActiva;
+import com.access.control.model.User;
+import com.access.control.repository.SesionActivaRepository;
+import com.access.control.repository.UserRepository;
+import com.access.control.services.UsuarioService;
 import com.biotrack.entity.TelemetriaVitalEntity;
 import com.biotrack.entity.UsuarioEntity;
 import com.biotrack.repository.TelemetriaVitalRepository;
@@ -10,6 +16,8 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
@@ -33,6 +41,15 @@ public class AuthResource {
     @Inject
     JsonWebToken jwt;
 
+    @Inject
+    UserRepository postgresUserRepository;
+
+    @Inject
+    UsuarioService usuarioService;
+
+    @Inject
+    SesionActivaRepository sesionActivaRepository;
+
     // --- DTOs ---
     public static class RegistroRequest {
         public String correo;
@@ -44,11 +61,14 @@ public class AuthResource {
 
     public static class LoginRequest {
         public String correo;
+        public String username;
         public String password;
     }
 
     public static class CambiarClaveRequest {
         public String correo;
+        public String username;
+        public String claveActual;
         public String nuevaClave;
         public String confirmacionClave;
     }
@@ -62,13 +82,13 @@ public class AuthResource {
     }
 
     @POST
-    @Path("/registrar")
+    @Path("/registro")
     @NonBlocking
     public Uni<Response> registrar(RegistroRequest request) {
         return Uni.createFrom().item(() -> {
             if (request == null || request.correo == null || request.correo.trim().isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "El correo es obligatorio."))
+                        .entity(Map.of("error", "El correo electronico es obligatorio."))
                         .build();
             }
 
@@ -102,16 +122,125 @@ public class AuthResource {
     @POST
     @Path("/login")
     @NonBlocking
-    public Uni<Response> login(LoginRequest request) {
+    public Uni<Response> login(LoginRequest request, @Context HttpHeaders headers) {
         return Uni.createFrom().item(() -> {
-            if (request == null || request.correo == null || request.password == null) {
+            String loginUser = null;
+            if (request != null) {
+                if (request.username != null && !request.username.trim().isEmpty()) {
+                    loginUser = request.username.trim().toLowerCase();
+                } else if (request.correo != null && !request.correo.trim().isEmpty()) {
+                    loginUser = request.correo.trim().toLowerCase();
+                }
+            }
+
+            if (loginUser == null || request.password == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Correo y contrasena son obligatorios."))
+                        .entity(Map.of("error", "Usuario/correo y contrasena son obligatorios."))
                         .build();
             }
 
-            UsuarioEntity usuario = usuarioRepository.findByCorreo(request.correo.trim().toLowerCase());
+            String userAgent = headers != null ? headers.getHeaderString("User-Agent") : "WEB";
+            String ip = "127.0.0.1";
+
+            // 1. Intentar autenticar contra PostgreSQL 'users'
+            User pgUser = postgresUserRepository.findByUsername(loginUser);
+            if (pgUser != null) {
+                if (Boolean.FALSE.equals(pgUser.getEnabled())) {
+                    usuarioService.registrarAuditoria(pgUser.getUsername(), pgUser.getId(),
+                            pgUser.getSede() != null ? pgUser.getSede().getId() : null,
+                            pgUser.getSede() != null ? pgUser.getSede().getSede() : null,
+                            ip, userAgent, "LOGIN", "DENEGADO", "Usuario inactivo en el sistema");
+
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity(Map.of("error", "El usuario esta inactivo. Contacte al administrador."))
+                            .build();
+                }
+
+                boolean match = false;
+                try {
+                    match = BCrypt.checkpw(request.password, pgUser.getPassword());
+                } catch (Exception e) {
+                    match = request.password.equals(pgUser.getPassword());
+                }
+
+                if (!match) {
+                    usuarioService.registrarAuditoria(pgUser.getUsername(), pgUser.getId(),
+                            pgUser.getSede() != null ? pgUser.getSede().getId() : null,
+                            pgUser.getSede() != null ? pgUser.getSede().getSede() : null,
+                            ip, userAgent, "LOGIN", "FALLIDO", "Credenciales invalidas");
+
+                    return Response.status(Response.Status.UNAUTHORIZED)
+                            .entity(Map.of("error", "Credenciales invalidas."))
+                            .build();
+                }
+
+                // Detectar si requiere reseteo o cambio obligatorio de clave
+                if (Boolean.TRUE.equals(pgUser.getRequiresPasswordReset())) {
+                    return Response.ok(Map.of(
+                            "requiresPasswordReset", true,
+                            "requiereCambioClave", true,
+                            "mensaje", "Debe cambiar su clave antes de continuar.",
+                            "username", pgUser.getUsername(),
+                            "correo", pgUser.getEmail() != null ? pgUser.getEmail() : pgUser.getUsername()
+                    )).build();
+                }
+
+                // Obtener rol principal
+                String principalRole = "ROLE_EMPLEADO";
+                Set<String> rolesList = new HashSet<>();
+                if (pgUser.getAuthorities() != null && !pgUser.getAuthorities().isEmpty()) {
+                    for (Authority a : pgUser.getAuthorities()) {
+                        rolesList.add(a.getName());
+                    }
+                    if (pgUser.isAdminOrSuperAdmin()) {
+                        principalRole = "ROLE_ADMIN";
+                    } else {
+                        principalRole = pgUser.getAuthorities().iterator().next().getName();
+                    }
+                } else {
+                    rolesList.add(principalRole);
+                }
+
+                // Token SmallRye JWT
+                String token = Jwt.issuer("https://controlacceso.api/issuer")
+                        .upn(pgUser.getUsername())
+                        .subject(pgUser.getId() != null ? pgUser.getId().toString() : pgUser.getUsername())
+                        .groups(rolesList)
+                        .claim("username", pgUser.getUsername())
+                        .claim("email", pgUser.getEmail() != null ? pgUser.getEmail() : "")
+                        .expiresIn(Duration.ofHours(24))
+                        .sign();
+
+                // Actualizar ultimo login, sesion activa y auditoria mediante servicio transaccional
+                usuarioService.registrarSesionActiva(pgUser.getId(), pgUser.getUsername(), ip, userAgent,
+                        pgUser.getSede() != null ? pgUser.getSede().getId() : null,
+                        pgUser.getSede() != null ? pgUser.getSede().getSede() : null);
+
+                usuarioService.registrarAuditoria(pgUser.getUsername(), pgUser.getId(),
+                        pgUser.getSede() != null ? pgUser.getSede().getId() : null,
+                        pgUser.getSede() != null ? pgUser.getSede().getSede() : null,
+                        ip, userAgent, "LOGIN", "EXITO", "Inicio de sesion exitoso");
+
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("primerIngreso", false);
+                resp.put("requiresPasswordReset", false);
+                resp.put("token", token);
+                resp.put("username", pgUser.getUsername());
+                resp.put("role", principalRole);
+                resp.put("roles", rolesList);
+                resp.put("nombreCompleto", pgUser.getNombreCompleto() != null ? pgUser.getNombreCompleto() : pgUser.getUsername());
+                resp.put("sedeId", pgUser.getSede() != null ? pgUser.getSede().getId() : null);
+                resp.put("sedeNombre", pgUser.getSede() != null ? pgUser.getSede().getSede() : null);
+
+                return Response.ok(resp).build();
+            }
+
+            // 2. Fallback de contingencia contra MongoDB 'UsuarioEntity'
+            UsuarioEntity usuario = usuarioRepository.findByCorreo(loginUser);
             if (usuario == null) {
+                usuarioService.registrarAuditoria(loginUser, null, null, null,
+                        ip, userAgent, "LOGIN", "FALLIDO", "Usuario no existe");
+
                 return Response.status(Response.Status.UNAUTHORIZED)
                         .entity(Map.of("error", "Credenciales invalidas."))
                         .build();
@@ -121,11 +250,13 @@ public class AuthResource {
             try {
                 passwordMatch = BCrypt.checkpw(request.password, usuario.claveEncriptada);
             } catch (Exception e) {
-                // Si la clave no estuviese hasheada en formato BCrypt, comparacion de contingencia
                 passwordMatch = request.password.equals(usuario.claveEncriptada);
             }
 
             if (!passwordMatch) {
+                usuarioService.registrarAuditoria(usuario.correo, null, null, null,
+                        ip, userAgent, "LOGIN", "FALLIDO", "Contrasena incorrecta");
+
                 return Response.status(Response.Status.UNAUTHORIZED)
                         .entity(Map.of("error", "Credenciales invalidas."))
                         .build();
@@ -138,6 +269,7 @@ public class AuthResource {
                         "requiereCambioClave", true,
                         "mensaje", "Debe cambiar su clave en el primer ingreso antes de continuar.",
                         "correo", usuario.correo,
+                        "username", usuario.correo,
                         "rol", usuario.rol != null ? usuario.rol : "CLIENTE"
                 )).build();
             }
@@ -153,11 +285,16 @@ public class AuthResource {
                     .expiresIn(Duration.ofHours(24))
                     .sign();
 
+            usuarioService.registrarAuditoria(usuario.correo, null, null, null,
+                    ip, userAgent, "LOGIN", "EXITO", "Inicio de sesion MongoDB exitoso");
+
             return Response.ok(Map.of(
                     "primerIngreso", false,
+                    "requiresPasswordReset", false,
                     "token", token,
+                    "username", usuario.correo,
                     "correo", usuario.correo,
-                    "rol", usuario.rol != null ? usuario.rol : "CLIENTE",
+                    "role", usuario.rol != null ? usuario.rol : "CLIENTE",
                     "idPulseraAsignada", usuario.idPulseraAsignada != null ? usuario.idPulseraAsignada : "",
                     "tipoMembresia", usuario.tipoMembresia != null ? usuario.tipoMembresia : "",
                     "estadoPago", usuario.estadoPago != null ? usuario.estadoPago : ""
@@ -170,9 +307,12 @@ public class AuthResource {
     @NonBlocking
     public Uni<Response> cambiarClave(CambiarClaveRequest request) {
         return Uni.createFrom().item(() -> {
-            if (request == null || request.correo == null || request.nuevaClave == null || request.confirmacionClave == null) {
+            String targetUser = request != null && request.username != null ? request.username.trim().toLowerCase()
+                    : (request != null && request.correo != null ? request.correo.trim().toLowerCase() : null);
+
+            if (targetUser == null || request.nuevaClave == null || request.confirmacionClave == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Todos los campos de cambio de clave son obligatorios."))
+                        .entity(Map.of("error", "Usuario y nueva clave son obligatorios."))
                         .build();
             }
 
@@ -188,7 +328,27 @@ public class AuthResource {
                         .build();
             }
 
-            UsuarioEntity usuario = usuarioRepository.findByCorreo(request.correo.trim().toLowerCase());
+            // 1. Probar en PostgreSQL 'User'
+            User pgUser = postgresUserRepository.findByUsername(targetUser);
+            if (pgUser != null) {
+                pgUser.setPassword(BCrypt.hashpw(request.nuevaClave, BCrypt.gensalt(10)));
+                pgUser.setRequiresPasswordReset(false);
+                postgresUserRepository.persist(pgUser);
+
+                usuarioService.registrarAuditoria(pgUser.getUsername(), pgUser.getId(),
+                        pgUser.getSede() != null ? pgUser.getSede().getId() : null,
+                        pgUser.getSede() != null ? pgUser.getSede().getSede() : null,
+                        "127.0.0.1", "WEB", "CAMBIO_CLAVE", "EXITO", "Clave actualizada en PostgreSQL");
+
+                return Response.ok(Map.of(
+                        "mensaje", "Clave actualizada con exito. Ahora puede iniciar sesion.",
+                        "requiresPasswordReset", false,
+                        "username", pgUser.getUsername()
+                )).build();
+            }
+
+            // 2. Fallback MongoDB 'UsuarioEntity'
+            UsuarioEntity usuario = usuarioRepository.findByCorreo(targetUser);
             if (usuario == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(Map.of("error", "Usuario no encontrado."))
@@ -223,7 +383,7 @@ public class AuthResource {
                 usuario = new UsuarioEntity();
                 usuario.correo = request.correo.trim().toLowerCase();
                 usuario.rol = "CLIENTE";
-                usuario.primerIngreso = false; // Como ingresa su clave propia directamente en la app
+                usuario.primerIngreso = false;
                 usuario.tipoMembresia = (request.tipoMembresia != null) ? request.tipoMembresia : "ESTANDAR";
                 usuario.estadoPago = "AL_DIA";
             }
@@ -247,5 +407,26 @@ public class AuthResource {
                     "idPulseraAsignada", usuario.idPulseraAsignada != null ? usuario.idPulseraAsignada : ""
             )).build();
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    }
+
+    @GET
+    @Path("/perfil")
+    public Response obtenerPerfil() {
+        if (jwt == null || jwt.getName() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String username = jwt.getName();
+        User pgUser = postgresUserRepository.findByUsername(username.toLowerCase());
+        if (pgUser != null) {
+            return Response.ok(Map.of(
+                    "username", pgUser.getUsername(),
+                    "email", pgUser.getEmail() != null ? pgUser.getEmail() : "",
+                    "nombreCompleto", pgUser.getNombreCompleto() != null ? pgUser.getNombreCompleto() : pgUser.getUsername(),
+                    "sedeId", pgUser.getSede() != null ? pgUser.getSede().getId() : "",
+                    "sedeNombre", pgUser.getSede() != null ? pgUser.getSede().getSede() : "",
+                    "isAdmin", pgUser.isAdminOrSuperAdmin()
+            )).build();
+        }
+        return Response.ok(Map.of("username", username)).build();
     }
 }

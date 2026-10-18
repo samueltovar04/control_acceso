@@ -40,6 +40,23 @@
   z-index: 10;
 }
 
+.face-bounding-box {
+  border: 3px solid #00e676 !important;
+  border-radius: 12px;
+  animation: pulse-border 1.5s infinite alternate;
+}
+
+@keyframes pulse-border {
+  from {
+    border-color: #00e676;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.6);
+  }
+  to {
+    border-color: #69f0ae;
+    box-shadow: 0 0 25px rgba(105, 240, 174, 0.9);
+  }
+}
+
 .target-oval {
   width: 100%;
   height: 100%;

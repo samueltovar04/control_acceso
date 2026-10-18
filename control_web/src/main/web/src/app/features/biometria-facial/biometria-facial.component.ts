@@ -43,6 +43,8 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   private qrScannerInterval?: any;
   private ultimoQrLeido: string = '';
   private ultimoTimestampQr: number = 0;
+  private ultimoTimestampFacialAuto: number = 0;
+  public autoIdentificacionFacialActiva: boolean = true;
 
   // Modal Flotante de Identificación de Persona
   public mostrarModalPersona: boolean = false;
@@ -147,6 +149,9 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   /**
    * Monitorea el elemento <video> de la camara cada 400ms para detectar codigos QR automaticamente sin pulsar boton
    */
+  /**
+   * Monitorea el elemento <video> de la camara cada 400ms para detectar codigos QR automaticamente sin pulsar boton
+   */
   private iniciarEscaneoContinuoQr(): void {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -157,34 +162,49 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
         return;
       }
 
+      // 1. Escaneo de QR continuo
       const videoEl = document.querySelector('webcam video') as HTMLVideoElement;
-      if (!videoEl || videoEl.readyState !== videoEl.HAVE_ENOUGH_DATA || videoEl.videoWidth === 0) {
-        return;
-      }
+      if (videoEl && videoEl.readyState === videoEl.HAVE_ENOUGH_DATA && videoEl.videoWidth > 0 && ctx) {
+        try {
+          canvas.width = videoEl.videoWidth;
+          canvas.height = videoEl.videoHeight;
+          ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      try {
-        canvas.width = videoEl.videoWidth;
-        canvas.height = videoEl.videoHeight;
-        if (!ctx) return;
-        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-        if (code && code.data && code.data.trim().length > 0) {
-          const qrLeido = code.data.trim();
-          const ahora = Date.now();
-          // Evitar re-disparar el mismo QR en menos de 5 segundos
-          if (qrLeido === this.ultimoQrLeido && (ahora - this.ultimoTimestampQr < 5000)) {
+          const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+          if (code && code.data && code.data.trim().length > 0) {
+            const qrLeido = code.data.trim();
+            const ahora = Date.now();
+            if (qrLeido === this.ultimoQrLeido && (ahora - this.ultimoTimestampQr < 5000)) {
+              return;
+            }
+            this.ultimoQrLeido = qrLeido;
+            this.ultimoTimestampQr = ahora;
+            this.verificarAccesoPorQr(qrLeido);
             return;
           }
-          this.ultimoQrLeido = qrLeido;
-          this.ultimoTimestampQr = ahora;
-          this.verificarAccesoPorQr(qrLeido);
+        } catch (err) {
+          // Ignorar excepciones menores de renderizado
         }
-      } catch (err) {
-        // Ignorar excepciones menores de renderizado en canvas
       }
-    }, 400);
+
+      // 2. Disparo automatico de identificacion facial si esta habilitado y se detecta rostro en vision optima
+      if (this.autoIdentificacionFacialActiva && !this.procesando && this.estadoTorniquete !== 'ABIERTO') {
+        const ahora = Date.now();
+        const tieneRostroEnfocado = this.biometricCapture && (this.biometricCapture.faceDetectado && !!this.biometricCapture.faceBox);
+        
+        if (tieneRostroEnfocado) {
+          const box = this.biometricCapture!.faceBox!;
+          // Vision optima: rostro centrado y con dimension visible suficiente
+          const esVisionOptima = (box.width >= 16 && box.height >= 20 && box.left >= 5 && box.left <= 75 && box.top <= 65);
+          
+          if (esVisionOptima && (ahora - this.ultimoTimestampFacialAuto > 2500)) {
+            this.ultimoTimestampFacialAuto = ahora;
+            this.capturarRostro();
+          }
+        }
+      }
+    }, 350);
   }
 
   cargarDispositivos(): void {
@@ -252,14 +272,22 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
 
   public onFotogramaCapturado(evento: { fotoUrl: string; faceVector: string }): void {
     this.procesando = true;
+
+    // Timeout de seguridad para evitar que procesando quede bloqueado indefinidamente
+    const safetyTimeout = setTimeout(() => {
+      this.procesando = false;
+    }, 4500);
     
     // 1. Verificar primero si el fotograma contiene un codigo QR (cedula)
     this.detectarCodigoQrEnImagen(evento.fotoUrl, (codigoQr) => {
+      clearTimeout(safetyTimeout);
       if (codigoQr && codigoQr.trim().length > 0) {
         this.verificarAccesoPorQr(codigoQr.trim(), evento.fotoUrl);
-      } else {
+      } else if (evento.faceVector && evento.faceVector.trim().length > 0) {
         // 2. Si no es un QR, proceder con la identificacion biometrica facial normal
         this.verificarAccesoPorRostro(evento.faceVector);
+      } else {
+        this.procesando = false;
       }
     });
   }

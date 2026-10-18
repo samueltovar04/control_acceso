@@ -74,7 +74,6 @@ HELP.md
 control_suprema/qemu_suprema/*.iso
 control_suprema/qemu_suprema/*.qcow2
 
-*.iso
-*.qcow2
-*.iso
-*.qcow2
+# Secretos locales (credenciales de camaras, etc.)
+.env
+!.env.example

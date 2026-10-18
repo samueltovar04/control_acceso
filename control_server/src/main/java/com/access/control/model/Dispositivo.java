@@ -30,6 +30,9 @@ public class Dispositivo extends AbstractEntity {
     @Column(name = "sistema_operativo")
     private String sistemaOperativo;
 
+    @Column(name = "ruta")
+    private String ruta;
+
     @ManyToOne
     @JoinColumn(name = "piso_id")
     private Piso piso;
@@ -129,6 +132,14 @@ public class Dispositivo extends AbstractEntity {
 
     public void setSistemaOperativo(String sistemaOperativo) {
         this.sistemaOperativo = sistemaOperativo;
+    }
+
+    public String getRuta() {
+        return ruta;
+    }
+
+    public void setRuta(String ruta) {
+        this.ruta = ruta;
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
