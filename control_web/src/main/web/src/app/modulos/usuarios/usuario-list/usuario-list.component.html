@@ -284,10 +284,47 @@
       </div>
 
       <div class="modal-body p-4">
+        <!-- Nombre de Usuario (Login) -->
         <div class="mb-3">
           <label class="form-label small fw-bold text-secondary">Nombre de Usuario (Login)</label>
           <input type="text" class="form-control form-control-sm" [(ngModel)]="usuarioForm.username"
                  [disabled]="esEdicion" placeholder="ej: jsmith">
+        </div>
+
+        <!-- Busqueda de Empleado (Solo en Creacion) -->
+        <div class="mb-3 position-relative" *ngIf="!esEdicion">
+          <label class="form-label small fw-bold text-secondary">
+            <i class="bi bi-search me-1"></i>Vincular / Buscar Empleado
+          </label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control" [(ngModel)]="busquedaEmpleado"
+                   (input)="onBuscarEmpleado()"
+                   placeholder="Buscar por nombre, apellido, cedula o legajo...">
+            <button *ngIf="busquedaEmpleado" class="btn btn-outline-secondary" type="button" (click)="limpiarEmpleadoSeleccionado()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <small class="text-muted" style="font-size: 0.72rem;">
+            * Al seleccionar un empleado se autocompletaran el nombre, correo, sede y sugerencia de login.
+          </small>
+
+          <!-- Resultados dropdown de busqueda -->
+          <div *ngIf="empleadosEncontrados.length > 0" class="list-group position-absolute w-100 shadow-sm border mt-1"
+               style="z-index: 1055; max-height: 200px; overflow-y: auto;">
+            <button type="button" *ngFor="let emp of empleadosEncontrados"
+                    class="list-group-item list-group-item-action list-group-item-sm py-2"
+                    (click)="seleccionarEmpleado(emp)">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ emp.name || emp.nombre }} {{ emp.lastName || emp.apellido }}</strong>
+                  <div class="text-muted small" style="font-size: 0.75rem;">
+                    Doc: {{ emp.document || emp.documento || 'S/D' }} | Legajo: {{ emp.legajo || 'S/L' }}
+                  </div>
+                </div>
+                <span class="badge bg-light text-secondary border" *ngIf="emp.sede?.sede">{{ emp.sede?.sede }}</span>
+              </div>
+            </button>
+          </div>
         </div>
 
         <div class="mb-3">
@@ -310,7 +347,6 @@
             <option value="ROLE_CONTABLE">CONTABLE (Solo Menu de Pagos)</option>
             <option value="ROLE_RECEPCION">RECEPCION (Panel & Vision + Gestion de Acceso)</option>
             <option value="ROLE_OPERACION">OPERACION (Panel & Vision + Gestion de Acceso)</option>
-            <option value="ROLE_EMPLEADO">EMPLEADO (Fijo a Sede Asignada)</option>
             <option value="ROLE_CLIENTE">CLIENTE (Solo Datos y Pagos Personales)</option>
           </select>
         </div>
@@ -326,10 +362,40 @@
           </small>
         </div>
 
+        <!-- Contrasena Inicial (Creacion) con ojito -->
         <div class="mb-3" *ngIf="!esEdicion">
           <label class="form-label small fw-bold text-secondary">Contrasena Inicial</label>
-          <input type="password" class="form-control form-control-sm" [(ngModel)]="usuarioForm.password"
-                 placeholder="Por defecto: 123456">
+          <div class="input-group input-group-sm">
+            <input [type]="mostrarPassword1 ? 'text' : 'password'"
+                   class="form-control"
+                   [(ngModel)]="usuarioForm.password"
+                   placeholder="Min 8 caracteres, mayuscula, minuscula, numero y simbolo">
+            <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassword1 = !mostrarPassword1" tabindex="-1">
+              <i class="bi" [ngClass]="mostrarPassword1 ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirmar Contrasena con ojito -->
+        <div class="mb-3" *ngIf="!esEdicion">
+          <label class="form-label small fw-bold text-secondary">Confirmar Contrasena</label>
+          <div class="input-group input-group-sm">
+            <input [type]="mostrarPassword2 ? 'text' : 'password'"
+                   class="form-control"
+                   [(ngModel)]="passwordConfirm"
+                   placeholder="Repita la contrasena">
+            <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassword2 = !mostrarPassword2" tabindex="-1">
+              <i class="bi" [ngClass]="mostrarPassword2 ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+            </button>
+          </div>
+          <div *ngIf="passwordConfirm && usuarioForm.password && passwordConfirm !== usuarioForm.password"
+               class="text-danger small mt-1" style="font-size: 0.75rem;">
+            <i class="bi bi-exclamation-circle me-1"></i>Las contrasenas no coinciden.
+          </div>
+          <div *ngIf="passwordConfirm && usuarioForm.password && passwordConfirm === usuarioForm.password"
+               class="text-success small mt-1" style="font-size: 0.75rem;">
+            <i class="bi bi-check-circle me-1"></i>Las contrasenas coinciden.
+          </div>
         </div>
 
         <div class="form-check form-switch mb-3">

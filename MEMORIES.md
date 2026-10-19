@@ -1,5 +1,18 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Gestion de Usuarios - Busqueda de Empleados y Seguridad de Contrasena (19-Oct-2026)**:
+  - En [usuario-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/usuarios/usuario-list/usuario-list.component.html):
+    - Se agrego campo de busqueda en vivo de empleados tras el login para autocompletar automaticamente nombre completo, correo electronico, sede asignada y sugerencia de username.
+    - Se retiro la opcion `ROLE_EMPLEADO` del selector de Rol del Usuario.
+    - Se incorporo el boton con icono de ojo (`bi-eye-fill` / `bi-eye-slash-fill`) para alternar la visibilidad de la contrasena inicial.
+    - Se anadio input de confirmacion de contrasena con su respectivo boton de visibilidad e indicadores visuales de coincidencia en tiempo real.
+  - En [usuario-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/usuarios/usuario-list/usuario-list.component.ts):
+    - Inyeccion de `EmpleadoService` y metodos `onBuscarEmpleado()`, `seleccionarEmpleado()`, `limpiarEmpleadoSeleccionado()`.
+    - Metodo `validarPasswordSegura()` que exige longitud minima de 8 caracteres, al menos una mayuscula, una minuscula, un digito y un caracter especial.
+    - Validacion cruzada de contrasenas identicas antes de enviar la peticion de creacion.
+  - En [empleado.service.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/empleado/empleado.service.ts):
+    - Configurado `@Injectable({ providedIn: 'root' })` para inyeccion limpia en componentes standalone.
+
 - **Despliegue y Levantamiento en Servidor Produccion acceso.andessistemas.com (18-Oct-2026)**:
   - **Causa Raiz**:
     1. Contenedor `access_control_backend` en ciclo de reinicio continuo por fallo de autenticacion en PostgreSQL (`FATAL: password authentication failed for user "admin"`).

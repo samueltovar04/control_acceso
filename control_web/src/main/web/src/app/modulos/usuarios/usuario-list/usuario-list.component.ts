@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UsuarioService, UserDTO, AuditoriaAcceso, SesionActiva } from '../../../core/services/usuario.service';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 
 @Component({
   selector: 'app-usuario-list',
@@ -29,7 +30,19 @@ export class UsuarioListComponent implements OnInit {
   public mostrarModalUsuario: boolean = false;
   public esEdicion: boolean = false;
   public usuarioForm: UserDTO = this.crearUsuarioVacio();
-  public rolSeleccionado: string = 'ROLE_EMPLEADO';
+  public rolSeleccionado: string = 'ROLE_RECEPCION';
+
+  // Busqueda de Empleados
+  public empleados: any[] = [];
+  public busquedaEmpleado: string = '';
+  public empleadosEncontrados: any[] = [];
+  public buscandoEmpleado: boolean = false;
+  public empleadoSeleccionado: any = null;
+
+  // Manejo de Contrasena
+  public passwordConfirm: string = '';
+  public mostrarPassword1: boolean = false;
+  public mostrarPassword2: boolean = false;
 
   // Auditoria
   public auditorias: AuditoriaAcceso[] = [];
@@ -42,7 +55,8 @@ export class UsuarioListComponent implements OnInit {
 
   constructor(
     private usuarioService: UsuarioService,
-    private sedeService: SedeService
+    private sedeService: SedeService,
+    private empleadoService: EmpleadoService
   ) {}
 
   ngOnInit(): void {
@@ -133,9 +147,74 @@ export class UsuarioListComponent implements OnInit {
   abrirCrearUsuario(): void {
     this.esEdicion = false;
     this.usuarioForm = this.crearUsuarioVacio();
-    this.rolSeleccionado = 'ROLE_EMPLEADO';
+    this.rolSeleccionado = 'ROLE_RECEPCION';
+    this.busquedaEmpleado = '';
+    this.empleadosEncontrados = [];
+    this.empleadoSeleccionado = null;
+    this.passwordConfirm = '';
+    this.mostrarPassword1 = false;
+    this.mostrarPassword2 = false;
     this.mostrarModalUsuario = true;
     this.limpiarMensajes();
+    this.cargarEmpleados();
+  }
+
+  cargarEmpleados(): void {
+    if (this.empleados.length === 0) {
+      this.empleadoService.getEmployeesList().subscribe({
+        next: (res) => {
+          this.empleados = res || [];
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  onBuscarEmpleado(): void {
+    const term = (this.busquedaEmpleado || '').trim().toLowerCase();
+    if (!term) {
+      this.empleadosEncontrados = [];
+      return;
+    }
+    this.empleadosEncontrados = this.empleados.filter(e => {
+      const nombre = (e.name || e.nombre || '').toLowerCase();
+      const apellido = (e.lastName || e.apellido || '').toLowerCase();
+      const doc = (e.document || e.documento || '').toString().toLowerCase();
+      const legajo = (e.legajo || '').toString().toLowerCase();
+      const email = (e.email || '').toLowerCase();
+      return nombre.includes(term) || apellido.includes(term) || doc.includes(term) || legajo.includes(term) || email.includes(term);
+    }).slice(0, 10);
+  }
+
+  seleccionarEmpleado(emp: any): void {
+    this.empleadoSeleccionado = emp;
+    const nombre = (emp.name || emp.nombre || '').trim();
+    const apellido = (emp.lastName || emp.apellido || '').trim();
+    this.usuarioForm.nombreCompleto = `${nombre} ${apellido}`.trim();
+    this.usuarioForm.email = emp.email || '';
+
+    if (!this.usuarioForm.username) {
+      const n = (emp.name || emp.nombre || '').trim().split(' ')[0] || '';
+      const a = (emp.lastName || emp.apellido || '').trim().split(' ')[0] || '';
+      if (n && a) {
+        this.usuarioForm.username = (n.charAt(0) + a).toLowerCase().replace(/[^a-z0-9]/g, '');
+      } else if (emp.document || emp.documento) {
+        this.usuarioForm.username = 'u' + (emp.document || emp.documento);
+      }
+    }
+
+    if (emp.sede && emp.sede.id) {
+      this.usuarioForm.sedeId = emp.sede.id;
+    }
+
+    this.busquedaEmpleado = `${this.usuarioForm.nombreCompleto} (${emp.document || emp.documento || ''})`.trim();
+    this.empleadosEncontrados = [];
+  }
+
+  limpiarEmpleadoSeleccionado(): void {
+    this.empleadoSeleccionado = null;
+    this.busquedaEmpleado = '';
+    this.empleadosEncontrados = [];
   }
 
   abrirEditarUsuario(u: UserDTO): void {
@@ -154,8 +233,11 @@ export class UsuarioListComponent implements OnInit {
     if (u.roles && u.roles.length > 0) {
       this.rolSeleccionado = u.roles[0];
     } else {
-      this.rolSeleccionado = 'ROLE_EMPLEADO';
+      this.rolSeleccionado = 'ROLE_RECEPCION';
     }
+    this.passwordConfirm = '';
+    this.mostrarPassword1 = false;
+    this.mostrarPassword2 = false;
     this.mostrarModalUsuario = true;
     this.limpiarMensajes();
   }
@@ -164,10 +246,45 @@ export class UsuarioListComponent implements OnInit {
     this.mostrarModalUsuario = false;
   }
 
+  validarPasswordSegura(p: string): { valida: boolean; mensaje: string } {
+    if (!p || p.length < 8) {
+      return { valida: false, mensaje: 'La contrasena debe tener al menos 8 caracteres.' };
+    }
+    if (!/[A-Z]/.test(p)) {
+      return { valida: false, mensaje: 'La contrasena debe contener al menos una letra mayuscula.' };
+    }
+    if (!/[a-z]/.test(p)) {
+      return { valida: false, mensaje: 'La contrasena debe contener al menos una letra minuscula.' };
+    }
+    if (!/[0-9]/.test(p)) {
+      return { valida: false, mensaje: 'La contrasena debe contener al menos un numero.' };
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p)) {
+      return { valida: false, mensaje: 'La contrasena debe contener al menos un caracter especial (!@#$%...)' };
+    }
+    return { valida: true, mensaje: '' };
+  }
+
   guardarUsuario(): void {
     if (!this.usuarioForm.username || !this.usuarioForm.username.trim()) {
       this.mensajeError = 'El nombre de usuario es obligatorio.';
       return;
+    }
+
+    if (!this.esEdicion) {
+      if (!this.usuarioForm.password) {
+        this.mensajeError = 'La contrasena es obligatoria.';
+        return;
+      }
+      const val = this.validarPasswordSegura(this.usuarioForm.password);
+      if (!val.valida) {
+        this.mensajeError = val.mensaje;
+        return;
+      }
+      if (this.usuarioForm.password !== this.passwordConfirm) {
+        this.mensajeError = 'Las contrasenas no coinciden.';
+        return;
+      }
     }
 
     this.usuarioForm.roles = [this.rolSeleccionado];
@@ -257,7 +374,7 @@ export class UsuarioListComponent implements OnInit {
       enabled: true,
       requiresPasswordReset: true,
       sedeId: undefined,
-      roles: ['ROLE_EMPLEADO'],
+      roles: ['ROLE_RECEPCION'],
       password: ''
     };
   }

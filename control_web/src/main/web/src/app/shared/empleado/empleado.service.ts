@@ -3,7 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Empleado } from './empleado.model';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class EmpleadoService {
 
 private baseUrl = '/api/v1/empleados';
