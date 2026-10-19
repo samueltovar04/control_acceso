@@ -1,5 +1,13 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Creacion de Empleado, Permisos de Pisos y Vinculacion Obligatoria de Usuario (19-Oct-2026)**:
+  - **Problemas Solucionados**:
+    1. Modal "Modo Local" / "Empleado guardado localmente": `crear-empleado.component.ts` mostraba falsamente que el empleado se habia guardado en modo local cuando en realidad la peticion HTTP fallaba en el backend debido a colision de unicidad en `empleados.user_id` (`uk_3oailepgwu9rqdquwd7e9xlg8`).
+    2. Creacion de empleado en tabla `empleados` y generacion automatica de usuario: en `EmpleadosServiceImpl.java` se valida la existencia previa por documento y correo, evitando duplicados; y si el usuario del correo ya pertenece a otro empleado, se impide el intento de reasignacion que provocaba la violacion de constraint.
+    3. Permisos de Pisos: en `PermisosController.java` se incorporaron endpoints `/api/v1/permisos/usuarios/{id}` que verifican si ya existe registro de permisos para el empleado asociado; de ser asi, se reutiliza y no se duplica en BD. Si se asigna directo, se actualiza el empleado.
+    4. Empleado obligatorio en creacion de Usuario: en `usuario-list.component.ts` se configuro `onBuscarEmpleado()` para filtrar unicamente empleados que no tengan usuario asignado (`!e.user && (!e.userId || e.userId === 0)`). En `guardarUsuario()` y en `UsuarioServiceImpl.java` se establecio como validacion obligatoria seleccionar un empleado sin usuario (`empleadoId` requerido), asignando bidireccionalmente el usuario al empleado.
+    5. Reconstruccion y despliegue exitoso en Docker (`access_control_backend` y `access_control_frontend`).
+
 - **Correccion de Secuencia en Authorities y Sanitizacion de Errores SQL (19-Oct-2026)**:
   - **Problema**: Al crear un usuario se generaba el error `duplicate key value violates unique constraint "authorities_pkey" Detail: Key (id)=(1) already exists.` y se exponia la sentencia SQL `insert into authorities ...` al usuario en la interfaz.
   - **Causa Raiz**:

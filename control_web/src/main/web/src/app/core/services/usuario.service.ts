@@ -14,6 +14,7 @@ export interface UserDTO {
   sedeNombre?: string;
   roles?: string[];
   password?: string;
+  empleadoId?: number;
 }
 
 export interface AuditoriaAcceso {

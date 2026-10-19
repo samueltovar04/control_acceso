@@ -1,12 +1,12 @@
-package com.controlaccesomobile.viewmodel
+package com.andessistemas.controlacceso.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.controlaccesomobile.model.NotificacionPagoRequest
-import com.controlaccesomobile.model.UserProfile
-import com.controlaccesomobile.model.VitalSignsPayload
-import com.controlaccesomobile.network.ApiService
-import com.controlaccesomobile.network.VitalSignsWebSocketClient
+import com.andessistemas.controlacceso.model.NotificacionPagoRequest
+import com.andessistemas.controlacceso.model.UserProfile
+import com.andessistemas.controlacceso.model.VitalSignsPayload
+import com.andessistemas.controlacceso.network.ApiService
+import com.andessistemas.controlacceso.network.VitalSignsWebSocketClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

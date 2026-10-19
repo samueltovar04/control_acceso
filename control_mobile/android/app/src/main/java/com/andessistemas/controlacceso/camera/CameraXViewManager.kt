@@ -1,4 +1,4 @@
-package com.controlaccesomobile.camera
+package com.andessistemas.controlacceso.camera
 
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext

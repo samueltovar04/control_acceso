@@ -75,4 +75,12 @@ export class ClienteService {
     };
     return this.http.put<Cliente>(`${this.baseUrl}/${cliente.id}`, payload);
   }
+
+  cerrarSesionMovil(clienteId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clienteId}/cerrar-sesion-movil`, {});
+  }
+
+  iniciarSesionMovil(clienteId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${clienteId}/iniciar-sesion-movil`, {});
+  }
 }

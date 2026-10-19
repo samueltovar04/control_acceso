@@ -13,6 +13,8 @@ export interface Cliente {
   huella2?: string;
   faceVector?: string;
   estadoSuscripcion?: string;
+  autoRenovar?: boolean;
+  sesionMovilActiva?: boolean;
   membresiaActual?: any;
   fechaVencimientoMembresia?: string | Date;
   fechaProximoCobro?: string | Date;

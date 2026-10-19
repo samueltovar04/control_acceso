@@ -6,8 +6,10 @@ import com.access.control.model.Authority;
 import com.access.control.model.Sede;
 import com.access.control.model.SesionActiva;
 import com.access.control.model.User;
+import com.access.control.model.Empleado;
 import com.access.control.repository.AuditoriaAccesoRepository;
 import com.access.control.repository.AuthorityRepository;
+import com.access.control.repository.EmpleadoRepository;
 import com.access.control.repository.SedeRepository;
 import com.access.control.repository.SesionActivaRepository;
 import com.access.control.repository.UserRepository;
@@ -24,6 +26,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    EmpleadoRepository empleadoRepository;
 
     @Inject
     SedeRepository sedeRepository;
@@ -57,6 +62,22 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new IllegalArgumentException("Username es requerido");
         }
 
+        boolean esRolCliente = dto.roles != null && dto.roles.stream()
+                .anyMatch(r -> r != null && (r.equalsIgnoreCase("ROLE_CLIENTE") || r.equalsIgnoreCase("CLIENTE")));
+
+        Empleado emp = null;
+        if (dto.empleadoId != null) {
+            emp = empleadoRepository.findById(dto.empleadoId);
+            if (emp == null) {
+                throw new IllegalArgumentException("El empleado seleccionado no existe.");
+            }
+            if (emp.getUser() != null) {
+                throw new IllegalArgumentException("El empleado ya tiene un usuario asignado (" + emp.getUser().getUsername() + ").");
+            }
+        } else if (!esRolCliente) {
+            throw new IllegalArgumentException("Es obligatorio asociar el usuario a un empleado sin usuario asignado.");
+        }
+
         User u = new User();
         u.setUsername(dto.username.trim().toLowerCase());
         u.setEmail(dto.email != null ? dto.email.trim().toLowerCase() : null);
@@ -71,18 +92,31 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (dto.sedeId != null) {
             Sede s = sedeRepository.findById(dto.sedeId);
             u.setSede(s);
+        } else if (emp != null && emp.getSede() != null) {
+            u.setSede(emp.getSede());
         }
 
         asignarRoles(u, dto.roles);
 
         userRepository.persist(u);
 
+        if (emp != null) {
+            emp.setUser(u);
+            empleadoRepository.persist(emp);
+        }
+
         registrarAuditoria(u.getUsername(), u.getId(),
                 u.getSede() != null ? u.getSede().getId() : null,
                 u.getSede() != null ? u.getSede().getSede() : null,
-                "SYSTEM", "BACKEND", "CREACION_USUARIO", "EXITO", "Usuario creado con clave inicial");
+                "SYSTEM", "BACKEND", "CREACION_USUARIO", "EXITO",
+                emp != null ? "Usuario creado con clave inicial y vinculado a empleado ID: " + emp.getId()
+                            : "Usuario creado exitosamente (tipo: " + (esRolCliente ? "CLIENTE" : "GENERAL") + ")");
 
-        return toDTO(u);
+        UserDTO resDto = toDTO(u);
+        if (emp != null) {
+            resDto.empleadoId = emp.getId();
+        }
+        return resDto;
     }
 
     @Override

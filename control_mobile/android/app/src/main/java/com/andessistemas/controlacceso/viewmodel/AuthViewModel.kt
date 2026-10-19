@@ -1,11 +1,11 @@
-package com.controlaccesomobile.viewmodel
+package com.andessistemas.controlacceso.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.controlaccesomobile.model.ChangePasswordRequest
-import com.controlaccesomobile.model.LoginRequest
-import com.controlaccesomobile.model.RegisterFrameRequest
-import com.controlaccesomobile.network.ApiService
+import com.andessistemas.controlacceso.model.ChangePasswordRequest
+import com.andessistemas.controlacceso.model.LoginRequest
+import com.andessistemas.controlacceso.model.RegisterFrameRequest
+import com.andessistemas.controlacceso.network.ApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

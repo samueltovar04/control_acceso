@@ -6,6 +6,7 @@ import { FinanzasService, Pago } from '../../core/services/finanzas.service';
 import { SignosVitalesService, SignosVitales } from '../../core/services/signos-vitales.service';
 import { BancoService, Banco } from '../../core/services/banco.service';
 import { AlertModalService } from '../../shared/services/alert-modal.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-portal-cliente',
@@ -41,14 +42,25 @@ export class PortalClienteComponent implements OnInit {
     private finanzasService: FinanzasService,
     private signosService: SignosVitalesService,
     private bancoService: BancoService,
-    private alertModal: AlertModalService
+    private alertModal: AlertModalService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    const user = this.authService.currentUserValue;
+    if (user && user.clienteId) {
+      this.clienteId = user.clienteId;
+    } else {
+      const storedId = localStorage.getItem('cliente_id');
+      if (storedId) {
+        this.clienteId = Number(storedId);
+      }
+    }
     this.cargarDatosPortal();
   }
 
   cargarDatosPortal(): void {
+    if (!this.clienteId) return;
     this.http.get(`/api/v1/clientes/${this.clienteId}`).subscribe(c => this.clienteData = c);
     this.http.get(`/api/v1/membresias/suscripciones/cliente/${this.clienteId}`).subscribe(s => this.suscripcionActiva = s);
     this.finanzasService.getPagosPorCliente(this.clienteId).subscribe(p => this.misPagos = p);

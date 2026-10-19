@@ -55,6 +55,7 @@ export class AuthService {
             username: res.username || res.correo || 'Usuario',
             role: res.role || 'ROLE_EMPLEADO',
             roles: res.roles || [res.role || 'ROLE_EMPLEADO'],
+            clienteId: res.clienteId ? Number(res.clienteId) : undefined,
             sedeId: res.sedeId ? Number(res.sedeId) : undefined,
             sedeNombre: res.sedeNombre,
             nombreCompleto: res.nombreCompleto,
@@ -63,6 +64,9 @@ export class AuthService {
           localStorage.setItem('currentUser', JSON.stringify(user));
           localStorage.setItem('auth_token', user.token);
           localStorage.setItem('usuario_activo', user.username);
+          if (user.clienteId) {
+            localStorage.setItem('cliente_id', user.clienteId.toString());
+          }
           this.currentUserSubject.next(user);
         }
       })

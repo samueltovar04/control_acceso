@@ -249,6 +249,48 @@ public class ClienteResource {
     }
 
     @POST
+    @Path("/{id}/cerrar-sesion-movil")
+    @Transactional
+    public Response cerrarSesionMovil(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
+            cliente = clienteRepository.listAll().get(0);
+        }
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
+        }
+        cliente.setSesionMovilActiva(false);
+        clienteRepository.persist(cliente);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("clienteId", cliente.getId());
+        res.put("sesionMovilActiva", false);
+        res.put("mensaje", "Sesión móvil cerrada exitosamente por el administrador.");
+        return Response.ok(res).build();
+    }
+
+    @POST
+    @Path("/{id}/iniciar-sesion-movil")
+    @Transactional
+    public Response iniciarSesionMovil(@PathParam("id") Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
+            cliente = clienteRepository.listAll().get(0);
+        }
+        if (cliente == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
+        }
+        cliente.setSesionMovilActiva(true);
+        clienteRepository.persist(cliente);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("clienteId", cliente.getId());
+        res.put("sesionMovilActiva", true);
+        res.put("mensaje", "Sesión móvil activada exitosamente.");
+        return Response.ok(res).build();
+    }
+
+    @POST
     @Path("/{id}/reactivar-renovacion")
     @Transactional
     public Response reactivarRenovacion(@PathParam("id") Long id) {

@@ -65,6 +65,33 @@ public class PermisosController {
     }
 
     @GET
+    @Path("/usuarios/{id}")
+    public Response getPisosUsuario(@PathParam("id") Long userId) {
+        Empleado emp = empleadoRepository.find("user.id", userId).firstResult();
+        if (emp != null && emp.getPisosPermitidos() != null) {
+            return Response.ok(emp.getPisosPermitidos()).build();
+        }
+        return Response.ok(new ArrayList<>()).build();
+    }
+
+    @PUT
+    @Path("/usuarios/{id}")
+    @Transactional
+    public Response updatePisosUsuario(@PathParam("id") Long userId, List<Long> pisoIds) {
+        Empleado emp = empleadoRepository.find("user.id", userId).firstResult();
+        if (emp != null) {
+            List<Piso> pisos = (pisoIds != null && !pisoIds.isEmpty()) 
+                ? pisoRepository.list("id in ?1", pisoIds) 
+                : new ArrayList<>();
+            emp.setPisosPermitidos(pisos);
+            return Response.ok(emp.getPisosPermitidos()).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(java.util.Map.of("error", "No existe empleado asociado a este usuario para asignar permisos de pisos."))
+                .build();
+    }
+
+    @GET
     @Path("/clientes/{id}")
     public Response getPisosCliente(@PathParam("id") Long id) {
         Cliente c = clienteRepository.findById(id);

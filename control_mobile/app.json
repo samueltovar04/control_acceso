@@ -1,4 +1,6 @@
 {
-  "name": "ControlAccesoMobile",
-  "displayName": "Control de Acceso"
+  "name": "AndesControlAcceso",
+  "displayName": "Andes Control",
+  "version": "1.0.0",
+  "description": "Aplicación oficial de Control de Acceso, Biometría Facial y Telemetría IoT"
 }

@@ -32,20 +32,44 @@ public class EmpleadosController {
         return Response.ok(e).build();
     }
 
+    private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(EmpleadosController.class);
+
     @POST
     public Response addEmpleado(EmpleadoDto dto) {
-        Empleado e = servicioEmpleado.addEmpleado(dto);
-        return Response.status(Response.Status.CREATED).entity(e).build();
+        try {
+            Empleado e = servicioEmpleado.addEmpleado(dto);
+            return Response.status(Response.Status.CREATED).entity(e).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            LOG.error("Error al registrar empleado: " + (dto != null ? dto.getNombre() : ""), e);
+            String msg = "No se pudo registrar el empleado. Verifique que los datos no esten duplicados.";
+            if (e.getMessage() != null && e.getMessage().contains("uk_3oailepgwu9rqdquwd7e9xlg8")) {
+                msg = "El usuario generado ya esta asignado a otro empleado.";
+            }
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(java.util.Map.of("error", msg)).build();
+        }
     }
 
     @PUT
     @Path("/{id}")
     public Response updateEmpleado(@PathParam("id") Long id, EmpleadoDto dto) {
-        Empleado e = servicioEmpleado.updateEmpleado(dto, id);
-        if (e == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try {
+            Empleado e = servicioEmpleado.updateEmpleado(dto, id);
+            if (e == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(e).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(java.util.Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            LOG.error("Error al actualizar empleado ID: " + id, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(java.util.Map.of("error", "No se pudo actualizar el empleado.")).build();
         }
-        return Response.ok(e).build();
     }
 
     @DELETE

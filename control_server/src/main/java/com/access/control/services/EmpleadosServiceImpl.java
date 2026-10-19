@@ -80,12 +80,30 @@ public class EmpleadosServiceImpl implements EmpleadosService {
             e.setPisosPermitidos(pisos);
         }
 
+        if (dto.getDocumento() != null && !dto.getDocumento().trim().isEmpty()) {
+            Empleado existenteDoc = empleadoRepository.findByDocumento(dto.getDocumento().trim());
+            if (existenteDoc != null) {
+                throw new IllegalArgumentException("Ya existe un empleado registrado con el documento: " + dto.getDocumento().trim());
+            }
+        }
+
         if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty() && usuarioService != null) {
+            String emailNorm = dto.getEmail().trim().toLowerCase();
+            Empleado existentePorEmail = empleadoRepository.find("email", emailNorm).firstResult();
+            if (existentePorEmail != null) {
+                throw new IllegalArgumentException("Ya existe un empleado registrado con el correo: " + emailNorm);
+            }
+
             String nombreCompleto = ((dto.getNombre() != null ? dto.getNombre() : "") + " " +
                     (dto.getApellido() != null ? dto.getApellido() : "")).trim();
             com.access.control.model.User user = usuarioService.obtenerOCrearUsuarioAutomatico(
-                    dto.getEmail(), nombreCompleto, e.getSede(), "ROLE_RECEPCION");
+                    emailNorm, nombreCompleto, e.getSede(), "ROLE_RECEPCION");
             if (user != null) {
+                Empleado empleadoConEsteUser = empleadoRepository.find("user.id", user.getId()).firstResult();
+                if (empleadoConEsteUser != null) {
+                    throw new IllegalArgumentException("El usuario vinculado a este correo ya esta asignado al empleado: " + 
+                            empleadoConEsteUser.getName() + " " + empleadoConEsteUser.getLastName());
+                }
                 e.setUser(user);
             }
         }

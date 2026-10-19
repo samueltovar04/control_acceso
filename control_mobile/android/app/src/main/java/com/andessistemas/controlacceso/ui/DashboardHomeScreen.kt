@@ -1,4 +1,4 @@
-package com.controlaccesomobile.ui
+package com.andessistemas.controlacceso.ui
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.controlaccesomobile.viewmodel.HomeDashboardState
-import com.controlaccesomobile.viewmodel.HomeViewModel
+import com.andessistemas.controlacceso.viewmodel.HomeDashboardState
+import com.andessistemas.controlacceso.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -286,7 +286,7 @@ fun PaymentNotificationDialog(
 }
 
 @Composable
-fun SectionBSignosVitales(vitalSigns: com.controlaccesomobile.model.VitalSignsPayload) {
+fun SectionBSignosVitales(vitalSigns: com.andessistemas.controlacceso.model.VitalSignsPayload) {
     val bpmDuration = (60000 / vitalSigns.bpm.coerceAtLeast(40)).coerceIn(300, 1500)
     val infiniteTransition = rememberInfiniteTransition(label = "Heartbeat")
     val scale by infiniteTransition.animateFloat(

@@ -15,4 +15,5 @@ public class UserDTO {
     public String sedeNombre;
     public Set<String> roles;
     public String password; // Solo para creacion o reseteo
+    public Long empleadoId;
 }

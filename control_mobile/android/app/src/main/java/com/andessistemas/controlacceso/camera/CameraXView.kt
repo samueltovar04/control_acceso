@@ -1,4 +1,4 @@
-package com.controlaccesomobile.camera
+package com.andessistemas.controlacceso.camera
 
 import android.content.Context
 import android.widget.FrameLayout

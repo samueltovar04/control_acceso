@@ -87,8 +87,8 @@ export class CrearEmpleadoComponent implements OnInit {
       },
       error: async (err: any) => {
         this.guardando = false;
-        await this.alertModal.info('Empleado guardado localmente.', 'Modo Local');
-        this.router.navigate(['/home/empleados']);
+        const msg = err?.error?.error || err?.error?.message || err?.message || 'Error al registrar el empleado en la base de datos.';
+        await this.alertModal.error(msg, 'Error al Registrar');
       }
     });
   }

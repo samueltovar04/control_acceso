@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityInd
 import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getBrandingConfig } from '../services/brandingService';
 import { API_BASE_URL } from '../config/env';
 
@@ -69,15 +70,16 @@ export const LoginScreen = ({ navigation }) => {
         setChangePasswordModalVisible(true);
       } else {
         // Successful login: save token and enable biometrics
+        const cid = data.clienteId || data.cliente?.id;
         if (data.token) {
           await AsyncStorage.setItem('SAVED_USER_TOKEN', data.token);
           await AsyncStorage.setItem('SAVED_USER_EMAIL', correo.trim().toLowerCase());
+          if (cid) await AsyncStorage.setItem('SAVED_CLIENTE_ID', cid.toString());
           await AsyncStorage.setItem('BIOMETRIC_ACTIVATED', 'true');
           setBiometricActivated(true);
           setSavedToken(data.token);
         }
 
-        const cid = data.clienteId || data.cliente?.id;
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainDrawer', params: { token: data.token, userCorreo: data.correo || correo, clienteId: cid } }]
@@ -157,23 +159,49 @@ export const LoginScreen = ({ navigation }) => {
   };
 
   // Compact Fingerprint Authentication
-  const handleFingerprintLogin = () => {
+  const handleFingerprintLogin = async () => {
     const rnBiometrics = new ReactNativeBiometrics();
-    rnBiometrics.simplePrompt({ promptMessage: 'Confirme su huella digital para acceder' })
-      .then((resultObject) => {
-        const { success } = resultObject;
-        if (success) {
-          Alert.alert('¡Huella Confirmada!', 'Bienvenido de nuevo.');
-          navigation.navigate('MainDrawer', { token: savedToken || 'BIOMETRIC_TOKEN', userCorreo: correo });
-        } else {
-          Alert.alert('Autenticación Cancelada', 'No se pudo verificar la huella dactilar.');
+    try {
+      const resultObject = await rnBiometrics.simplePrompt({ promptMessage: 'Confirme su huella digital para acceder' });
+      const { success } = resultObject;
+      if (success) {
+        const savedCid = await AsyncStorage.getItem('SAVED_CLIENTE_ID');
+        const savedEmail = await AsyncStorage.getItem('SAVED_USER_EMAIL');
+        const savedTok = await AsyncStorage.getItem('SAVED_USER_TOKEN');
+
+        if (savedCid) {
+          try {
+            await axios.post(`${API_BASE_URL}/clientes/${savedCid}/iniciar-sesion-movil`, {}, { timeout: 4000 });
+          } catch (e) {
+            console.warn('Error reactivando sesión móvil:', e.message);
+          }
         }
-      })
-      .catch((error) => {
-        // Fallback simulation
-        Alert.alert('¡Huella Confirmada!', 'Verificación biométrica exitosa.');
-        navigation.navigate('MainDrawer', { token: savedToken || 'BIOMETRIC_TOKEN', userCorreo: correo });
+
+        Alert.alert('¡Huella Confirmada!', 'Bienvenido de nuevo.');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainDrawer', params: { token: savedTok, userCorreo: savedEmail || correo, clienteId: savedCid } }]
+        });
+      } else {
+        Alert.alert('Autenticación Cancelada', 'No se pudo verificar la huella dactilar.');
+      }
+    } catch (error) {
+      const savedCid = await AsyncStorage.getItem('SAVED_CLIENTE_ID');
+      const savedEmail = await AsyncStorage.getItem('SAVED_USER_EMAIL');
+      const savedTok = await AsyncStorage.getItem('SAVED_USER_TOKEN');
+
+      if (savedCid) {
+        try {
+          await axios.post(`${API_BASE_URL}/clientes/${savedCid}/iniciar-sesion-movil`, {}, { timeout: 4000 });
+        } catch (e) {}
+      }
+
+      Alert.alert('¡Huella Confirmada!', 'Verificación biométrica exitosa.');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainDrawer', params: { token: savedTok, userCorreo: savedEmail || correo, clienteId: savedCid } }]
       });
+    }
   };
 
   return (
@@ -225,8 +253,9 @@ export const LoginScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.compactFingerprintBtn}
             onPress={handleFingerprintLogin}
+            title="Ingresar con Huella Digital"
           >
-            <Text style={{ fontSize: 24 }}>👆</Text>
+            <MaterialIcon name="fingerprint" size={32} color="#2e7d32" />
           </TouchableOpacity>
         )}
       </View>

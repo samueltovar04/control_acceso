@@ -1,5 +1,5 @@
-import React from 'react';
-import { StatusBar } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, Platform, PermissionsAndroid } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
@@ -16,6 +16,21 @@ import { NotificationsScreen } from './src/screens/NotificationsScreen';
 const Stack = createStackNavigator();
 
 export default function App() {
+  useEffect(() => {
+    async function requestNotificationPermission() {
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        try {
+          await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+          );
+        } catch (err) {
+          console.warn('Error solicitando permiso de notificaciones:', err);
+        }
+      }
+    }
+    requestNotificationPermission();
+  }, []);
+
   return (
     <NavigationContainer>
       <StatusBar barStyle="light-content" backgroundColor="#1E88E5" />

@@ -130,8 +130,11 @@ interface VitalData {
                   <span class="badge me-1" [ngClass]="c.huella1 ? 'bg-primary' : 'bg-light text-muted border'">
                     <i class="bi bi-fingerprint me-1"></i>Huella
                   </span>
-                  <span class="badge" [ngClass]="c.faceVector ? 'bg-info text-dark' : 'bg-light text-muted border'">
+                  <span class="badge me-1" [ngClass]="c.faceVector ? 'bg-info text-dark' : 'bg-light text-muted border'">
                     <i class="bi bi-camera-fill me-1"></i>Facial
+                  </span>
+                  <span class="badge" [ngClass]="c.sesionMovilActiva !== false ? 'bg-success text-white' : 'bg-secondary text-white'">
+                    <i class="bi bi-phone me-1"></i>{{ c.sesionMovilActiva !== false ? 'App Activa' : 'App Inactiva' }}
                   </span>
                 </td>
                 <td class="text-center">
@@ -143,6 +146,14 @@ interface VitalData {
                     >
                       <i class="bi bi-credit-card-2-front me-1"></i>
                       <span>Membresia</span>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-warning d-inline-flex align-items-center px-2 py-1"
+                      (click)="cerrarSesionMovil(c)"
+                      [title]="c.sesionMovilActiva !== false ? 'Cerrar Sesión Móvil del Cliente' : 'Sesión Móvil Inactiva'"
+                    >
+                      <i class="bi bi-phone-vibrate me-1"></i>
+                      <span>{{ c.sesionMovilActiva !== false ? 'Cerrar App' : 'App Inactiva' }}</span>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-info d-inline-flex align-items-center px-2 py-1"
@@ -434,7 +445,7 @@ interface VitalData {
             <button type="button" class="btn-close" (click)="cerrarModalPulsera()"></button>
           </div>
           <div class="modal-body p-4">
-            
+
             <!-- INPUT DE ASIGNACION DE PULSERA -->
             <div class="row g-3 align-items-end mb-4">
               <div class="col-md-8">
@@ -677,6 +688,29 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     this.cerrarWebSocket();
   }
 
+  cerrarSesionMovil(cliente: Cliente): void {
+    if (!cliente || !cliente.id) return;
+    this.alertModal.confirm(
+      `¿Está seguro de cerrar de forma remota la sesión móvil de ${cliente.nombre} ${cliente.apellido}? La aplicación del usuario retornará al inicio de sesión.`,
+      '¿Cerrar Sesión Móvil?',
+      'Sí, Cerrar Sesión App',
+      'Cancelar'
+    ).then((confirmado) => {
+      if (confirmado) {
+        this.clienteService.cerrarSesionMovil(cliente.id!).subscribe({
+          next: (res) => {
+            cliente.sesionMovilActiva = false;
+            this.alertModal.success(`La sesión móvil de ${cliente.nombre} ${cliente.apellido} ha sido invalidada con éxito.`, 'Sesión Móvil Cerrada');
+          },
+          error: (err) => {
+            console.error('Error al cerrar sesión móvil:', err);
+            this.alertModal.error('No se pudo cerrar la sesión móvil del cliente.', 'Error');
+          }
+        });
+      }
+    });
+  }
+
   cargarClientes(): void {
     this.clienteService.getClientesList().subscribe({
       next: (data) => {
@@ -756,7 +790,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     if (!this.membresiaModalId) {
       this.promocionesFiltradas = this.catalogoPromociones.filter(p => !p.membresiaAplica && p.activo !== false);
     } else {
-      this.promocionesFiltradas = this.catalogoPromociones.filter(p => 
+      this.promocionesFiltradas = this.catalogoPromociones.filter(p =>
         p.activo !== false && (!p.membresiaAplica || p.membresiaAplica.id === this.membresiaModalId)
       );
     }
@@ -784,8 +818,8 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     if (this.membresiaModalId) {
       // Usar endpoint especializado de asignacion que aplica cupon, genera pago inmediato e invalida cache
       this.clienteService.asignarMembresiaAlCliente(
-        this.clienteSeleccionado.id, 
-        Number(this.membresiaModalId), 
+        this.clienteSeleccionado.id,
+        Number(this.membresiaModalId),
         this.nuevoEstadoMembresia,
         this.cuponSeleccionadoCodigo || undefined,
         this.metodoPagoSeleccionado || 'EFECTIVO'

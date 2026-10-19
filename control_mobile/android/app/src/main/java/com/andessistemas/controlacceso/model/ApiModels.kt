@@ -1,4 +1,4 @@
-package com.controlaccesomobile.model
+package com.andessistemas.controlacceso.model
 
 import com.google.gson.annotations.SerializedName
 

@@ -37,6 +37,8 @@ public class Cliente extends AbstractEntity {
 
     private Boolean autoRenovar = true;
 
+    private Boolean sesionMovilActiva = true;
+
     private String qrTokenDinamico;
 
     @Temporal(TemporalType.DATE)
@@ -254,5 +256,13 @@ public class Cliente extends AbstractEntity {
 
     public void setCongeladoHasta(Date congeladoHasta) {
         this.congeladoHasta = congeladoHasta;
+    }
+
+    public Boolean getSesionMovilActiva() {
+        return sesionMovilActiva != null ? sesionMovilActiva : true;
+    }
+
+    public void setSesionMovilActiva(Boolean sesionMovilActiva) {
+        this.sesionMovilActiva = sesionMovilActiva;
     }
 }

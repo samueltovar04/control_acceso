@@ -1,11 +1,11 @@
-package com.controlaccesomobile.ui
+package com.andessistemas.controlacceso.ui
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.controlaccesomobile.viewmodel.AuthViewModel
-import com.controlaccesomobile.viewmodel.HomeViewModel
+import com.andessistemas.controlacceso.viewmodel.AuthViewModel
+import com.andessistemas.controlacceso.viewmodel.HomeViewModel
 
 object NavRoutes {
     const val LOGIN = "login"

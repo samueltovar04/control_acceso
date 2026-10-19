@@ -177,6 +177,14 @@ export class UsuarioListComponent implements OnInit {
       return;
     }
     this.empleadosEncontrados = this.empleados.filter(e => {
+      // Si estamos creando un nuevo usuario, mostrar UNICAMENTE empleados sin usuario vinculado
+      if (!this.esEdicion) {
+        const tieneUsuario = e.user != null || (e.userId != null && e.userId > 0);
+        if (tieneUsuario) {
+          return false;
+        }
+      }
+
       const nombre = (e.name || e.nombre || '').toLowerCase();
       const apellido = (e.lastName || e.apellido || '').toLowerCase();
       const doc = (e.document || e.documento || '').toString().toLowerCase();
@@ -188,6 +196,7 @@ export class UsuarioListComponent implements OnInit {
 
   seleccionarEmpleado(emp: any): void {
     this.empleadoSeleccionado = emp;
+    this.usuarioForm.empleadoId = emp.id;
     const nombre = (emp.name || emp.nombre || '').trim();
     const apellido = (emp.lastName || emp.apellido || '').trim();
     this.usuarioForm.nombreCompleto = `${nombre} ${apellido}`.trim();
@@ -213,6 +222,7 @@ export class UsuarioListComponent implements OnInit {
 
   limpiarEmpleadoSeleccionado(): void {
     this.empleadoSeleccionado = null;
+    this.usuarioForm.empleadoId = undefined;
     this.busquedaEmpleado = '';
     this.empleadosEncontrados = [];
   }
@@ -270,6 +280,14 @@ export class UsuarioListComponent implements OnInit {
   }
 
   guardarUsuario(): void {
+    const esCliente = this.rolSeleccionado === 'ROLE_CLIENTE' ||
+                      (this.usuarioForm.roles && this.usuarioForm.roles.includes('ROLE_CLIENTE'));
+
+    if (!this.esEdicion && !esCliente && (!this.empleadoSeleccionado || !this.usuarioForm.empleadoId)) {
+      this.mensajeError = 'Debe seleccionar obligatoriamente un empleado para crear el usuario.';
+      return;
+    }
+
     if (!this.usuarioForm.username || !this.usuarioForm.username.trim()) {
       this.mensajeError = 'El nombre de usuario es obligatorio.';
       return;

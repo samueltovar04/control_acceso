@@ -298,21 +298,21 @@
                  [disabled]="esEdicion" placeholder="ej: jsmith">
         </div>
 
-        <!-- Busqueda de Empleado (Disponible en Creacion y Edicion) -->
-        <div class="mb-3 position-relative">
+        <!-- Busqueda de Empleado (Obligatorio en Creacion para usuarios no-cliente) -->
+        <div class="mb-3 position-relative" *ngIf="rolSeleccionado !== 'ROLE_CLIENTE'">
           <label class="form-label small fw-bold text-secondary">
-            <i class="bi bi-search me-1"></i>Vincular / Buscar Empleado
+            <i class="bi bi-search me-1"></i>Asociar Empleado <span *ngIf="!esEdicion" class="text-danger">* (Obligatorio)</span>
           </label>
           <div class="input-group input-group-sm">
             <input type="text" class="form-control" [(ngModel)]="busquedaEmpleado"
                    (input)="onBuscarEmpleado()"
-                   placeholder="Buscar por nombre, apellido, cedula o legajo...">
+                   [placeholder]="!esEdicion ? 'Buscar empleado sin usuario por nombre, cedula...' : 'Buscar empleado por nombre, cedula...'">
             <button *ngIf="busquedaEmpleado" class="btn btn-outline-secondary" type="button" (click)="limpiarEmpleadoSeleccionado()">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <small class="text-muted" style="font-size: 0.72rem;">
-            * Al seleccionar un empleado se autocompletaran el nombre, correo, sede{{ !esEdicion ? ' y login' : '' }}.
+            * Solo se muestran empleados sin usuario asignado. Al seleccionarlo se vincularan sus datos y permisos.
           </small>
 
           <!-- Resultados dropdown de busqueda -->

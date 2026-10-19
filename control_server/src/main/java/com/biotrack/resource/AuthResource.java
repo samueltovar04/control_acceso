@@ -248,6 +248,20 @@ public class AuthResource {
                 resp.put("sedeId", pgUser.getSede() != null ? pgUser.getSede().getId() : null);
                 resp.put("sedeNombre", pgUser.getSede() != null ? pgUser.getSede().getSede() : null);
 
+                // Detectar si el usuario corresponde a un Cliente (App movil / Portal Web Cliente)
+                com.access.control.model.Cliente clienteAsociado = clienteRepository.find("user.id", pgUser.getId()).firstResult();
+                if (clienteAsociado == null && pgUser.getEmail() != null) {
+                    clienteAsociado = clienteRepository.findByEmail(pgUser.getEmail());
+                }
+                if (clienteAsociado != null) {
+                    resp.put("clienteId", clienteAsociado.getId());
+                    resp.put("documento", clienteAsociado.getDocumento());
+                    resp.put("estadoSuscripcion", clienteAsociado.getEstadoSuscripcion());
+                    resp.put("qrToken", clienteAsociado.getQrTokenDinamico());
+                    resp.put("membresiaNombre", clienteAsociado.getMembresiaActual() != null ? clienteAsociado.getMembresiaActual().getNombre() : null);
+                    resp.put("sesionMovilActiva", clienteAsociado.getSesionMovilActiva());
+                }
+
                 return Response.ok(resp).build();
             }
 
@@ -362,20 +376,14 @@ public class AuthResource {
             // 1. Probar en PostgreSQL 'User'
             User pgUser = postgresUserRepository.findByUsername(targetUser);
             if (pgUser != null) {
-                pgUser.setPassword(BCrypt.hashpw(request.nuevaClave, BCrypt.gensalt(10)));
-                pgUser.setRequiresPasswordReset(false);
-                postgresUserRepository.persist(pgUser);
-
-                usuarioService.registrarAuditoria(pgUser.getUsername(), pgUser.getId(),
-                        pgUser.getSede() != null ? pgUser.getSede().getId() : null,
-                        pgUser.getSede() != null ? pgUser.getSede().getSede() : null,
-                        "127.0.0.1", "WEB", "CAMBIO_CLAVE", "EXITO", "Clave actualizada en PostgreSQL");
-
-                return Response.ok(Map.of(
-                        "mensaje", "Clave actualizada con exito. Ahora puede iniciar sesion.",
-                        "requiresPasswordReset", false,
-                        "username", pgUser.getUsername()
-                )).build();
+                boolean cambiado = usuarioService.cambiarPassword(targetUser, request.claveActual != null ? request.claveActual : "", request.nuevaClave);
+                if (cambiado) {
+                    return Response.ok(Map.of(
+                            "mensaje", "Clave actualizada con exito. Ahora puede iniciar sesion.",
+                            "requiresPasswordReset", false,
+                            "username", pgUser.getUsername()
+                    )).build();
+                }
             }
 
             // 2. Fallback MongoDB 'UsuarioEntity'

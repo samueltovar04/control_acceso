@@ -1,6 +1,6 @@
-package com.controlaccesomobile.network
+package com.andessistemas.controlacceso.network
 
-import com.controlaccesomobile.model.VitalSignsPayload
+import com.andessistemas.controlacceso.model.VitalSignsPayload
 import com.google.gson.Gson
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

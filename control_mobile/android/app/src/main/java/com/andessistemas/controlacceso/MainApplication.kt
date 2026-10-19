@@ -1,4 +1,4 @@
-package com.controlaccesomobile
+package com.andessistemas.controlacceso
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -10,6 +10,7 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.soloader.SoLoader
+import com.andessistemas.controlacceso.BuildConfig
 
 class MainApplication : Application(), ReactApplication {
 
@@ -17,7 +18,7 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
             PackageList(this).packages.apply {
-              add(com.controlaccesomobile.camera.CameraXPackage())
+              add(com.andessistemas.controlacceso.camera.CameraXPackage())
             }
 
         override fun getJSMainModuleName(): String = "index"

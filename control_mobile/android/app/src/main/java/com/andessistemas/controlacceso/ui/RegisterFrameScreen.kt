@@ -1,4 +1,4 @@
-package com.controlaccesomobile.ui
+package com.andessistemas.controlacceso.ui
 
 import android.graphics.Bitmap
 import android.util.Base64
@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.controlaccesomobile.viewmodel.AuthUiState
-import com.controlaccesomobile.viewmodel.AuthViewModel
+import com.andessistemas.controlacceso.viewmodel.AuthUiState
+import com.andessistemas.controlacceso.viewmodel.AuthViewModel
 import java.io.ByteArrayOutputStream
 
 @Composable

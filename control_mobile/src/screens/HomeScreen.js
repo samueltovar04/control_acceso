@@ -38,6 +38,18 @@ export const HomeScreen = ({ route, navigation }) => {
       try {
         const response = await axios.get(`${API_BASE_URL}/clientes/${clienteId}`, { timeout: 5000 });
         if (response.data && response.data.id) {
+          if (response.data.sesionMovilActiva === false) {
+            await AsyncStorage.multiRemove(['userToken', 'clienteId', 'userEmail', 'userDoc']);
+            setCliente(null);
+            Alert.alert(
+              '🔒 Sesión Cerrada Remotamente',
+              'Su sesión fue cerrada por el administrador desde el panel web. Por favor inicie sesión nuevamente.',
+              [
+                { text: 'Ir a Iniciar Sesión', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) }
+              ]
+            );
+            return;
+          }
           setCliente(response.data);
         } else {
           throw new Error('Perfil de cliente no encontrado');
@@ -109,6 +121,32 @@ export const HomeScreen = ({ route, navigation }) => {
     return '🏦';
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      '🚪 Cerrar Sesión',
+      '¿Está seguro de que desea salir de su cuenta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, Salir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (clienteId) {
+                await axios.post(`${API_BASE_URL}/clientes/${clienteId}/cerrar-sesion-movil`, {}, { timeout: 4000 });
+              }
+            } catch (e) {
+              console.warn('Error al notificar cierre de sesión:', e.message);
+            }
+            await AsyncStorage.multiRemove(['userToken', 'clienteId', 'userEmail', 'userDoc']);
+            setCliente(null);
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          }
+        }
+      ]
+    );
+  };
+
   // Screen Guard: Show full-screen spinner during verification
   if (loading && !cliente) {
     return (
@@ -126,7 +164,7 @@ export const HomeScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* CABECERA CON LOGO Y BOTON CAMPANITA DE NOTIFICACIONES */}
+      {/* CABECERA CON LOGO, CAMPANITA Y BOTON DE CIERRE DE SESION */}
       <View style={[styles.header, { backgroundColor: branding?.colorPrimary || '#1E88E5' }]}>
         <View style={styles.headerTopRow}>
           <View style={{ flex: 1, alignItems: 'center' }}>
@@ -136,13 +174,22 @@ export const HomeScreen = ({ route, navigation }) => {
             <Text style={styles.headerTitle}>{branding?.nombreEmpresa || 'Menú Principal'}</Text>
           </View>
 
-          {/* CAMPANITA DE NOTIFICACIONES EN CABECERA */}
-          <TouchableOpacity
-            style={styles.headerNotificationBell}
-            onPress={() => navigation.navigate('Notifications', { clienteId })}
-          >
-            <Text style={{ fontSize: 22 }}>🔔</Text>
-          </TouchableOpacity>
+          {/* BOTONES DE NOTIFICACIONES Y SALIR */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              style={styles.headerNotificationBell}
+              onPress={() => navigation.navigate('Notifications', { clienteId })}
+            >
+              <Text style={{ fontSize: 20 }}>🔔</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.headerNotificationBell, { backgroundColor: 'rgba(255,255,255,0.25)' }]}
+              onPress={handleLogout}
+            >
+              <Text style={{ fontSize: 20 }}>🚪</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
