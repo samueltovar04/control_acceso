@@ -1,4 +1,5 @@
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { JwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { BrowserModule } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -95,7 +96,13 @@ import { AlertModalComponent } from './shared/components/alert-modal/alert-modal
     MatListModule,
     MatToolbarModule
   ],
-  providers: [EmpleadoService, PisoService, VisitanteService, DispositivoService],
+  providers: [
+    EmpleadoService,
+    PisoService,
+    VisitanteService,
+    DispositivoService,
+    { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   bootstrap: [AppComponent]
 })

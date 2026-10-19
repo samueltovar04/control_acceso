@@ -92,6 +92,12 @@ export class AuthService {
   }
 
   logout(): void {
+    try {
+      this.http.post<any>(`${this.apiUrl}/auth/logout`, {}).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    } catch (e) {}
     localStorage.removeItem('currentUser');
     localStorage.removeItem('auth_token');
     localStorage.removeItem('usuario_activo');
