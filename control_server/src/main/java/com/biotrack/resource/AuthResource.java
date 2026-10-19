@@ -50,6 +50,19 @@ public class AuthResource {
     @Inject
     SesionActivaRepository sesionActivaRepository;
 
+    private String extraerIpCliente(HttpHeaders headers) {
+        if (headers == null) return "127.0.0.1";
+        String xForwardedFor = headers.getHeaderString("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.trim().isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = headers.getHeaderString("X-Real-IP");
+        if (xRealIp != null && !xRealIp.trim().isEmpty()) {
+            return xRealIp.trim();
+        }
+        return "127.0.0.1";
+    }
+
     // --- DTOs ---
     public static class RegistroRequest {
         public String correo;
@@ -140,7 +153,7 @@ public class AuthResource {
             }
 
             String userAgent = headers != null ? headers.getHeaderString("User-Agent") : "WEB";
-            String ip = "127.0.0.1";
+            String ip = extraerIpCliente(headers);
 
             // 1. Intentar autenticar contra PostgreSQL 'users'
             User pgUser = postgresUserRepository.findByUsername(loginUser);
@@ -428,5 +441,25 @@ public class AuthResource {
             )).build();
         }
         return Response.ok(Map.of("username", username)).build();
+    }
+
+    @POST
+    @Path("/logout")
+    @NonBlocking
+    public Uni<Response> logout(@Context HttpHeaders headers) {
+        return Uni.createFrom().item(() -> {
+            String username = null;
+            if (jwt != null && jwt.getName() != null && !jwt.getName().trim().isEmpty()) {
+                username = jwt.getName().trim().toLowerCase();
+            }
+            if (username != null) {
+                String ip = extraerIpCliente(headers);
+                String userAgent = headers != null ? headers.getHeaderString("User-Agent") : "WEB";
+                sesionActivaRepository.invalidarPorUsername(username);
+                usuarioService.registrarAuditoria(username, null, null, null,
+                        ip, userAgent, "LOGOUT", "EXITO", "Cierre voluntario de sesion");
+            }
+            return Response.ok(Map.of("success", true, "mensaje", "Sesion finalizada con exito.")).build();
+        }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 }

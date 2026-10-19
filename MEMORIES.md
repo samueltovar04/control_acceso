@@ -1,5 +1,20 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Despliegue y Levantamiento en Servidor Produccion acceso.andessistemas.com (18-Oct-2026)**:
+  - **Causa Raiz**:
+    1. Contenedor `access_control_backend` en ciclo de reinicio continuo por fallo de autenticacion en PostgreSQL (`FATAL: password authentication failed for user "admin"`).
+    2. En `viajes_gateway`, `acceso.andessistemas.com` apuntaba a `http://access_control_frontend:82` en lugar del puerto interno `:80`.
+    3. `access_control_frontend` no compartia la red `conciliacashea_network` del proxy gateway y a la vez no estaba conectado a `default` para comunicarse con `access_control_backend`, arrojando `502 Bad Gateway` y `host not found in upstream`.
+    4. El certificado SSL en el proxy utilizaba el de `andessistemas.com` que no cubria el subdominio `acceso.andessistemas.com`.
+  - **Resolucion**:
+    1. Reset de password de `admin` en `access_control_db` (`ALTER USER admin WITH PASSWORD 'Family.#02';`) levantando Quarkus backend exitosamente en `:8080`.
+    2. Conectado `access_control_frontend` a ambas redes (`default` y `conciliacashea_network`) en `docker-compose.yml`.
+    3. Ajustado en `/opt/viajescamion/gateway/nginx.conf` el upstream a `http://access_control_frontend:80`.
+    4. Generado certificado Let's Encrypt valido con Certbot para `acceso.andessistemas.com` y recargado Nginx.
+    5. Creado usuario `superadmin` con roles `ROLE_SUPER_ADMIN` y `ROLE_ADMIN` en PostgreSQL (`users`, `authorities`, `user_authorities`), autenticacion validada con JWT en `/api/v1/auth/login`.
+    6. Configurado proxy WebSocket (`proxy_http_version 1.1`, `Upgrade $http_upgrade`, `Connection "Upgrade"`) en `viajes_gateway` para rutas `/ws/` y `/api/`, permitiendo handshakes WSS limpios en `wss://acceso.andessistemas.com/ws/*` (acceso, notificaciones, signos-vitales).
+    7. Generado e instalado nuevo `favicon.ico` temático de control de acceso en el frontend y desplegado en producción.
+    8. Verificado acceso publico con HTTPS y respuesta HTTP 200 OK.
 - **Deteccion Facial y Disparo Automatico en Vision Optima (18-Oct-2026)**:
   - En [biometric-capture.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/components/biometric-capture/biometric-capture.component.ts): Se calibraron los rangos YCbCr y RGB en `analizarRostroEnCanvas` para deteccion inmediata de rostro en webcams estandar bajo diversas condiciones de iluminacion. Se activa `faceBox` y `faceDetectado` al detectar la masa facial, ocultando el ovalo estatico y desplegando el recuadro verde con la etiqueta "Rostro Detectado".
   - En [biometria-facial.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/biometria-facial/biometria-facial.component.ts): El ciclo evalua la vision optima del rostro (`width >= 16%`, `height >= 20%`, `left >= 5% && <= 75%`, `top <= 65%`). Al estar centrado y encuadrado, dispara automaticamente `capturarRostro()` con debounce de 2.5s sin requerir clic manual.
