@@ -143,16 +143,23 @@
                 </span>
               </td>
               <td class="text-end">
-                <div class="btn-group btn-group-sm">
-                  <button class="btn btn-outline-secondary" (click)="abrirEditarUsuario(u)" title="Editar Usuario">
-                    <i class="bi bi-pencil"></i>
+                <div class="d-inline-flex gap-1">
+                  <button class="btn btn-sm btn-primary px-2 py-1 shadow-sm fw-semibold"
+                          (click)="abrirEditarUsuario(u)"
+                          title="Editar Usuario">
+                    <i class="bi bi-pencil-square me-1"></i>Editar
                   </button>
-                  <button class="btn btn-outline-warning" (click)="forzarReseteo(u)" title="Forzar reseteo de clave">
-                    <i class="bi bi-shield-lock"></i>
+                  <button class="btn btn-sm btn-outline-warning text-dark px-2 py-1 shadow-sm fw-semibold"
+                          (click)="forzarReseteo(u)"
+                          title="Forzar reseteo de clave en proximo inicio">
+                    <i class="bi bi-shield-lock-fill text-warning me-1"></i>Reset Clave
                   </button>
-                  <button class="btn" [ngClass]="u.enabled ? 'btn-outline-danger' : 'btn-outline-success'"
-                          (click)="toggleEstado(u)" [title]="u.enabled ? 'Inactivar' : 'Activar'">
-                    <i class="bi" [ngClass]="u.enabled ? 'bi-person-dash' : 'bi-person-check'"></i>
+                  <button class="btn btn-sm px-2 py-1 shadow-sm fw-semibold"
+                          [ngClass]="u.enabled ? 'btn-outline-danger' : 'btn-outline-success'"
+                          (click)="toggleEstado(u)"
+                          [title]="u.enabled ? 'Inactivar acceso al sistema' : 'Activar acceso al sistema'">
+                    <i class="bi" [ngClass]="u.enabled ? 'bi-person-x-fill me-1' : 'bi-person-check-fill me-1'"></i>
+                    {{ u.enabled ? 'Inactivar' : 'Activar' }}
                   </button>
                 </div>
               </td>
@@ -291,8 +298,8 @@
                  [disabled]="esEdicion" placeholder="ej: jsmith">
         </div>
 
-        <!-- Busqueda de Empleado (Solo en Creacion) -->
-        <div class="mb-3 position-relative" *ngIf="!esEdicion">
+        <!-- Busqueda de Empleado (Disponible en Creacion y Edicion) -->
+        <div class="mb-3 position-relative">
           <label class="form-label small fw-bold text-secondary">
             <i class="bi bi-search me-1"></i>Vincular / Buscar Empleado
           </label>
@@ -305,7 +312,7 @@
             </button>
           </div>
           <small class="text-muted" style="font-size: 0.72rem;">
-            * Al seleccionar un empleado se autocompletaran el nombre, correo, sede y sugerencia de login.
+            * Al seleccionar un empleado se autocompletaran el nombre, correo, sede{{ !esEdicion ? ' y login' : '' }}.
           </small>
 
           <!-- Resultados dropdown de busqueda -->
@@ -362,14 +369,16 @@
           </small>
         </div>
 
-        <!-- Contrasena Inicial (Creacion) con ojito -->
-        <div class="mb-3" *ngIf="!esEdicion">
-          <label class="form-label small fw-bold text-secondary">Contrasena Inicial</label>
+        <!-- Contrasena (Inicial en creacion u Opcional en edicion) con ojito -->
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">
+            {{ esEdicion ? 'Nueva Contrasena (Dejar vacio para no modificar)' : 'Contrasena Inicial' }}
+          </label>
           <div class="input-group input-group-sm">
             <input [type]="mostrarPassword1 ? 'text' : 'password'"
                    class="form-control"
                    [(ngModel)]="usuarioForm.password"
-                   placeholder="Min 8 caracteres, mayuscula, minuscula, numero y simbolo">
+                   [placeholder]="esEdicion ? 'Solo si desea cambiarla (Min 8 car, mayus, minus, num, sim)' : 'Min 8 caracteres, mayuscula, minuscula, numero y simbolo'">
             <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassword1 = !mostrarPassword1" tabindex="-1">
               <i class="bi" [ngClass]="mostrarPassword1 ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
             </button>
@@ -377,7 +386,7 @@
         </div>
 
         <!-- Confirmar Contrasena con ojito -->
-        <div class="mb-3" *ngIf="!esEdicion">
+        <div class="mb-3" *ngIf="!esEdicion || (usuarioForm.password && usuarioForm.password.length > 0)">
           <label class="form-label small fw-bold text-secondary">Confirmar Contrasena</label>
           <div class="input-group input-group-sm">
             <input [type]="mostrarPassword2 ? 'text' : 'password'"

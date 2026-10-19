@@ -235,11 +235,15 @@ export class UsuarioListComponent implements OnInit {
     } else {
       this.rolSeleccionado = 'ROLE_RECEPCION';
     }
+    this.busquedaEmpleado = '';
+    this.empleadosEncontrados = [];
+    this.empleadoSeleccionado = null;
     this.passwordConfirm = '';
     this.mostrarPassword1 = false;
     this.mostrarPassword2 = false;
     this.mostrarModalUsuario = true;
     this.limpiarMensajes();
+    this.cargarEmpleados();
   }
 
   cerrarModalUsuario(): void {
@@ -284,6 +288,19 @@ export class UsuarioListComponent implements OnInit {
       if (this.usuarioForm.password !== this.passwordConfirm) {
         this.mensajeError = 'Las contrasenas no coinciden.';
         return;
+      }
+    } else {
+      // En modo edicion, si escribio una nueva contrasena, validarla
+      if (this.usuarioForm.password && this.usuarioForm.password.trim()) {
+        const val = this.validarPasswordSegura(this.usuarioForm.password);
+        if (!val.valida) {
+          this.mensajeError = val.mensaje;
+          return;
+        }
+        if (this.usuarioForm.password !== this.passwordConfirm) {
+          this.mensajeError = 'Las contrasenas no coinciden.';
+          return;
+        }
       }
     }
 
