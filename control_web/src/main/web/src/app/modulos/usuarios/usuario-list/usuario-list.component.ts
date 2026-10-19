@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { UsuarioService, UserDTO, AuditoriaAcceso, SesionActiva } from '../../../core/services/usuario.service';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-usuario-list',
@@ -56,7 +57,8 @@ export class UsuarioListComponent implements OnInit {
   constructor(
     private usuarioService: UsuarioService,
     private sedeService: SedeService,
-    private empleadoService: EmpleadoService
+    private empleadoService: EmpleadoService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -88,7 +90,20 @@ export class UsuarioListComponent implements OnInit {
 
   aplicarFiltros(): void {
     const term = this.filtroTexto.trim().toLowerCase();
+    const current = this.authService.currentUserValue;
+    const esSuperAdmin = current && (
+      current.role === 'ROLE_SUPER_ADMIN' ||
+      current.role === 'SUPER_ADMIN' ||
+      (current.roles && (current.roles.includes('ROLE_SUPER_ADMIN') || current.roles.includes('SUPER_ADMIN')))
+    );
+
     this.usuariosFiltrados = this.usuarios.filter(u => {
+      // Si no es superadmin, ocultar el usuario superadmin
+      if (!esSuperAdmin) {
+        if (u.username && u.username.toLowerCase() === 'superadmin') return false;
+        if (u.roles && (u.roles.includes('ROLE_SUPER_ADMIN') || u.roles.includes('SUPER_ADMIN'))) return false;
+      }
+
       const matchText = !term ||
         (u.username && u.username.toLowerCase().includes(term)) ||
         (u.nombreCompleto && u.nombreCompleto.toLowerCase().includes(term)) ||

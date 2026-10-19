@@ -35,6 +35,9 @@ public class ClienteResource {
     @Inject
     com.access.control.services.UsuarioService usuarioService;
 
+    @Inject
+    com.access.control.component.NotificacionesWebSocketEndpoint notificacionesWebSocket;
+
     @GET
     public List<Cliente> getAllClientes() {
         return clienteRepository.listAll();
@@ -262,6 +265,18 @@ public class ClienteResource {
         cliente.setSesionMovilActiva(false);
         clienteRepository.persist(cliente);
 
+        if (notificacionesWebSocket != null) {
+            try {
+                String eventJson = String.format(
+                    "{\"evento\":\"SESION_MOVIL_CERRADA\",\"tipo\":\"SESION_MOVIL_CERRADA\",\"clienteId\":%d,\"sesionMovilActiva\":false}",
+                    cliente.getId()
+                );
+                notificacionesWebSocket.broadcast(eventJson);
+            } catch (Exception e) {
+                // Ignore ws broadcast failures
+            }
+        }
+
         Map<String, Object> res = new HashMap<>();
         res.put("clienteId", cliente.getId());
         res.put("sesionMovilActiva", false);
@@ -282,6 +297,18 @@ public class ClienteResource {
         }
         cliente.setSesionMovilActiva(true);
         clienteRepository.persist(cliente);
+
+        if (notificacionesWebSocket != null) {
+            try {
+                String eventJson = String.format(
+                    "{\"evento\":\"SESION_MOVIL_INICIADA\",\"tipo\":\"SESION_MOVIL_INICIADA\",\"clienteId\":%d,\"sesionMovilActiva\":true}",
+                    cliente.getId()
+                );
+                notificacionesWebSocket.broadcast(eventJson);
+            } catch (Exception e) {
+                // Ignore ws broadcast failures
+            }
+        }
 
         Map<String, Object> res = new HashMap<>();
         res.put("clienteId", cliente.getId());

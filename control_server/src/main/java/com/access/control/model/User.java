@@ -127,4 +127,17 @@ public class User extends AbstractEntity {
         }
         return false;
     }
+
+    public boolean isSuperAdmin() {
+        if (authorities == null) return false;
+        for (Authority auth : authorities) {
+            if (auth != null && auth.getName() != null) {
+                String name = auth.getName().trim().toUpperCase();
+                if (name.equals("ROLE_SUPER_ADMIN") || name.equals("SUPER_ADMIN") || name.equals("SUPERADMIN")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

@@ -1,8 +1,6 @@
 package com.access.control.controller;
 
 import com.access.control.dto.UserDTO;
-import com.access.control.model.AuditoriaAcceso;
-import com.access.control.model.SesionActiva;
 import com.access.control.model.User;
 import com.access.control.repository.UserRepository;
 import com.access.control.services.UsuarioService;
@@ -17,6 +15,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Path("/api/v1/usuarios")
 @Produces(MediaType.APPLICATION_JSON)
@@ -57,9 +56,17 @@ public class UsuariosController {
                     .entity(Map.of("error", "No autenticado")).build();
         }
 
-        // Si es ADMIN o SUPER_ADMIN puede ver la lista completa
+        // Si es ADMIN o SUPER_ADMIN puede ver la lista
         if (isCallerAdmin(caller)) {
-            return Response.ok(usuarioService.listarUsuarios()).build();
+            List<UserDTO> lista = usuarioService.listarUsuarios();
+            if (!caller.isSuperAdmin() && lista != null) {
+                lista = lista.stream()
+                        .filter(u -> u != null &&
+                                (u.username == null || !u.username.equalsIgnoreCase("superadmin")) &&
+                                (u.roles == null || (!u.roles.contains("ROLE_SUPER_ADMIN") && !u.roles.contains("SUPER_ADMIN"))))
+                        .collect(Collectors.toList());
+            }
+            return Response.ok(lista).build();
         }
 
         // Si es usuario regular, unica y exclusivamente puede ver su propio registro

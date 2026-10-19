@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import axios from 'axios';
 import { getBrandingConfig } from '../services/brandingService';
-import { API_BASE_URL } from '../config/env';
+import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
 export const HomeScreen = ({ route, navigation }) => {
@@ -71,6 +71,42 @@ export const HomeScreen = ({ route, navigation }) => {
     }
 
     fetchClienteReal();
+
+    // WebSocket en tiempo real para invalidación instantánea de sesión móvil
+    let ws = null;
+    try {
+      ws = new WebSocket(`${WS_BASE_URL}/notificaciones`);
+      ws.onmessage = async (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          const eventClienteId = data.clienteId;
+          const esMismoCliente = clienteId && (String(eventClienteId) === String(clienteId) || !eventClienteId);
+
+          if ((data.evento === 'SESION_MOVIL_CERRADA' || data.tipo === 'SESION_MOVIL_CERRADA') && esMismoCliente) {
+            await AsyncStorage.multiRemove(['userToken', 'clienteId', 'userEmail', 'userDoc', 'BIOMETRIC_ACTIVATED']);
+            setCliente(null);
+            Alert.alert(
+              '🔒 Sesión Inactivada Remotamente',
+              'El administrador ha inactivado su sesión móvil en tiempo real. Por favor ingrese de nuevo.',
+              [
+                { text: 'Aceptar', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) }
+              ]
+            );
+          }
+        } catch (err) {
+          // Ignorar mensajes no JSON
+        }
+      };
+      ws.onerror = () => {};
+    } catch (err) {
+      console.warn('No se pudo inicializar WebSocket en HomeScreen:', err.message);
+    }
+
+    return () => {
+      if (ws) {
+        try { ws.close(); } catch (_) {}
+      }
+    };
   }, [clienteId]);
 
   const fetchBancosBackend = async () => {
