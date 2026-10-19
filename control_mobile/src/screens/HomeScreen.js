@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import axios from 'axios';
 import { getBrandingConfig } from '../services/brandingService';
@@ -164,27 +165,28 @@ export const HomeScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* CABECERA CON LOGO, CAMPANITA Y BOTON DE CIERRE DE SESION */}
+      {/* CABECERA CON LOGO Y ACCIONES (NOTIFICACIONES Y SALIR) */}
       <View style={[styles.header, { backgroundColor: branding?.colorPrimary || '#1E88E5' }]}>
         <View style={styles.headerTopRow}>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            {branding?.logoMenuUrl && (
-              <Image source={{ uri: branding.logoMenuUrl }} style={styles.logoMenu} resizeMode="contain" />
-            )}
-            <Text style={styles.headerTitle}>{branding?.nombreEmpresa || 'Menú Principal'}</Text>
+          <Image source={getProfileAvatarSource()} style={styles.headerAvatar} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.headerTitle}>{branding?.nombreEmpresa || 'Control de Acceso'}</Text>
+            <Text style={{ color: '#E3F2FD', fontSize: 13, fontWeight: 'bold' }}>
+              {cliente?.nombre || ''} {cliente?.apellido || ''}
+            </Text>
           </View>
 
-          {/* BOTONES DE NOTIFICACIONES Y SALIR */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {/* ACCIONES DE CABECERA: NOTIFICACIONES Y SALIR */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
-              style={styles.headerNotificationBell}
+              style={styles.headerActionBtn}
               onPress={() => navigation.navigate('Notifications', { clienteId })}
             >
               <Text style={{ fontSize: 20 }}>🔔</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.headerNotificationBell, { backgroundColor: 'rgba(255,255,255,0.25)' }]}
+              style={[styles.headerActionBtn, { marginLeft: 8, backgroundColor: '#c62828' }]}
               onPress={handleLogout}
             >
               <Text style={{ fontSize: 20 }}>🚪</Text>
@@ -248,6 +250,14 @@ export const HomeScreen = ({ route, navigation }) => {
             <Text style={styles.cardTitle}>Datos Bancarios</Text>
           </TouchableOpacity>
         </View>
+
+        {/* BOTÓN PROMINENTE DE CIERRE DE SESIÓN */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>🚪 Cerrar Sesión de la App</Text>
+        </TouchableOpacity>
       </View>
 
       {/* MODAL DE DATOS BANCARIOS DINÁMICOS DESDE API QUARKUS */}
@@ -302,11 +312,11 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', padding: 20 },
   loadingText: { fontSize: 14, color: '#1E88E5', fontWeight: 'bold', marginTop: 14 },
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { padding: 20, paddingTop: 40, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+  header: { padding: 18, paddingTop: 36, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
   headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
-  logoMenu: { width: 80, height: 80, marginBottom: 6 },
-  headerTitle: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
-  headerNotificationBell: { position: 'absolute', right: 5, top: 5, backgroundColor: 'rgba(255,255,255,0.25)', padding: 10, borderRadius: 20 },
+  headerAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: '#ffffff' },
+  headerTitle: { color: '#ffffff', fontSize: 17, fontWeight: 'bold' },
+  headerActionBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
   body: { padding: 18 },
   profileCard: { backgroundColor: '#ffffff', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 20, elevation: 3, borderWidth: 1, borderColor: '#e0e0e0' },
   profileAvatar: { width: 70, height: 70, borderRadius: 35, borderWidth: 3, borderColor: '#1E88E5', backgroundColor: '#e0e0e0' },
@@ -317,6 +327,8 @@ const styles = StyleSheet.create({
   card: { width: '48%', backgroundColor: '#fff', padding: 20, borderRadius: 12, alignItems: 'center', marginBottom: 15, elevation: 2 },
   cardIcon: { fontSize: 36, marginBottom: 10 },
   cardTitle: { fontSize: 14, fontWeight: 'bold', color: '#333' },
+  logoutButton: { backgroundColor: '#d32f2f', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 15, marginBottom: 25, elevation: 3 },
+  logoutButtonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 18 },
   modalCard: { backgroundColor: '#ffffff', borderRadius: 18, padding: 20 },
   modalTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E88E5', marginBottom: 14, textAlign: 'center' },

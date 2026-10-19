@@ -33,16 +33,21 @@ export const LoginScreen = ({ navigation }) => {
         const bioFlag = await AsyncStorage.getItem('BIOMETRIC_ACTIVATED');
         const token = await AsyncStorage.getItem('SAVED_USER_TOKEN');
         const email = await AsyncStorage.getItem('SAVED_USER_EMAIL');
+        const savedCid = await AsyncStorage.getItem('SAVED_CLIENTE_ID');
 
-        if (bioFlag === 'true' && token) {
+        const rnBiometrics = new ReactNativeBiometrics();
+        const { available } = await rnBiometrics.isSensorAvailable();
+
+        if (available || bioFlag === 'true' || savedCid || token) {
           setBiometricActivated(true);
-          setSavedToken(token);
+          if (token) setSavedToken(token);
         }
         if (email) {
           setCorreo(email);
         }
       } catch (e) {
         console.warn('Error reading stored biometrics:', e.message);
+        setBiometricActivated(true);
       }
     }
 
@@ -239,7 +244,7 @@ export const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* FILA DE BOTONES: INICIAR SESIÓN + BOTÓN COMPACTO DE HUELLA SI ESTÁ ACTIVADA */}
+      {/* BOTONES DE INICIO DE SESIÓN */}
       <View style={styles.actionRow}>
         <TouchableOpacity
           style={[styles.button, { flex: 1, backgroundColor: branding?.colorPrimary || '#1E88E5' }]}
@@ -248,17 +253,18 @@ export const LoginScreen = ({ navigation }) => {
         >
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Iniciar Sesión</Text>}
         </TouchableOpacity>
-
-        {biometricActivated && (
-          <TouchableOpacity
-            style={styles.compactFingerprintBtn}
-            onPress={handleFingerprintLogin}
-            title="Ingresar con Huella Digital"
-          >
-            <MaterialIcon name="fingerprint" size={32} color="#2e7d32" />
-          </TouchableOpacity>
-        )}
       </View>
+
+      {/* BOTÓN PROMINENTE DE INGRESO CON HUELLA DIGITAL */}
+      {biometricActivated && (
+        <TouchableOpacity
+          style={styles.fullFingerprintBtn}
+          onPress={handleFingerprintLogin}
+        >
+          <MaterialIcon name="fingerprint" size={28} color="#ffffff" style={{ marginRight: 8 }} />
+          <Text style={styles.fullFingerprintBtnText}>Ingresar con Huella Digital</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.registerLink}
@@ -333,7 +339,8 @@ const styles = StyleSheet.create({
   actionRow: { width: '100%', flexDirection: 'row', alignItems: 'center', marginTop: 5 },
   button: { height: 50, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   buttonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
-  compactFingerprintBtn: { width: 50, height: 50, borderWidth: 1.5, borderColor: '#2e7d32', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginLeft: 10, backgroundColor: '#e8f5e9' },
+  fullFingerprintBtn: { width: '100%', height: 50, backgroundColor: '#2e7d32', borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12 },
+  fullFingerprintBtnText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
   registerLink: { marginTop: 20, padding: 8 },
   registerLinkText: { color: '#00ACC1', fontSize: 14, fontWeight: 'bold', textAlign: 'center' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
