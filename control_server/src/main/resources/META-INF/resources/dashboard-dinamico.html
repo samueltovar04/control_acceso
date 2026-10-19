@@ -412,8 +412,9 @@
 
         function initWebSocket() {
             const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsPort = window.location.port ? window.location.port : '80';
-            const wsHost = window.location.hostname + (wsPort === '80' ? '' : ':' + wsPort);
+            const port = window.location.port;
+            const wsPort = (port && port !== '80' && port !== '443') ? `:${port}` : '';
+            const wsHost = window.location.hostname + wsPort;
             // Probar el canal /ws/signos-vitales (sin filtro JWT restrictivo)
             const wsUrl = `${proto}//${wsHost}/ws/signos-vitales`;
 

@@ -262,6 +262,15 @@ public class UsuarioServiceImpl implements UsuarioService {
         return true;
     }
 
+    @Override
+    @Transactional
+    public void revocarSesionPorUsername(String username, String ip, String userAgent) {
+        if (username == null || username.trim().isEmpty()) return;
+        sesionActivaRepository.invalidarPorUsername(username.trim().toLowerCase());
+        registrarAuditoria(username, null, null, null,
+                ip, userAgent, "LOGOUT", "EXITO", "Cierre voluntario de sesion");
+    }
+
     private void asignarRoles(User u, Set<String> rolesNames) {
         Set<Authority> set = new HashSet<>();
         if (rolesNames != null && !rolesNames.isEmpty()) {

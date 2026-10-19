@@ -455,9 +455,7 @@ public class AuthResource {
             if (username != null) {
                 String ip = extraerIpCliente(headers);
                 String userAgent = headers != null ? headers.getHeaderString("User-Agent") : "WEB";
-                sesionActivaRepository.invalidarPorUsername(username);
-                usuarioService.registrarAuditoria(username, null, null, null,
-                        ip, userAgent, "LOGOUT", "EXITO", "Cierre voluntario de sesion");
+                usuarioService.revocarSesionPorUsername(username, ip, userAgent);
             }
             return Response.ok(Map.of("success", true, "mensaje", "Sesion finalizada con exito.")).build();
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());

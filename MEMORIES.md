@@ -14,7 +14,15 @@
     5. Creado usuario `superadmin` con roles `ROLE_SUPER_ADMIN` y `ROLE_ADMIN` en PostgreSQL (`users`, `authorities`, `user_authorities`), autenticacion validada con JWT en `/api/v1/auth/login`.
     6. Configurado proxy WebSocket (`proxy_http_version 1.1`, `Upgrade $http_upgrade`, `Connection "Upgrade"`) en `viajes_gateway` para rutas `/ws/` y `/api/`, permitiendo handshakes WSS limpios en `wss://acceso.andessistemas.com/ws/*` (acceso, notificaciones, signos-vitales).
     7. Generado e instalado nuevo `favicon.ico` temático de control de acceso en el frontend y desplegado en producción.
-    8. Verificado acceso publico con HTTPS y respuesta HTTP 200 OK.
+    8. **Sesiones Activas, IP Pública y Permisos de Usuarios**:
+       - Registrado `JwtInterceptor` en `app.module.ts` (`HTTP_INTERCEPTORS`) para enviar `Authorization: Bearer <token>` en todas las peticiones salientes hacia `/api/v1/usuarios`, corrigiendo el error `401 Unauthorized` al ver usuarios y datos propios.
+       - Extracción dinámica de la IP pública del cliente mediante `X-Forwarded-For` / `X-Real-IP` en `AuthResource.java`, registrando la IP real (ej. `200.82.239.28`) en `sesiones_activas` y auditoría en lugar de `127.0.0.1`.
+       - Implementado `POST /api/v1/auth/logout` con delegación transaccional (`usuarioService.revocarSesionPorUsername()`), invalidando la sesión activa del usuario al pulsar *"Cerrar Sesión"*.
+    9. **Dashboard Dinámico IoT en Producción**:
+       - Mapeado `/dashboard-dinamico.html` en el reverse proxy Nginx (`access_control_frontend`) redirigiendo a `access_control_backend:8080/dashboard-dinamico.html`.
+       - Ajustado `wsUrl` en `dashboard-dinamico.html` para detectar automáticamente `wss://` y hostname sin sufijos de puerto al navegar bajo HTTPS/443.
+       - Desplegado y verificado en `https://acceso.andessistemas.com/dashboard-dinamico.html` con telemetría en tiempo real, selección de sedes, emulador y WebSocket activo.
+    10. Verificado acceso publico con HTTPS y respuesta HTTP 200 OK.
 - **Deteccion Facial y Disparo Automatico en Vision Optima (18-Oct-2026)**:
   - En [biometric-capture.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/components/biometric-capture/biometric-capture.component.ts): Se calibraron los rangos YCbCr y RGB en `analizarRostroEnCanvas` para deteccion inmediata de rostro en webcams estandar bajo diversas condiciones de iluminacion. Se activa `faceBox` y `faceDetectado` al detectar la masa facial, ocultando el ovalo estatico y desplegando el recuadro verde con la etiqueta "Rostro Detectado".
   - En [biometria-facial.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/biometria-facial/biometria-facial.component.ts): El ciclo evalua la vision optima del rostro (`width >= 16%`, `height >= 20%`, `left >= 5% && <= 75%`, `top <= 65%`). Al estar centrado y encuadrado, dispara automaticamente `capturarRostro()` con debounce de 2.5s sin requerir clic manual.

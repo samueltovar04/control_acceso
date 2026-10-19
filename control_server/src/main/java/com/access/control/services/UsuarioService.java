@@ -22,4 +22,5 @@ public interface UsuarioService {
     List<AuditoriaAcceso> listarAuditoria(int limit);
     List<SesionActiva> listarSesionesActivas();
     boolean revocarSesion(Long sesionId);
+    void revocarSesionPorUsername(String username, String ip, String userAgent);
 }
