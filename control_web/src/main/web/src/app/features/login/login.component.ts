@@ -20,12 +20,15 @@ export class LoginComponent {
   // Credenciales
   public usuario: string = '';
   public contrasena: string = '';
+  public mostrarContrasena: boolean = false;
 
   // Cambio Obligatorio de Clave
   public forzarCambioClave: boolean = false;
   public usuarioReseteo: string = '';
   public nuevaClave: string = '';
   public confirmacionClave: string = '';
+  public mostrarNuevaClave: boolean = false;
+  public mostrarConfirmClave: boolean = false;
   public mensajeCambioClave: string = '';
 
   // Facial

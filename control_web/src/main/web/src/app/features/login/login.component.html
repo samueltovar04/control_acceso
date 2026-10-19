@@ -49,7 +49,10 @@
         <label class="form-label small fw-bold text-secondary">Nueva Contrasena</label>
         <div class="input-group input-group-sm">
           <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-          <input type="password" class="form-control" [(ngModel)]="nuevaClave" placeholder="Minimo 6 caracteres">
+          <input [type]="mostrarNuevaClave ? 'text' : 'password'" class="form-control" [(ngModel)]="nuevaClave" placeholder="Minimo 6 caracteres">
+          <button class="btn btn-outline-secondary" type="button" (click)="mostrarNuevaClave = !mostrarNuevaClave" tabindex="-1">
+            <i class="bi" [ngClass]="mostrarNuevaClave ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+          </button>
         </div>
       </div>
 
@@ -57,7 +60,10 @@
         <label class="form-label small fw-bold text-secondary">Confirmar Nueva Contrasena</label>
         <div class="input-group input-group-sm">
           <span class="input-group-text"><i class="bi bi-check-circle-fill"></i></span>
-          <input type="password" class="form-control" [(ngModel)]="confirmacionClave" placeholder="Repita la nueva contrasena">
+          <input [type]="mostrarConfirmClave ? 'text' : 'password'" class="form-control" [(ngModel)]="confirmacionClave" placeholder="Repita la nueva contrasena">
+          <button class="btn btn-outline-secondary" type="button" (click)="mostrarConfirmClave = !mostrarConfirmClave" tabindex="-1">
+            <i class="bi" [ngClass]="mostrarConfirmClave ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+          </button>
         </div>
       </div>
 
@@ -85,7 +91,10 @@
         <label class="form-label small fw-bold text-secondary">Contrasena</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input type="password" class="form-control" [(ngModel)]="contrasena" (keyup.enter)="loginCredenciales()" placeholder="••••••••">
+          <input [type]="mostrarContrasena ? 'text' : 'password'" class="form-control" [(ngModel)]="contrasena" (keyup.enter)="loginCredenciales()" placeholder="••••••••">
+          <button class="btn btn-outline-secondary" type="button" (click)="mostrarContrasena = !mostrarContrasena" tabindex="-1">
+            <i class="bi" [ngClass]="mostrarContrasena ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+          </button>
         </div>
       </div>
       <button class="btn btn-primary w-100 py-2 fw-bold" [disabled]="cargando" (click)="loginCredenciales()">
