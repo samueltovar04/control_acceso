@@ -1,6 +1,7 @@
 package com.access.control.controller;
 
 import com.access.control.dto.UserDTO;
+import com.access.control.model.SesionActiva;
 import com.access.control.model.User;
 import com.access.control.repository.UserRepository;
 import com.access.control.services.UsuarioService;
@@ -221,20 +222,58 @@ public class UsuariosController {
     @Path("/sesiones-activas")
     public Response listarSesionesActivas(@Context SecurityContext sec) {
         User caller = getCallerUser(sec);
-        if (caller != null && !isCallerAdmin(caller)) {
+        if (caller == null || !isCallerAdmin(caller)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of("error", "Solo administradores pueden ver sesiones activas.")).build();
         }
-        return Response.ok(usuarioService.listarSesionesActivas()).build();
+
+        List<SesionActiva> sesiones = usuarioService.listarSesionesActivas();
+        if (sesiones != null && !caller.isSuperAdmin()) {
+            sesiones = sesiones.stream()
+                    .filter(s -> {
+                        if (s == null) return false;
+                        if (s.getUserId() != null) {
+                            User u = userRepository.findById(s.getUserId());
+                            if (u != null && u.isSuperAdmin()) {
+                                return false;
+                            }
+                        }
+                        return s.getUsername() == null || !s.getUsername().equalsIgnoreCase("superadmin");
+                    })
+                    .collect(Collectors.toList());
+        }
+        return Response.ok(sesiones).build();
     }
 
     @POST
     @Path("/sesiones-activas/{id}/revocar")
     public Response revocarSesion(@PathParam("id") Long id, @Context SecurityContext sec) {
         User caller = getCallerUser(sec);
-        if (caller != null && !isCallerAdmin(caller)) {
+        if (caller == null || !isCallerAdmin(caller)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of("error", "Solo administradores pueden revocar sesiones remotas.")).build();
+        }
+
+        if (!caller.isSuperAdmin()) {
+            List<SesionActiva> activas = usuarioService.listarSesionesActivas();
+            if (activas != null) {
+                for (SesionActiva s : activas) {
+                    if (s != null && s.getId() != null && s.getId().equals(id)) {
+                        if (s.getUserId() != null) {
+                            User targetUser = userRepository.findById(s.getUserId());
+                            if (targetUser != null && targetUser.isSuperAdmin()) {
+                                return Response.status(Response.Status.FORBIDDEN)
+                                        .entity(Map.of("error", "No tiene permisos para revocar la sesion de un superadmin.")).build();
+                            }
+                        }
+                        if (s.getUsername() != null && s.getUsername().equalsIgnoreCase("superadmin")) {
+                            return Response.status(Response.Status.FORBIDDEN)
+                                    .entity(Map.of("error", "No tiene permisos para revocar la sesion de un superadmin.")).build();
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         boolean ok = usuarioService.revocarSesion(id);

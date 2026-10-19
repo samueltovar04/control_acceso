@@ -36,6 +36,7 @@
        - Registrado `JwtInterceptor` en `app.module.ts` (`HTTP_INTERCEPTORS`) para enviar `Authorization: Bearer <token>` en todas las peticiones salientes hacia `/api/v1/usuarios`, corrigiendo el error `401 Unauthorized` al ver usuarios y datos propios.
        - Extracción dinámica de la IP pública del cliente mediante `X-Forwarded-For` / `X-Real-IP` en `AuthResource.java`, registrando la IP real (ej. `200.82.239.28`) en `sesiones_activas` y auditoría en lugar de `127.0.0.1`.
        - Implementado `POST /api/v1/auth/logout` con delegación transaccional (`usuarioService.revocarSesionPorUsername()`), invalidando la sesión activa del usuario al pulsar *"Cerrar Sesión"*.
+       - Regla de aislamiento de sesiones activas: si el usuario no es `SUPER_ADMIN`, no puede ver ni revocar sesiones activas del superadmin (`GET /api/v1/usuarios/sesiones-activas` y `POST /api/v1/usuarios/sesiones-activas/{id}/revocar`). Filtrado activo en backend y frontend.
     9. **Dashboard Dinámico IoT en Producción**:
        - Mapeado `/dashboard-dinamico.html` en el reverse proxy Nginx (`access_control_frontend`) redirigiendo a `access_control_backend:8080/dashboard-dinamico.html`.
        - Ajustado `wsUrl` en `dashboard-dinamico.html` para detectar automáticamente `wss://` y hostname sin sufijos de puerto al navegar bajo HTTPS/443.

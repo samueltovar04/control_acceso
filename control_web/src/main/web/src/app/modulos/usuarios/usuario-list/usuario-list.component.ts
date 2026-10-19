@@ -149,7 +149,18 @@ export class UsuarioListComponent implements OnInit {
     this.cargandoSesiones = true;
     this.usuarioService.getSesionesActivas().subscribe({
       next: (res) => {
-        this.sesiones = res || [];
+        const current = this.authService.currentUserValue;
+        const esSuperAdmin = current && (
+          current.role === 'ROLE_SUPER_ADMIN' ||
+          current.role === 'SUPER_ADMIN' ||
+          (current.roles && (current.roles.includes('ROLE_SUPER_ADMIN') || current.roles.includes('SUPER_ADMIN')))
+        );
+
+        let list = res || [];
+        if (!esSuperAdmin) {
+          list = list.filter(s => s && s.username && s.username.toLowerCase() !== 'superadmin');
+        }
+        this.sesiones = list;
         this.cargandoSesiones = false;
       },
       error: () => {
