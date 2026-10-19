@@ -32,6 +32,9 @@ public class ClienteResource {
     @Inject
     com.access.control.repository.PagoRepository pagoRepository;
 
+    @Inject
+    com.access.control.services.UsuarioService usuarioService;
+
     @GET
     public List<Cliente> getAllClientes() {
         return clienteRepository.listAll();
@@ -71,8 +74,11 @@ public class ClienteResource {
             cliente.setEstadoSuscripcion("ACTIVA");
         }
 
-        if (cliente.getEmail() != null && userRepository != null) {
-            com.access.control.model.User user = userRepository.find("email = ?1 or username = ?1", cliente.getEmail().trim().toLowerCase()).firstResult();
+        if (cliente.getEmail() != null && !cliente.getEmail().trim().isEmpty() && usuarioService != null) {
+            String nombreCompleto = ((cliente.getNombre() != null ? cliente.getNombre() : "") + " " +
+                    (cliente.getApellido() != null ? cliente.getApellido() : "")).trim();
+            com.access.control.model.User user = usuarioService.obtenerOCrearUsuarioAutomatico(
+                    cliente.getEmail(), nombreCompleto, cliente.getSede(), "ROLE_CLIENTE");
             if (user != null) {
                 cliente.setUser(user);
             }

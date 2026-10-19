@@ -15,6 +15,9 @@ public interface UsuarioService {
     boolean forzarReseteoPassword(Long id);
     boolean cambiarPassword(String username, String currentPassword, String newPassword);
     
+    // Creacion automatica vinculada (Clientes / Empleados)
+    User obtenerOCrearUsuarioAutomatico(String email, String nombreCompleto, com.access.control.model.Sede sede, String rolDefecto);
+
     // Auditoria y sesiones
     void registrarAuditoria(String username, Long userId, Long sedeId, String sedeNombre,
                             String ip, String userAgent, String accion, String estado, String detalles);

@@ -98,6 +98,8 @@ public class UsuariosController {
         return Response.ok(dto).build();
     }
 
+    private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(UsuariosController.class);
+
     @POST
     public Response crearUsuario(UserDTO dto, @Context SecurityContext sec) {
         User caller = getCallerUser(sec);
@@ -112,8 +114,15 @@ public class UsuariosController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
         } catch (Exception e) {
+            LOG.error("Fallo al crear usuario " + (dto != null ? dto.username : ""), e);
+            String msg = "No se pudo crear el usuario. Verifique que el login o correo no esten duplicados.";
+            if (e.getMessage() != null && e.getMessage().contains("duplicate key") && e.getMessage().contains("users_username_key")) {
+                msg = "El nombre de usuario ya se encuentra registrado.";
+            } else if (e.getMessage() != null && e.getMessage().contains("duplicate key") && e.getMessage().contains("users_email_key")) {
+                msg = "El correo electronico ya esta registrado.";
+            }
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Error al crear usuario: " + e.getMessage())).build();
+                    .entity(Map.of("error", msg)).build();
         }
     }
 
@@ -138,11 +147,23 @@ public class UsuariosController {
             dto.enabled = caller.getEnabled();
         }
 
-        UserDTO actualizado = usuarioService.actualizarUsuario(id, dto);
-        if (actualizado == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try {
+            UserDTO actualizado = usuarioService.actualizarUsuario(id, dto);
+            if (actualizado == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(actualizado).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            LOG.error("Fallo al actualizar usuario ID " + id, e);
+            String msg = "No se pudieron actualizar los datos del usuario.";
+            if (e.getMessage() != null && e.getMessage().contains("duplicate key") && e.getMessage().contains("users_email_key")) {
+                msg = "El correo electronico ingresado ya pertenece a otro usuario.";
+            }
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", msg)).build();
         }
-        return Response.ok(actualizado).build();
     }
 
     @PATCH

@@ -36,6 +36,9 @@ public class ClienteApiResource {
     @Inject
     com.access.control.repository.TasaCambioRepository tasaCambioRepository;
 
+    @Inject
+    com.access.control.services.UsuarioService usuarioService;
+
     @GET
     @Path("/validar-disponibilidad")
     public Response validarDisponibilidad(
@@ -261,6 +264,15 @@ public class ClienteApiResource {
             Membresia m = membresiaRepository.findById(memId);
             if (m != null) {
                 nuevo.setMembresiaActual(m);
+            }
+        }
+
+        if (email != null && !email.trim().isEmpty() && usuarioService != null) {
+            String nombreCompleto = (nuevo.getNombre() + " " + nuevo.getApellido()).trim();
+            com.access.control.model.User user = usuarioService.obtenerOCrearUsuarioAutomatico(
+                    email, nombreCompleto, nuevo.getSede(), "ROLE_CLIENTE");
+            if (user != null) {
+                nuevo.setUser(user);
             }
         }
 

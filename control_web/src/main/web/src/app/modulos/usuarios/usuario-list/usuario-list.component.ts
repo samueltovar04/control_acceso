@@ -317,7 +317,7 @@ export class UsuarioListComponent implements OnInit {
         },
         error: (err) => {
           this.cargando = false;
-          this.mensajeError = 'Error al actualizar usuario: ' + (err.error?.error || err.message);
+          this.mensajeError = this.limpiarMensajeError(err, 'No fue posible actualizar el usuario.');
         }
       });
     } else {
@@ -330,10 +330,28 @@ export class UsuarioListComponent implements OnInit {
         },
         error: (err) => {
           this.cargando = false;
-          this.mensajeError = 'Error al crear usuario: ' + (err.error?.error || err.message);
+          this.mensajeError = this.limpiarMensajeError(err, 'No fue posible registrar el nuevo usuario.');
         }
       });
     }
+  }
+
+  limpiarMensajeError(err: any, fallback: string): string {
+    const raw = err?.error?.error || err?.error?.message || err?.message || '';
+    if (!raw) return fallback;
+    const lower = raw.toLowerCase();
+    if (lower.includes('select ') || lower.includes('insert ') || lower.includes('update ') ||
+        lower.includes('delete ') || lower.includes('duplicate key') || lower.includes('constraint') ||
+        lower.includes('authorities_pkey') || lower.includes('could not execute statement')) {
+      if (lower.includes('users_username') || lower.includes('username')) {
+        return 'El nombre de usuario ingresado ya se encuentra registrado.';
+      }
+      if (lower.includes('email') || lower.includes('correo')) {
+        return 'El correo electronico ya se encuentra registrado.';
+      }
+      return fallback + ' Por favor verifique los datos o consulte con soporte tecnico.';
+    }
+    return raw;
   }
 
   toggleEstado(u: UserDTO): void {

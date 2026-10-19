@@ -29,6 +29,9 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Inject
     com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
 
+    @Inject
+    com.access.control.services.UsuarioService usuarioService;
+
     @Override
     public Empleado getEmpleadoById(Long id) {
         return empleadoRepository.findById(id);
@@ -76,6 +79,17 @@ public class EmpleadosServiceImpl implements EmpleadosService {
             List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
             e.setPisosPermitidos(pisos);
         }
+
+        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty() && usuarioService != null) {
+            String nombreCompleto = ((dto.getNombre() != null ? dto.getNombre() : "") + " " +
+                    (dto.getApellido() != null ? dto.getApellido() : "")).trim();
+            com.access.control.model.User user = usuarioService.obtenerOCrearUsuarioAutomatico(
+                    dto.getEmail(), nombreCompleto, e.getSede(), "ROLE_RECEPCION");
+            if (user != null) {
+                e.setUser(user);
+            }
+        }
+
         empleadoRepository.persist(e);
         if (dto.getFaceVector() != null) {
             biometriaVectorRepository.updateFaceEmbeddingFromString("empleados", e.getId(), dto.getFaceVector());

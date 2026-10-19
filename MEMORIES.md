@@ -1,14 +1,14 @@
 # MEMORIES.md - Persistent Memory Protocol
 
-- **Gestion de Usuarios - Busqueda de Empleados, Seguridad de Contrasena y Edicion (19-Oct-2026)**:
-  - En [usuario-list.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/usuarios/usuario-list/usuario-list.component.html):
-    - Se habilito el buscador de empleados y la actualizacion de contrasena segura con ojitos tanto en **Nuevo Usuario** como en **Editar Usuario**.
-    - En edicion, el cambio de clave es opcional; si se ingresa texto se exige validacion segura y confirmacion identica.
-    - Se redisenaron las acciones de la tabla de usuarios: botones individuales mas grandes, con color solido y texto claro (`Editar`, `Reset Clave`, `Activar`/`Inactivar`) con sombra e iconos para maxima visibilidad.
-    - Se retiro la opcion `ROLE_EMPLEADO` del selector de Rol del Usuario.
-  - En [usuario-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/usuarios/usuario-list/usuario-list.component.ts):
-    - `abrirEditarUsuario()` ahora carga la lista de empleados y resetea los estados de busqueda y contrasena.
-    - `guardarUsuario()` valida contrasena segura y coincidencia cuando se ingresa en modo edicion.
+- **Correccion de Secuencia en Authorities y Sanitizacion de Errores SQL (19-Oct-2026)**:
+  - **Problema**: Al crear un usuario se generaba el error `duplicate key value violates unique constraint "authorities_pkey" Detail: Key (id)=(1) already exists.` y se exponia la sentencia SQL `insert into authorities ...` al usuario en la interfaz.
+  - **Causa Raiz**:
+    1. La secuencia `authorities_id_seq` en PostgreSQL habia quedado desincronizada tras inserciones manuales previas (su `last_value` apuntaba a 1 o 2 mientras existian registros persistidos).
+    2. El backend (`UsuariosController.java`) y el frontend (`usuario-list.component.ts`) retransmitian directamente el `e.getMessage()` con el volcado completo de la query SQL y la traza de Hibernate al usuario.
+  - **Solucion**:
+    1. Sincronizadas todas las secuencias de PostgreSQL mediante script `DO $$ ... SELECT setval(...) $$` para que apunten al `MAX(id)` actual de cada tabla.
+    2. En [UsuariosController.java](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_server/src/main/java/com/access/control/controller/UsuariosController.java): Captura de excepciones con registro detallado mediante `LOG.error(..., e)` y devolucion de mensajes amigables y precisos (sin codigo SQL ni nombres de tablas o constraints).
+    3. En [usuario-list.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/modulos/usuarios/usuario-list/usuario-list.component.ts): Funcion `limpiarMensajeError()` para interceptar y limpiar cualquier traza tecnica residual o sintaxis SQL, mostrando exclusivamente mensajes comprensibles para el usuario final.
 
 - **Despliegue y Levantamiento en Servidor Produccion acceso.andessistemas.com (18-Oct-2026)**:
   - **Causa Raiz**:

@@ -271,6 +271,48 @@ public class UsuarioServiceImpl implements UsuarioService {
                 ip, userAgent, "LOGOUT", "EXITO", "Cierre voluntario de sesion");
     }
 
+    @Override
+    @Transactional
+    public User obtenerOCrearUsuarioAutomatico(String email, String nombreCompleto, Sede sede, String rolDefecto) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        String emailNorm = email.trim().toLowerCase();
+
+        // Buscar si ya existe usuario con ese email o username
+        User u = userRepository.find("email = ?1 or username = ?1", emailNorm).firstResult();
+        if (u != null) {
+            return u;
+        }
+
+        u = new User();
+        u.setUsername(emailNorm);
+        u.setEmail(emailNorm);
+        u.setNombreCompleto(nombreCompleto != null ? nombreCompleto.trim() : emailNorm);
+        u.setEnabled(true);
+        u.setRequiresPasswordReset(true);
+        u.setPassword(BCrypt.hashpw("123456", BCrypt.gensalt(10)));
+        u.setSede(sede);
+
+        Set<String> roles = new HashSet<>();
+        if (rolDefecto != null && !rolDefecto.trim().isEmpty()) {
+            roles.add(rolDefecto.trim());
+        } else {
+            roles.add("ROLE_CLIENTE");
+        }
+        asignarRoles(u, roles);
+
+        userRepository.persist(u);
+
+        registrarAuditoria(u.getUsername(), u.getId(),
+                sede != null ? sede.getId() : null,
+                sede != null ? sede.getSede() : null,
+                "SYSTEM", "BACKEND", "CREACION_USUARIO_AUTO", "EXITO",
+                "Usuario creado automaticamente vinculado al correo con clave por defecto y cambio obligatorio");
+
+        return u;
+    }
+
     private void asignarRoles(User u, Set<String> rolesNames) {
         Set<Authority> set = new HashSet<>();
         if (rolesNames != null && !rolesNames.isEmpty()) {
