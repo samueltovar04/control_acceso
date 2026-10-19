@@ -4,11 +4,11 @@ WORKDIR /code
 
 # Copy dependencies first for efficient layer caching
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mvn dependency:go-offline -B -Daether.connector.http.retryHandler.count=5 || true
 
 # Copy source code and build package
 COPY src ./src
-RUN mvn package -DskipTests
+RUN mvn package -DskipTests -Daether.connector.http.retryHandler.count=5
 
 # --- STAGE 2: Lightweight Runtime stage ---
 FROM eclipse-temurin:17-jre
