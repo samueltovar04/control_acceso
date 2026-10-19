@@ -85,6 +85,15 @@ export const LoginScreen = ({ navigation }) => {
           setSavedToken(data.token);
         }
 
+        // Re-activar explícitamente la sesión móvil en servidor
+        if (cid) {
+          try {
+            await axios.post(`${API_BASE_URL}/clientes/${cid}/iniciar-sesion-movil`, {}, { timeout: 4000 });
+          } catch (e) {
+            console.warn('Aviso activando sesión móvil post-login:', e.message);
+          }
+        }
+
         navigation.reset({
           index: 0,
           routes: [{ name: 'MainDrawer', params: { token: data.token, userCorreo: data.correo || correo, clienteId: cid } }]

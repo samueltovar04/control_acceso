@@ -46,6 +46,11 @@ public class ClienteRepository implements PanacheRepository<Cliente> {
         return find("email", email.trim().toLowerCase()).firstResult();
     }
 
+    public Cliente findByUserId(Long userId) {
+        if (userId == null) return null;
+        return find("user.id", userId).firstResult();
+    }
+
     public Cliente findPrimerCliente() {
         return find("order by id asc").firstResult();
     }

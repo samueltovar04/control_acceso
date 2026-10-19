@@ -42,6 +42,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Inject
     SesionActivaRepository sesionActivaRepository;
 
+    @Inject
+    com.access.control.repository.ClienteRepository clienteRepository;
+
     @Override
     public List<UserDTO> listarUsuarios() {
         return userRepository.listAll().stream()
@@ -254,6 +257,14 @@ public class UsuarioServiceImpl implements UsuarioService {
                 if (u != null) {
                     u.setLastLogin(new Date());
                     userRepository.persist(u);
+                }
+                com.access.control.model.Cliente c = clienteRepository.findByUserId(userId);
+                if (c == null && username != null) {
+                    c = clienteRepository.findByEmail(username.trim().toLowerCase());
+                }
+                if (c != null) {
+                    c.setSesionMovilActiva(true);
+                    clienteRepository.persist(c);
                 }
             }
             SesionActiva sesion = new SesionActiva();
