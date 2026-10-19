@@ -4,8 +4,7 @@ import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { getBrandingConfig } from '../services/brandingService';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL } from '../config/env';
 
 export const LoginScreen = ({ navigation }) => {
   const [branding, setBranding] = useState(null);
@@ -78,7 +77,11 @@ export const LoginScreen = ({ navigation }) => {
           setSavedToken(data.token);
         }
 
-        navigation.navigate('MainDrawer', { token: data.token, userCorreo: data.correo });
+        const cid = data.clienteId || data.cliente?.id;
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainDrawer', params: { token: data.token, userCorreo: data.correo || correo, clienteId: cid } }]
+        });
       }
     } catch (error) {
       setLoading(false);

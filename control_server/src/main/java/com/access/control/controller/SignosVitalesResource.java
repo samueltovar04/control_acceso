@@ -13,6 +13,7 @@ import java.util.List;
 @Path("/api/v1/telemetria")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@io.smallrye.common.annotation.Blocking
 public class SignosVitalesResource {
 
     @Inject

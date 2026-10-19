@@ -3,8 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityInd
 import { launchImageLibrary } from 'react-native-image-picker';
 import { getCotizacionBCV, reportarPagoMultimoneda, subscribeClientePayments } from '../services/paymentsService';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL } from '../config/env';
 
 export const PaymentsScreen = ({ route }) => {
   const clienteId = route?.params?.clienteId || 1;
@@ -74,7 +73,9 @@ export const PaymentsScreen = ({ route }) => {
     const unsubscribe = subscribeClientePayments(
       clienteId,
       (eventData) => {
-        Vibration.vibrate([0, 500, 200, 500]); // Haptic vibration feedback
+        try {
+          Vibration.vibrate([0, 500, 200, 500]); // Haptic vibration feedback
+        } catch (e) {}
         fetchClienteAndBCV();
         fetchPagos();
         Alert.alert('🎉 ¡Pago Conciliado!', 'Su pago ha sido verificado y conciliado exitosamente por la administración. Su membresía está ACTIVA.');

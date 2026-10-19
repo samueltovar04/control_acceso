@@ -1,8 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
-const WS_BASE_URL = 'ws://192.168.1.140:8080/ws';
+import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 
 export const getCotizacionBCV = async (clienteId = 1) => {
   try {

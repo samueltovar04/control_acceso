@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL } from '../config/env';
 
 export const RegisterScreen = ({ navigation }) => {
   const [correo, setCorreo] = useState('');
@@ -82,7 +81,8 @@ export const RegisterScreen = ({ navigation }) => {
         email: correo.trim().toLowerCase(),
         telefono: telefono,
         foto: fotoUri || fotogramaBase64,
-        estadoSuscripcion: 'ACTIVA'
+        estadoSuscripcion: 'ACTIVA',
+        membresiaActual: { id: 1 }
       };
 
       await axios.post(`${API_BASE_URL}/clientes`, clientPayload, { timeout: 6000 });

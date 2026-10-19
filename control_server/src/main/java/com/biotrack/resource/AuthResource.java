@@ -50,6 +50,9 @@ public class AuthResource {
     @Inject
     SesionActivaRepository sesionActivaRepository;
 
+    @Inject
+    com.access.control.repository.ClienteRepository clienteRepository;
+
     private String extraerIpCliente(HttpHeaders headers) {
         if (headers == null) return "127.0.0.1";
         String xForwardedFor = headers.getHeaderString("X-Forwarded-For");
@@ -301,17 +304,32 @@ public class AuthResource {
             usuarioService.registrarAuditoria(usuario.correo, null, null, null,
                     ip, userAgent, "LOGIN", "EXITO", "Inicio de sesion MongoDB exitoso");
 
-            return Response.ok(Map.of(
-                    "primerIngreso", false,
-                    "requiresPasswordReset", false,
-                    "token", token,
-                    "username", usuario.correo,
-                    "correo", usuario.correo,
-                    "role", usuario.rol != null ? usuario.rol : "CLIENTE",
-                    "idPulseraAsignada", usuario.idPulseraAsignada != null ? usuario.idPulseraAsignada : "",
-                    "tipoMembresia", usuario.tipoMembresia != null ? usuario.tipoMembresia : "",
-                    "estadoPago", usuario.estadoPago != null ? usuario.estadoPago : ""
-            )).build();
+            Long resolvedClienteId = null;
+            if (clienteRepository != null) {
+                com.access.control.model.Cliente c = clienteRepository.findByEmail(usuario.correo);
+                if (c == null) {
+                    c = clienteRepository.findPrimerCliente();
+                }
+                if (c != null) {
+                    resolvedClienteId = c.getId();
+                }
+            }
+
+            Map<String, Object> respMap = new HashMap<>();
+            respMap.put("primerIngreso", false);
+            respMap.put("requiresPasswordReset", false);
+            respMap.put("token", token);
+            respMap.put("username", usuario.correo);
+            respMap.put("correo", usuario.correo);
+            respMap.put("role", usuario.rol != null ? usuario.rol : "CLIENTE");
+            respMap.put("idPulseraAsignada", usuario.idPulseraAsignada != null ? usuario.idPulseraAsignada : "");
+            respMap.put("tipoMembresia", usuario.tipoMembresia != null ? usuario.tipoMembresia : "");
+            respMap.put("estadoPago", usuario.estadoPago != null ? usuario.estadoPago : "");
+            if (resolvedClienteId != null) {
+                respMap.put("clienteId", resolvedClienteId);
+            }
+
+            return Response.ok(respMap).build();
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 

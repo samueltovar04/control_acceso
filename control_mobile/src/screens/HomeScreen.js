@@ -3,15 +3,14 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIn
 import Clipboard from '@react-native-clipboard/clipboard';
 import axios from 'axios';
 import { getBrandingConfig } from '../services/brandingService';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL } from '../config/env';
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
 export const HomeScreen = ({ route, navigation }) => {
-  const clienteId = route?.params?.clienteId || 1;
+  const clienteId = route?.params?.clienteId;
   const [branding, setBranding] = useState(null);
   const [cliente, setCliente] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Dynamic Banking Accounts State from Backend API
   const [bankingModalVisible, setBankingModalVisible] = useState(false);
@@ -22,21 +21,37 @@ export const HomeScreen = ({ route, navigation }) => {
     getBrandingConfig().then(config => setBranding(config));
 
     async function fetchClienteReal() {
+      if (!clienteId) {
+        setLoading(false);
+        setCliente(null);
+        Alert.alert(
+          '🔒 Sesión Requerida',
+          'Por favor inicie sesión con sus credenciales para acceder.',
+          [
+            { text: 'Iniciar Sesión', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) }
+          ]
+        );
+        return;
+      }
+
       setLoading(true);
       try {
         const response = await axios.get(`${API_BASE_URL}/clientes/${clienteId}`, { timeout: 5000 });
-        setCliente(response.data);
+        if (response.data && response.data.id) {
+          setCliente(response.data);
+        } else {
+          throw new Error('Perfil de cliente no encontrado');
+        }
       } catch (error) {
         console.warn('Error fetching real cliente:', error.message);
-        // Fallback default
-        setCliente({
-          id: clienteId,
-          nombre: 'Carlos',
-          apellido: 'Pérez',
-          documento: 'V-18234567',
-          estadoSuscripcion: 'ACTIVA',
-          foto: ''
-        });
+        setCliente(null);
+        Alert.alert(
+          '🔒 Sesión Inválida o No Encontrada',
+          'No se pudo verificar su perfil de usuario en el servidor. Por favor inicie sesión.',
+          [
+            { text: 'Iniciar Sesión', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) }
+          ]
+        );
       } finally {
         setLoading(false);
       }
@@ -93,6 +108,21 @@ export const HomeScreen = ({ route, navigation }) => {
     if (t.includes('BINANCE') || t.includes('CRIPTO') || t.includes('CRYPTO')) return '🪙';
     return '🏦';
   };
+
+  // Screen Guard: Show full-screen spinner during verification
+  if (loading && !cliente) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1E88E5" />
+        <Text style={styles.loadingText}>Verificando credenciales de acceso...</Text>
+      </View>
+    );
+  }
+
+  // Screen Guard: Do NOT render main screen UI if unauthenticated
+  if (!cliente) {
+    return null;
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -222,6 +252,8 @@ export const HomeScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', padding: 20 },
+  loadingText: { fontSize: 14, color: '#1E88E5', fontWeight: 'bold', marginTop: 14 },
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   header: { padding: 20, paddingTop: 40, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
   headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },

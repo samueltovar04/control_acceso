@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL } from '../config/env';
 
 export const getBrandingConfig = async () => {
   try {

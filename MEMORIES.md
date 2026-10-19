@@ -21,6 +21,7 @@
     9. **Dashboard Dinámico IoT en Producción**:
        - Mapeado `/dashboard-dinamico.html` en el reverse proxy Nginx (`access_control_frontend`) redirigiendo a `access_control_backend:8080/dashboard-dinamico.html`.
        - Ajustado `wsUrl` en `dashboard-dinamico.html` para detectar automáticamente `wss://` y hostname sin sufijos de puerto al navegar bajo HTTPS/443.
+       - En `left-menu.component.html`, reemplazado el enlace estático `http://localhost:8080/dashboard-dinamico.html` por la ruta relativa `/dashboard-dinamico.html`, abriendo directamente bajo el dominio del host (`https://acceso.andessistemas.com/dashboard-dinamico.html`).
        - Desplegado y verificado en `https://acceso.andessistemas.com/dashboard-dinamico.html` con telemetría en tiempo real, selección de sedes, emulador y WebSocket activo.
     10. Verificado acceso publico con HTTPS y respuesta HTTP 200 OK.
 - **Deteccion Facial y Disparo Automatico en Vision Optima (18-Oct-2026)**:

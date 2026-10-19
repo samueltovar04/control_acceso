@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://192.168.1.140:8080/api/v1';
+import { API_BASE_URL, WS_BASE_URL } from '../config/env';
 
 export const VitalSignsScreen = ({ route }) => {
   const clienteId = route?.params?.clienteId || 1;
@@ -52,7 +51,7 @@ export const VitalSignsScreen = ({ route }) => {
     // WebSockets connection
     let ws = null;
     try {
-      ws = new WebSocket('ws://192.168.1.140:8080/ws/signos-vitales');
+      ws = new WebSocket(`${WS_BASE_URL}/signos-vitales`);
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);

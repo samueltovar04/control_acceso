@@ -14,6 +14,7 @@ import java.util.HashMap;
 @Path("/api/v1/clientes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@io.smallrye.common.annotation.Blocking
 public class ClienteResource {
 
     @Inject
@@ -21,6 +22,15 @@ public class ClienteResource {
 
     @Inject
     com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
+
+    @Inject
+    com.access.control.repository.MembresiaRepository membresiaRepository;
+
+    @Inject
+    com.access.control.repository.UserRepository userRepository;
+
+    @Inject
+    com.access.control.repository.PagoRepository pagoRepository;
 
     @GET
     public List<Cliente> getAllClientes() {
@@ -50,15 +60,42 @@ public class ClienteResource {
     @POST
     @Transactional
     public Response createCliente(Cliente cliente) {
-        if (cliente.getMembresiaActual() == null) {
-            cliente.setEstadoSuscripcion("SIN_MEMBRESIA");
-        } else if (cliente.getEstadoSuscripcion() == null || cliente.getEstadoSuscripcion().trim().isEmpty()) {
+        if (cliente.getMembresiaActual() == null && membresiaRepository != null) {
+            List<com.access.control.model.Membresia> activas = membresiaRepository.findActivas();
+            if (!activas.isEmpty()) {
+                cliente.setMembresiaActual(activas.get(0));
+            }
+        }
+
+        if (cliente.getEstadoSuscripcion() == null || cliente.getEstadoSuscripcion().trim().isEmpty() || "SIN_MEMBRESIA".equals(cliente.getEstadoSuscripcion())) {
             cliente.setEstadoSuscripcion("ACTIVA");
         }
+
+        if (cliente.getEmail() != null && userRepository != null) {
+            com.access.control.model.User user = userRepository.find("email = ?1 or username = ?1", cliente.getEmail().trim().toLowerCase()).firstResult();
+            if (user != null) {
+                cliente.setUser(user);
+            }
+        }
+
         clienteRepository.persist(cliente);
-        if (cliente.getFaceVector() != null) {
+
+        if (cliente.getFaceVector() != null && biometriaVectorRepository != null) {
             biometriaVectorRepository.updateFaceEmbeddingFromString("clientes", cliente.getId(), cliente.getFaceVector());
         }
+
+        // Auto generate pending payment for created client
+        if (cliente.getMembresiaActual() != null && pagoRepository != null) {
+            com.access.control.model.Pago pago = new com.access.control.model.Pago();
+            pago.setCliente(cliente);
+            pago.setMonto(cliente.getMembresiaActual().getPrecio());
+            pago.setEstadoPago("PENDIENTE_PAGO");
+            pago.setFechaPago(new java.util.Date());
+            pago.setMetodoPago("PENDIENTE");
+            pago.setNumeroReferencia("REG-" + cliente.getId() + "-" + System.currentTimeMillis());
+            pagoRepository.persist(pago);
+        }
+
         return Response.status(Response.Status.CREATED).entity(cliente).build();
     }
 

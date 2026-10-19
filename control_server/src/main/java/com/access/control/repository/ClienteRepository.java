@@ -40,4 +40,13 @@ public class ClienteRepository implements PanacheRepository<Cliente> {
     public List<Cliente> findCancelacionesProgramadasVencidas(java.util.Date fechaCorte) {
         return list("estadoSuscripcion = 'CANCELACION_PROGRAMADA' and fechaVencimientoMembresia <= ?1", fechaCorte);
     }
+
+    public Cliente findByEmail(String email) {
+        if (email == null) return null;
+        return find("email", email.trim().toLowerCase()).firstResult();
+    }
+
+    public Cliente findPrimerCliente() {
+        return find("order by id asc").firstResult();
+    }
 }

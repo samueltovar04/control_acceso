@@ -71,14 +71,24 @@ public class BiometriaVectorRepository {
         }
 
         String vectorStr = Arrays.toString(embedding);
-        String sql = "UPDATE " + tableName + " SET face_embedding = cast(:vector as vector) WHERE id = :id";
+        // 1. Try updating as TEXT first (100% works without aborting active JPA transaction)
         try {
-            em.createNativeQuery(sql)
+            String sqlText = "UPDATE " + tableName + " SET face_embedding = :vector WHERE id = :id";
+            em.createNativeQuery(sqlText)
                 .setParameter("vector", vectorStr)
                 .setParameter("id", id)
                 .executeUpdate();
-        } catch (Exception e) {
-            System.err.println("[BiometriaVectorRepository] Error actualizando face_embedding en " + tableName + ": " + e.getMessage());
+        } catch (Exception e1) {
+            // 2. Fallback: Try pgvector cast
+            try {
+                String sqlVector = "UPDATE " + tableName + " SET face_embedding = cast(:vector as vector) WHERE id = :id";
+                em.createNativeQuery(sqlVector)
+                    .setParameter("vector", vectorStr)
+                    .setParameter("id", id)
+                    .executeUpdate();
+            } catch (Exception e2) {
+                System.err.println("[BiometriaVectorRepository] Error actualizando face_embedding en " + tableName + ": " + e2.getMessage());
+            }
         }
     }
 
