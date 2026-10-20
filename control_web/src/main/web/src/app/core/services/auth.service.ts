@@ -145,16 +145,30 @@ export class AuthService {
   }
 
   isRecepcion(): boolean {
-    return this.hasRole('RECEPCION') || this.hasRole('ROLE_RECEPCION');
+    return this.hasRole('RECEPCION') || this.hasRole('ROLE_RECEPCION') || this.hasRole('RECEPCIONISTA') || this.hasRole('ROLE_RECEPCIONISTA');
+  }
+
+  isSeguridad(): boolean {
+    return this.hasRole('SEGURIDAD') || this.hasRole('ROLE_SEGURIDAD') || this.hasRole('OFICIAL') || this.hasRole('ROLE_OFICIAL');
+  }
+
+  isAnalista(): boolean {
+    return this.hasRole('ANALISTA') || this.hasRole('ROLE_ANALISTA');
   }
 
   isOperacion(): boolean {
     return this.hasRole('OPERACION') || this.hasRole('OPERADOR') || this.hasRole('EMPLEADO') ||
-           this.hasRole('ROLE_OPERACION') || this.hasRole('ROLE_OPERADOR') || this.hasRole('ROLE_EMPLEADO');
+           this.hasRole('ROLE_OPERACION') || this.hasRole('ROLE_OPERADOR') || this.hasRole('ROLE_EMPLEADO') ||
+           this.isSeguridad() || this.isAnalista();
   }
 
   isCliente(): boolean {
     return this.hasRole('CLIENTE') || this.hasRole('ROLE_CLIENTE');
+  }
+
+  hasSedeRestringida(): boolean {
+    if (this.isAdminOrSuperAdmin()) return false;
+    return this.isRecepcion() || this.isSeguridad() || this.isAnalista() || this.isOperacion() || this.isContable() || this.isCliente();
   }
 
   // Modulo Panel & Vision

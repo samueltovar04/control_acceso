@@ -76,7 +76,11 @@ export class LoginComponent {
           return;
         }
 
-        this.router.navigate(['/home/admin-dashboard']);
+        if (this.authService.isCliente() && !this.authService.isAdminOrSuperAdmin()) {
+          this.router.navigate(['/home/portal-cliente']);
+        } else {
+          this.router.navigate(['/home/admin-dashboard']);
+        }
       },
       error: (err) => {
         this.cargando = false;

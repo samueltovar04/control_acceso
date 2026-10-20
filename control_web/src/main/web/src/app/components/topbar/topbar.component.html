@@ -11,12 +11,12 @@
       <i class="bi bi-list fs-4"></i>
     </button>
 
-    <div class="brand-badge bg-primary text-white rounded p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
-      <i class="bi bi-shield-check fs-5"></i>
+    <div class="brand-logo-container me-2 d-flex align-items-center">
+      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 38px; width: auto; object-fit: contain;" class="rounded" />
     </div>
     <div>
-      <h6 class="m-0 fw-bold text-dark text-truncate" style="max-width: 140px;">{{ branding?.nombreEmpresa || 'Control de Acceso' }}</h6>
-      <small class="text-muted font-monospace d-none d-sm-inline" style="font-size: 0.75rem;">V.2.0 • Sistema Centralizado</small>
+      <h6 class="m-0 fw-bold text-dark text-truncate" style="max-width: 170px;">{{ branding?.nombreEmpresa || 'Andes Sistemas' }}</h6>
+      <small class="text-muted font-monospace d-none d-sm-inline" style="font-size: 0.75rem;">Control de Acceso • V.2.0</small>
     </div>
   </div>
 
@@ -32,10 +32,12 @@
               [title]="sedeBloqueada ? 'Sede asignada a su usuario' : 'Filtrar por sede en todo el sistema'"
               [(ngModel)]="sedeSeleccionadaId" 
               (ngModelChange)="onSedeChange($event)">
-        <option [ngValue]="null">Todas las Sedes</option>
-        <option *ngFor="let s of sedesList" [ngValue]="s.id">
-          {{ s.sede }}
-        </option>
+        <option *ngIf="!sedeBloqueada" [ngValue]="null">Todas las Sedes</option>
+        <ng-container *ngFor="let s of sedesList">
+          <option *ngIf="!sedeBloqueada || s.id === sedeSeleccionadaId" [ngValue]="s.id">
+            {{ s.sede }}
+          </option>
+        </ng-container>
       </select>
       <span *ngIf="sedeBloqueada" class="badge bg-secondary rounded-pill ms-1" title="Sede fijada por rol">
         <i class="bi bi-lock-fill text-white" style="font-size: 0.7rem;"></i>
@@ -76,7 +78,7 @@
     </div>
 
     <!-- TERMINAL RÁPIDA -->
-    <a routerLink="/home/biometria-facial" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-2 px-sm-3">
+    <a *ngIf="!authService.isCliente() || authService.isAdminOrSuperAdmin()" routerLink="/home/biometria-facial" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-2 px-sm-3">
       <i class="bi bi-camera-video me-sm-1"></i>
       <span class="d-none d-sm-inline">Terminal Visión</span>
     </a>

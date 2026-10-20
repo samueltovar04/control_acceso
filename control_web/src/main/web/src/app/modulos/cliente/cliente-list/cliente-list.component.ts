@@ -7,6 +7,8 @@ import { ClienteService } from '../../../shared/cliente/cliente.service';
 import { Cliente } from '../../../shared/cliente/cliente.model';
 import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { Subscription } from 'rxjs';
 
 interface VitalData {
   bpm: number;
@@ -661,14 +663,21 @@ export class ClienteListComponent implements OnInit, OnDestroy {
   };
 
   private socket: WebSocket | null = null;
+  filtroSedeId: number | null = null;
+  private sedeSub?: Subscription;
 
   constructor(
     private clienteService: ClienteService,
     private http: HttpClient,
-    private alertModal: AlertModalService
+    private alertModal: AlertModalService,
+    private sedeStateService: SedeStateService
   ) {}
 
   ngOnInit(): void {
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+      this.filtroSedeId = id;
+      this.filtrarClientes();
+    });
     this.cargarClientes();
     this.cargarMembresiasCatalogo();
   }
@@ -686,6 +695,9 @@ export class ClienteListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.cerrarWebSocket();
+    if (this.sedeSub) {
+      this.sedeSub.unsubscribe();
+    }
   }
 
   cerrarSesionMovil(cliente: Cliente): void {
@@ -729,7 +741,14 @@ export class ClienteListComponent implements OnInit, OnDestroy {
           .toLowerCase()
           .includes(this.filtro.toLowerCase());
       const matchMembresia = !this.filtroMembresia || c.estadoSuscripcion === this.filtroMembresia;
-      return matchTexto && matchMembresia;
+      
+      let matchSede = true;
+      if (this.filtroSedeId !== null) {
+        const sId = c.sede ? (c.sede.id || (c.sede as any).sede_id) : (c as any).sedeId || (c as any).sede_id;
+        matchSede = sId !== null && sId !== undefined && Number(sId) === Number(this.filtroSedeId);
+      }
+
+      return matchTexto && matchMembresia && matchSede;
     });
 
     this.totalPaginas = Math.ceil(this.clientesFiltrados.length / this.pageSize) || 1;

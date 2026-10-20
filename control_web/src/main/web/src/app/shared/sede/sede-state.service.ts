@@ -55,8 +55,20 @@ export class SedeStateService {
         if (userSedeId !== null) {
           this.sedeBloqueadaSubject.next(true);
           this.sedeSeleccionadaIdSubject.next(userSedeId);
+          localStorage.setItem(this.STORAGE_KEY, String(userSedeId));
           return;
         }
+        
+        // Si no tiene sedeId explicitamente asignada pero su rol es recepcion/seguridad/analista
+        if (this.authService.hasSedeRestringida()) {
+          const stored = this.getStoredSedeId();
+          if (stored !== null) {
+            this.sedeBloqueadaSubject.next(true);
+            this.sedeSeleccionadaIdSubject.next(stored);
+            return;
+          }
+        }
+
         this.sedeBloqueadaSubject.next(false);
         this.sedeSeleccionadaIdSubject.next(this.getStoredSedeId());
       }

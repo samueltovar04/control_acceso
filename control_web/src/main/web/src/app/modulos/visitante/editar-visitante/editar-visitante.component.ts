@@ -47,11 +47,15 @@ constructor(private route: ActivatedRoute,private router: Router,private visiSer
   }
 
   save() {
-    console.log(this.visita);
-    this.visiService.updateVisitante(this.id,this.visita)
-      .subscribe(data => console.log(data), error => console.log(error));
-    this.visita = new Visitante();
-    this.gotoList();
+    this.visiService.updateVisitante(this.id, this.visita).subscribe({
+      next: () => {
+        this.gotoList();
+      },
+      error: (error) => {
+        console.error('Error al actualizar visitante:', error);
+        this.gotoList();
+      }
+    });
   }
 
   onSubmit() {
@@ -60,6 +64,6 @@ constructor(private route: ActivatedRoute,private router: Router,private visiSer
   }
 
   gotoList() {
-    this.router.navigate(['/visitantes']);
+    this.router.navigate(['/home/visitantes']);
   }
 }

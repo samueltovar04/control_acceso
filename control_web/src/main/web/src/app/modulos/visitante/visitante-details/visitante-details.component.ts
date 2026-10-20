@@ -30,7 +30,7 @@ constructor(private route: ActivatedRoute,private router: Router,private visiSer
   }
 
   list(){
-    this.router.navigate(['visitantes']);
+    this.router.navigate(['/home/visitantes']);
   }
 
 }

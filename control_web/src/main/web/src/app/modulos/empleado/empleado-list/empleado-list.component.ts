@@ -1,18 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-empleado-list',
   templateUrl: './empleado-list.component.html',
   styleUrls: ['./empleado-list.component.css']
 })
-export class EmpleadoListComponent implements OnInit {
+export class EmpleadoListComponent implements OnInit, OnDestroy {
   empleados: any[] = [];
   empleadosFiltrados: any[] = [];
   itemsPaginados: any[] = [];
 
   filtroTexto: string = '';
+  filtroSedeId: number | null = null;
+  private sedeSub?: Subscription;
+
   page: number = 1;
   pageSize: number = 10;
   totalPaginas: number = 1;
@@ -20,11 +25,22 @@ export class EmpleadoListComponent implements OnInit {
 
   constructor(
     private empleService: EmpleadoService,
-    private alertModal: AlertModalService
+    private alertModal: AlertModalService,
+    private sedeStateService: SedeStateService
   ) {}
 
   ngOnInit(): void {
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+      this.filtroSedeId = id;
+      this.aplicarFiltro();
+    });
     this.reloadData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.sedeSub) {
+      this.sedeSub.unsubscribe();
+    }
   }
 
   reloadData(): void {
@@ -39,10 +55,9 @@ export class EmpleadoListComponent implements OnInit {
 
   aplicarFiltro(): void {
     const q = (this.filtroTexto || '').toLowerCase().trim();
-    if (!q) {
-      this.empleadosFiltrados = [...this.empleados];
-    } else {
-      this.empleadosFiltrados = this.empleados.filter((e) => {
+    this.empleadosFiltrados = this.empleados.filter((e) => {
+      let matchTexto = true;
+      if (q) {
         const nombre = (e.name || e.nombre || '').toLowerCase();
         const apellido = (e.lastName || e.apellido || '').toLowerCase();
         const doc = (e.document || e.documento || '').toString();
@@ -50,7 +65,7 @@ export class EmpleadoListComponent implements OnInit {
         const email = (e.email || '').toLowerCase();
         const gerencia = (e.gerencia?.gerencia || '').toLowerCase();
         const sede = (e.sede?.sede || '').toLowerCase();
-        return (
+        matchTexto = (
           nombre.includes(q) ||
           apellido.includes(q) ||
           doc.includes(q) ||
@@ -59,8 +74,16 @@ export class EmpleadoListComponent implements OnInit {
           gerencia.includes(q) ||
           sede.includes(q)
         );
-      });
-    }
+      }
+
+      let matchSede = true;
+      if (this.filtroSedeId !== null) {
+        const sId = e.sede ? (e.sede.id || e.sede.sede_id) : (e.sedeId || e.sede_id);
+        matchSede = sId !== null && sId !== undefined && Number(sId) === Number(this.filtroSedeId);
+      }
+
+      return matchTexto && matchSede;
+    });
     this.totalPaginas = Math.ceil(this.empleadosFiltrados.length / this.pageSize) || 1;
     this.page = 1;
     this.actualizarPaginacion();

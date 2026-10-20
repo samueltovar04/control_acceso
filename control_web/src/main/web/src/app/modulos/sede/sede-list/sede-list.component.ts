@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
@@ -178,6 +179,7 @@ export class SedeListComponent implements OnInit {
 
   constructor(
     private sedeService: SedeService,
+    private sedeStateService: SedeStateService,
     private alertModal: AlertModalService
   ) {}
 
@@ -190,6 +192,7 @@ export class SedeListComponent implements OnInit {
       next: (data) => {
         this.sedes = data || [];
         this.aplicarFiltro();
+        this.sedeStateService.cargarSedes();
       },
       error: (err) => console.error('Error al cargar sedes:', err)
     });

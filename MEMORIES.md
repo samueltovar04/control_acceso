@@ -1,5 +1,29 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Identidad Andes Control Acceso y Reactividad en Selector de Sede (20-Oct-2026)**:
+  - **Titulo y Favicon**:
+    1. En `index.html`: Se actualizo `<title>` a `Andes Control Acceso` (reemplazando `NpApp`).
+    2. Se descargo el isotipo oficial `logo-crystal.png` de `andessistemas.com` alojandolo en `assets/images/logo-andes.png` y se genero un nuevo `favicon.ico` binario de 64x64.
+  - **Branding Visual**:
+    1. En `topbar.component.html`: Se reemplazo el icono estatico por la imagen de `assets/images/logo-andes.png` y texto `Andes Sistemas • Control de Acceso • V.2.0`.
+    2. En `left-menu.component.html`: Se integro el logo con la marca `ANDES CONTROL ACCESO`.
+    3. En `login.component.html`: Se integro el logo de Andes Sistemas en la cabecera del login.
+  - **Reactividad del Selector de Sede**:
+    1. En `SedeListComponent` (`sede-list.component.ts`): Al crear, actualizar o eliminar sedes se invoca inmediatamente `sedeStateService.cargarSedes()`.
+    2. Al emitir por `sedes$`, el selector en `topbar.component.html` y los componentes suscritos reflejan la nueva sede al instante sin necesidad de recargar la pagina.
+
+- **Filtrado Estricto por Sede para Roles Restringidos (20-Oct-2026)**:
+  - **Requisito**: Usuarios con roles `RECEPCION` / `RECEPCIONISTA`, `SEGURIDAD` / `OFICIAL`, `ANALISTA` / `OPERACION` deben tener su sede bloqueada en el topbar (ocultando "Todas las Sedes" y sedes no asignadas) y este filtro debe gobernar estrictamente todos los modulos del sistema: Clientes, Empleados, Visitantes, Torniquetes y Monitor de Signos Vitales.
+  - **Frontend**:
+    1. En `auth.service.ts`: Metodos de chequeo de roles `isRecepcion()`, `isSeguridad()`, `isAnalista()`, `hasSedeRestringida()`.
+    2. En `sede-state.service.ts`: `aplicarReglasUsuario(user)` bloquea `sedeBloqueada = true` si el usuario tiene `hasSedeRestringida()` o tiene `sedeId` asignada, seteando `sedeSeleccionadaId`.
+    3. En `topbar.component.html`: Cuando `sedeBloqueada` es true se oculta la opcion "Todas las Sedes" y solo se renderiza la sede asignada.
+    4. En `cliente-list.component.ts`: Inyeccion de `SedeStateService`, suscripcion a `sedeSeleccionadaId$` y filtrado dinamico en `filtrarClientes()` por `c.sede.id`.
+    5. En `empleado-list.component.ts`: Inyeccion de `SedeStateService`, suscripcion a `sedeSeleccionadaId$` y filtrado dinamico en `aplicarFiltro()` por `e.sede.id`.
+    6. En `visitante-list.component.ts`: Inyeccion de `SedeStateService`, suscripcion a `sedeSeleccionadaId$` y filtrado dinamico en `aplicarFiltro()` por `v.sede.id || v.empleadoAVisitar.sede.id || v.sedeId`.
+    7. En `torniquetes-hub.component.ts`: Recibe y propaga `sedeSeleccionadaId` hacia `biometria-facial` y `acceso-torniquete`.
+    8. En `monitor-salud.component.ts`: Escucha `sedeSeleccionadaId$` y filtra tanto pulseras en vivo como historial telemetrico MongoDB por sede asignada.
+
 - **Creacion de Empleado, Permisos de Pisos y Vinculacion Obligatoria de Usuario (19-Oct-2026)**:
   - **Problemas Solucionados**:
     1. Modal "Modo Local" / "Empleado guardado localmente": `crear-empleado.component.ts` mostraba falsamente que el empleado se habia guardado en modo local cuando en realidad la peticion HTTP fallaba en el backend debido a colision de unicidad en `empleados.user_id` (`uk_3oailepgwu9rqdquwd7e9xlg8`).
@@ -43,6 +67,13 @@
        - En `left-menu.component.html`, reemplazado el enlace estático `http://localhost:8080/dashboard-dinamico.html` por la ruta relativa `/dashboard-dinamico.html`, abriendo directamente bajo el dominio del host (`https://acceso.andessistemas.com/dashboard-dinamico.html`).
        - Desplegado y verificado en `https://acceso.andessistemas.com/dashboard-dinamico.html` con telemetría en tiempo real, selección de sedes, emulador y WebSocket activo.
     10. Verificado acceso publico con HTTPS y respuesta HTTP 200 OK.
+    11. **Portal Cliente, Restricción Estricta de Navegación y Telemetría Wearable**:
+       - Redirección automática directa a `/home/portal-cliente` tras iniciar sesión con rol `CLIENTE`.
+       - Bloqueo de navegación en [AuthGuard.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/core/guards/auth.guard.ts): los clientes tienen prohibido acceder a cualquier otra ruta del sistema; intentos manuales redirigen a `/home/portal-cliente`.
+       - Ocultado el botón *"Terminal Visión"* en [topbar.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/components/topbar/topbar.component.html) para usuarios con rol `CLIENTE`.
+       - Fijación de sede única asignada en el selector del topbar (ocultando opción global "Todas las Sedes" y sedes no autorizadas cuando `sedeBloqueada = true`).
+       - Catálogo completo de cuentas y formas de pago bancarias disponibles en el selector de [portal-cliente.component.html](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/portal-cliente/portal-cliente.component.html) sincronizando automáticamente método de pago seleccionado.
+       - Telemetría en tiempo real de pulsera wearable conectada a WebSocket `/ws/signos-vitales` con auto-reconexión resiliente en [websocket.service.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/core/services/websocket.service.ts) y consulta inicial REST adaptada a la entidad MongoDB (`bpm`, `spo2`, `temp`).
 - **Deteccion Facial y Disparo Automatico en Vision Optima (18-Oct-2026)**:
   - En [biometric-capture.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/shared/components/biometric-capture/biometric-capture.component.ts): Se calibraron los rangos YCbCr y RGB en `analizarRostroEnCanvas` para deteccion inmediata de rostro en webcams estandar bajo diversas condiciones de iluminacion. Se activa `faceBox` y `faceDetectado` al detectar la masa facial, ocultando el ovalo estatico y desplegando el recuadro verde con la etiqueta "Rostro Detectado".
   - En [biometria-facial.component.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/features/biometria-facial/biometria-facial.component.ts): El ciclo evalua la vision optima del rostro (`width >= 16%`, `height >= 20%`, `left >= 5% && <= 75%`, `top <= 65%`). Al estar centrado y encuadrado, dispara automaticamente `capturarRostro()` con debounce de 2.5s sin requerir clic manual.

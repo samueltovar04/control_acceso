@@ -19,6 +19,13 @@ export class AuthGuard implements CanActivate, CanActivateChild {
 
   private checkAuth(url: string): boolean {
     if (this.authService.isLoggedIn()) {
+      if (this.authService.isCliente() && !this.authService.isAdminOrSuperAdmin()) {
+        const cleanUrl = url.split('?')[0];
+        if (cleanUrl !== '/home/portal-cliente') {
+          this.router.navigate(['/home/portal-cliente']);
+          return false;
+        }
+      }
       return true;
     }
 

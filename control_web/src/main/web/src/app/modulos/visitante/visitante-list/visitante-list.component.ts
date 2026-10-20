@@ -1,18 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { VisitanteService } from '../../../shared/visitante/visitante.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
 
 @Component({
   selector: 'app-visitante-list',
   templateUrl: './visitante-list.component.html',
   styleUrls: ['./visitante-list.component.css']
 })
-export class VisitanteListComponent implements OnInit {
+export class VisitanteListComponent implements OnInit, OnDestroy {
   visitantes: any[] = [];
   visitantesFiltrados: any[] = [];
   itemsPaginados: any[] = [];
 
   filtroTexto: string = '';
+  filtroSedeId: number | null = null;
+  private sedeSub?: Subscription;
+
   page: number = 1;
   pageSize: number = 10;
   totalPaginas: number = 1;
@@ -20,11 +25,20 @@ export class VisitanteListComponent implements OnInit {
 
   constructor(
     private visiService: VisitanteService,
-    private alertModal: AlertModalService
+    private alertModal: AlertModalService,
+    private sedeStateService: SedeStateService
   ) {}
 
   ngOnInit(): void {
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe((sedeId) => {
+      this.filtroSedeId = sedeId;
+      this.aplicarFiltro();
+    });
     this.reloadData();
+  }
+
+  ngOnDestroy(): void {
+    this.sedeSub?.unsubscribe();
   }
 
   reloadData(): void {
@@ -39,24 +53,31 @@ export class VisitanteListComponent implements OnInit {
 
   aplicarFiltro(): void {
     const q = (this.filtroTexto || '').toLowerCase().trim();
-    if (!q) {
-      this.visitantesFiltrados = [...this.visitantes];
-    } else {
-      this.visitantesFiltrados = this.visitantes.filter((v) => {
-        const nombre = (v.name || v.nombre || '').toLowerCase();
-        const apellido = (v.lastName || v.apellido || '').toLowerCase();
-        const doc = (v.document || v.documento || '').toString();
-        const email = (v.email || '').toLowerCase();
-        const badge = (v.badgeAccess || '').toString();
-        return (
-          nombre.includes(q) ||
-          apellido.includes(q) ||
-          doc.includes(q) ||
-          email.includes(q) ||
-          badge.includes(q)
-        );
-      });
-    }
+    this.visitantesFiltrados = this.visitantes.filter((v) => {
+      if (this.filtroSedeId) {
+        const vSedeId = v.sede?.id ?? v.empleadoAVisitar?.sede?.id ?? v.sedeId;
+        if (vSedeId && Number(vSedeId) !== Number(this.filtroSedeId)) {
+          return false;
+        }
+      }
+
+      if (!q) {
+        return true;
+      }
+
+      const nombre = (v.name || v.nombre || '').toLowerCase();
+      const apellido = (v.lastName || v.apellido || '').toLowerCase();
+      const doc = (v.document || v.documento || '').toString();
+      const email = (v.email || '').toLowerCase();
+      const badge = (v.badgeAccess || '').toString();
+      return (
+        nombre.includes(q) ||
+        apellido.includes(q) ||
+        doc.includes(q) ||
+        email.includes(q) ||
+        badge.includes(q)
+      );
+    });
     this.totalPaginas = Math.ceil(this.visitantesFiltrados.length / this.pageSize) || 1;
     this.page = 1;
     this.actualizarPaginacion();
