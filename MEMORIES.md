@@ -1,5 +1,15 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Sede y Permisos Preconfigurados por Usuario en Empleados y Visitantes (20-Oct-2026)**:
+  - **Empleados (Crear y Editar)**:
+    1. En `crear-empleado.component.ts` y `editar-empleado.component.ts`: Inyeccion de `SedeStateService` y `AuthService`.
+    2. Si el usuario tiene sede bloqueada o rol restringido (`sedeBloqueada = true`), el selector de sede se preestablece a la sede del usuario (`employee.sedeId = sedeActualId`) y se bloquea (`[disabled]="sedeBloqueada"`), mostrando unicamente la sede autorizada en el `<select>`.
+  - **Visitantes (Crear y Editar)**:
+    1. En `crear-visitante.component.ts` y `editar-visitante.component.ts`: Se inyecto `SedeStateService` y se implemento `aplicarFiltroSede()`.
+    2. El selector de **Anfitrión / Empleado a Visitar** se filtra estrictamente para mostrar solo los empleados pertenecientes a la sede del usuario.
+    3. La grilla de **Permisos por Pisos y Zonas** se acota dinamicamente para desplegar unicamente los pisos registrados en la sede autorizada (ej. Guacara), seleccionando de forma predeterminada el nivel base (PB) de dicha sede y previniendo asignacion indebida de niveles foraneos.
+    4. En `editar-visitante.component.ts` y `editar-visitante.component.html`: Se modernizo el componente a standalone con enrolamiento facial y soporte completo de permisos por piso en edicion.
+
 - **Identidad Andes Control Acceso y Reactividad en Selector de Sede (20-Oct-2026)**:
   - **Titulo y Favicon**:
     1. En `index.html`: Se actualizo `<title>` a `Andes Control Acceso` (reemplazando `NpApp`).

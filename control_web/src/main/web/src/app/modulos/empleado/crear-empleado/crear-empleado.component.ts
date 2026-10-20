@@ -6,9 +6,12 @@ import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 import { Empleado } from '../../../shared/empleado/empleado.model';
 import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
 import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-crear-empleado',
@@ -39,12 +42,17 @@ export class CrearEmpleadoComponent implements OnInit {
   gerenciasList: Gerencia[] = [];
   contratosList: TipoContrato[] = [];
 
+  sedeBloqueada: boolean = false;
+  private subs: Subscription[] = [];
+
   submitted = false;
   guardando = false;
 
   constructor(
     private empleService: EmpleadoService,
     private sedeService: SedeService,
+    private sedeStateService: SedeStateService,
+    private authService: AuthService,
     private gerenciaService: GerenciaService,
     private tipoContratoService: TipoContratoService,
     private router: Router,
@@ -52,12 +60,38 @@ export class CrearEmpleadoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.sedeBloqueada = this.sedeStateService.esSedeBloqueada() || this.authService.hasSedeRestringida();
+    const sedeActual = this.sedeStateService.getSedeActualId();
+    if (sedeActual) {
+      this.employee.sedeId = sedeActual;
+    }
+
+    this.subs.push(
+      this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+        if (id && (!this.employee.sedeId || this.sedeBloqueada)) {
+          this.employee.sedeId = id;
+        }
+      })
+    );
+
+    this.subs.push(
+      this.sedeStateService.sedeBloqueada$.subscribe(bloq => {
+        this.sedeBloqueada = bloq || this.authService.hasSedeRestringida();
+      })
+    );
+
     this.cargarCatalogos();
   }
 
   cargarCatalogos(): void {
     this.sedeService.getListSedes().subscribe({
-      next: (data) => (this.sedesList = data || []),
+      next: (data) => {
+        this.sedesList = data || [];
+        if (!this.employee.sedeId && this.sedesList.length > 0) {
+          const sedeActual = this.sedeStateService.getSedeActualId();
+          this.employee.sedeId = sedeActual || this.sedesList[0].id;
+        }
+      },
       error: (err) => console.log('Error sedes:', err)
     });
     this.gerenciaService.getListGerencias().subscribe({

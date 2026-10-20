@@ -8,6 +8,9 @@ import { PisoService } from '../../../shared/piso/piso.service';
 import { Piso } from '../../../shared/piso/piso.model';
 import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-crear-visitante',
@@ -38,27 +41,54 @@ export class CrearVisitanteComponent implements OnInit {
     pisoIds: []
   };
 
+  todosEmpleados: any[] = [];
   empleadosList: any[] = [];
+  todosPisos: Piso[] = [];
   pisosList: Piso[] = [];
   pisosSeleccionadosIds: Set<number> = new Set<number>();
   guardando: boolean = false;
+
+  filtroSedeId: number | null = null;
+  sedeBloqueada: boolean = false;
+  private subs: Subscription[] = [];
 
   constructor(
     private visiService: VisitanteService,
     private empleService: EmpleadoService,
     private pisoService: PisoService,
+    private sedeStateService: SedeStateService,
+    private authService: AuthService,
     private router: Router,
     private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
+    this.sedeBloqueada = this.sedeStateService.esSedeBloqueada() || this.authService.hasSedeRestringida();
+    this.filtroSedeId = this.sedeStateService.getSedeActualId();
+
+    this.subs.push(
+      this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+        this.filtroSedeId = id;
+        this.aplicarFiltroSede();
+      })
+    );
+
+    this.subs.push(
+      this.sedeStateService.sedeBloqueada$.subscribe(b => {
+        this.sedeBloqueada = b || this.authService.hasSedeRestringida();
+      })
+    );
+
     this.cargarEmpleados();
     this.cargarPisos();
   }
 
   cargarEmpleados(): void {
     this.empleService.getEmployeesList().subscribe({
-      next: (data) => (this.empleadosList = data || []),
+      next: (data) => {
+        this.todosEmpleados = data || [];
+        this.aplicarFiltroSede();
+      },
       error: (err) => console.error('Error al cargar empleados:', err)
     });
   }
@@ -66,19 +96,39 @@ export class CrearVisitanteComponent implements OnInit {
   cargarPisos(): void {
     this.pisoService.getPisosList().subscribe({
       next: (data) => {
-        this.pisosList = data || [];
-        // Por defecto preseleccionar PB o el primer piso disponible
-        if (this.pisosList.length > 0) {
-          const pb = this.pisosList.find(p => (p.piso || p.descripcion || '').toLowerCase().includes('pb') || (p.piso || p.descripcion || '').toLowerCase().includes('baja'));
-          if (pb && pb.id) {
-            this.pisosSeleccionadosIds.add(pb.id);
-          } else if (this.pisosList[0].id) {
-            this.pisosSeleccionadosIds.add(this.pisosList[0].id);
-          }
-        }
+        this.todosPisos = data || [];
+        this.aplicarFiltroSede();
       },
       error: (err) => console.error('Error al cargar pisos:', err)
     });
+  }
+
+  aplicarFiltroSede(): void {
+    if (this.filtroSedeId !== null && this.filtroSedeId !== undefined) {
+      const sId = Number(this.filtroSedeId);
+      this.empleadosList = this.todosEmpleados.filter(e => {
+        const empSedeId = e.sede ? (e.sede.id || e.sede.sede_id) : (e.sedeId || e.sede_id);
+        return empSedeId !== null && empSedeId !== undefined && Number(empSedeId) === sId;
+      });
+
+      this.pisosList = this.todosPisos.filter(p => {
+        const pisoSedeId = p.sede ? (p.sede.id || (p.sede as any).sede_id) : (p.sede_id || (p as any).sedeId);
+        return pisoSedeId !== null && pisoSedeId !== undefined && Number(pisoSedeId) === sId;
+      });
+    } else {
+      this.empleadosList = [...this.todosEmpleados];
+      this.pisosList = [...this.todosPisos];
+    }
+
+    // Auto-seleccionar PB de la sede asignada por defecto si no hay seleccion previa
+    if (this.pisosSeleccionadosIds.size === 0 && this.pisosList.length > 0) {
+      const pb = this.pisosList.find(p => (p.piso || p.descripcion || '').toLowerCase().includes('pb') || (p.piso || p.descripcion || '').toLowerCase().includes('baja'));
+      if (pb && pb.id) {
+        this.pisosSeleccionadosIds.add(pb.id);
+      } else if (this.pisosList[0].id) {
+        this.pisosSeleccionadosIds.add(this.pisosList[0].id);
+      }
+    }
   }
 
   onBiometricData(data: { fotoUrl?: string; faceVector?: string }): void {

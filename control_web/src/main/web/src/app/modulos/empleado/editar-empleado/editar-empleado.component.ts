@@ -5,9 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 import { BiometricCaptureComponent } from '../../../shared/components/biometric-capture/biometric-capture.component';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { GerenciaService, Gerencia } from '../../../shared/gerencia/gerencia.service';
 import { TipoContratoService, TipoContrato } from '../../../shared/tipo-contrato/tipo-contrato.service';
 import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-editar-empleado',
@@ -40,6 +43,9 @@ export class EditarEmpleadoComponent implements OnInit {
   gerenciasList: Gerencia[] = [];
   contratosList: TipoContrato[] = [];
 
+  sedeBloqueada: boolean = false;
+  private subs: Subscription[] = [];
+
   submitted = false;
   guardando = false;
 
@@ -48,6 +54,8 @@ export class EditarEmpleadoComponent implements OnInit {
     private router: Router,
     private empleService: EmpleadoService,
     private sedeService: SedeService,
+    private sedeStateService: SedeStateService,
+    private authService: AuthService,
     private gerenciaService: GerenciaService,
     private tipoContratoService: TipoContratoService,
     private alertModal: AlertModalService
@@ -55,6 +63,14 @@ export class EditarEmpleadoComponent implements OnInit {
 
   ngOnInit(): void {
     this.id = Number(this.route.snapshot.params['id']);
+    this.sedeBloqueada = this.sedeStateService.esSedeBloqueada() || this.authService.hasSedeRestringida();
+
+    this.subs.push(
+      this.sedeStateService.sedeBloqueada$.subscribe(bloq => {
+        this.sedeBloqueada = bloq || this.authService.hasSedeRestringida();
+      })
+    );
+
     this.cargarCatalogos();
     this.cargarEmpleado();
   }

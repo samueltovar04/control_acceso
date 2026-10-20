@@ -116,9 +116,11 @@
 
               <div class="col-md-4">
                 <label class="form-label small fw-bold">Sede</label>
-                <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId">
-                  <option [ngValue]="null">Seleccionar Sede...</option>
-                  <option *ngFor="let s of sedesList" [value]="s.id">{{ s.sede }}</option>
+                <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId" [disabled]="sedeBloqueada">
+                  <option *ngIf="!sedeBloqueada" [ngValue]="null">Seleccionar Sede...</option>
+                  <ng-container *ngFor="let s of sedesList">
+                    <option *ngIf="!sedeBloqueada || s.id === employee.sedeId" [value]="s.id">{{ s.sede }}</option>
+                  </ng-container>
                 </select>
               </div>
               <div class="col-md-4">
