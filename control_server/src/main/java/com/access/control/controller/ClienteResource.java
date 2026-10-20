@@ -126,8 +126,8 @@ public class ClienteResource {
             if (clienteDetails.getDocumento() != null) {
                 cliente.setDocumento(clienteDetails.getDocumento());
             }
-            if (clienteDetails.getCodigoInsignia() != null) {
-                cliente.setCodigoInsignia(clienteDetails.getCodigoInsignia());
+            if (clienteDetails.getCodigoInsignia() != null && !clienteDetails.getCodigoInsignia().trim().isEmpty()) {
+                cliente.setCodigoInsignia(clienteDetails.getCodigoInsignia().trim());
             }
             if (clienteDetails.getEmail() != null) {
                 cliente.setEmail(clienteDetails.getEmail());

@@ -201,6 +201,15 @@ public class AuthResource {
                     )).build();
                 }
 
+                // Detectar si el usuario corresponde a un Cliente (App movil / Portal Web Cliente)
+                com.access.control.model.Cliente clienteAsociado = clienteRepository.find("user.id", pgUser.getId()).firstResult();
+                if (clienteAsociado == null && pgUser.getEmail() != null) {
+                    clienteAsociado = clienteRepository.findByEmail(pgUser.getEmail());
+                }
+                if (clienteAsociado == null && pgUser.getUsername() != null) {
+                    clienteAsociado = clienteRepository.findByEmail(pgUser.getUsername());
+                }
+
                 // Obtener rol principal
                 String principalRole = "ROLE_EMPLEADO";
                 Set<String> rolesList = new HashSet<>();
@@ -214,7 +223,17 @@ public class AuthResource {
                         principalRole = pgUser.getAuthorities().iterator().next().getName();
                     }
                 } else {
+                    if (clienteAsociado != null) {
+                        principalRole = "ROLE_CLIENTE";
+                    }
                     rolesList.add(principalRole);
+                }
+
+                if (clienteAsociado != null) {
+                    rolesList.add("ROLE_CLIENTE");
+                    if (!pgUser.isAdminOrSuperAdmin()) {
+                        principalRole = "ROLE_CLIENTE";
+                    }
                 }
 
                 // Token SmallRye JWT
@@ -248,11 +267,6 @@ public class AuthResource {
                 resp.put("sedeId", pgUser.getSede() != null ? pgUser.getSede().getId() : null);
                 resp.put("sedeNombre", pgUser.getSede() != null ? pgUser.getSede().getSede() : null);
 
-                // Detectar si el usuario corresponde a un Cliente (App movil / Portal Web Cliente)
-                com.access.control.model.Cliente clienteAsociado = clienteRepository.find("user.id", pgUser.getId()).firstResult();
-                if (clienteAsociado == null && pgUser.getEmail() != null) {
-                    clienteAsociado = clienteRepository.findByEmail(pgUser.getEmail());
-                }
                 if (clienteAsociado != null) {
                     resp.put("clienteId", clienteAsociado.getId());
                     resp.put("documento", clienteAsociado.getDocumento());

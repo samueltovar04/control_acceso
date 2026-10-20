@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, ScrollView, Image, Vibration, Switch } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { getCotizacionBCV, reportarPagoMultimoneda, subscribeClientePayments } from '../services/paymentsService';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/env';
 
 export const PaymentsScreen = ({ route }) => {
-  const clienteId = route?.params?.clienteId || 1;
+  const [activeClienteId, setActiveClienteId] = useState(route?.params?.clienteId || null);
 
   // Real Backend Data
   const [cliente, setCliente] = useState(null);
@@ -36,15 +37,33 @@ export const PaymentsScreen = ({ route }) => {
   const [validandoCupon, setValidandoCupon] = useState(false);
   const [cuponInfo, setCuponInfo] = useState(null);
 
-  const fetchClienteAndBCV = async () => {
+  useEffect(() => {
+    async function initClienteId() {
+      if (route?.params?.clienteId) {
+        setActiveClienteId(Number(route.params.clienteId));
+      } else {
+        const storedId = await AsyncStorage.getItem('SAVED_CLIENTE_ID');
+        if (storedId) {
+          setActiveClienteId(Number(storedId));
+        }
+      }
+    }
+    initClienteId();
+  }, [route?.params?.clienteId]);
+
+  const clienteId = activeClienteId;
+
+  const fetchClienteAndBCV = async (cid) => {
+    const targetId = cid || clienteId;
+    if (!targetId) return;
     setLoading(true);
     try {
       // 1. Fetch real client profile
-      const clientRes = await axios.get(`${API_BASE_URL}/clientes/${clienteId}`, { timeout: 5000 });
+      const clientRes = await axios.get(`${API_BASE_URL}/clientes/${targetId}`, { timeout: 5000 });
       setCliente(clientRes.data);
 
       // 2. Fetch live BCV rate & membership pricing for this client
-      const bcvRes = await getCotizacionBCV(clienteId);
+      const bcvRes = await getCotizacionBCV(targetId);
       setBcvData(bcvRes);
     } catch (error) {
       console.warn('Error fetching client & BCV pricing from backend:', error.message);
@@ -53,10 +72,12 @@ export const PaymentsScreen = ({ route }) => {
     }
   };
 
-  const fetchPagos = async () => {
+  const fetchPagos = async (cid) => {
+    const targetId = cid || clienteId;
+    if (!targetId) return;
     setLoadingPagos(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/finanzas/pagos`, { timeout: 5000 });
+      const response = await axios.get(`${API_BASE_URL}/finanzas/pagos/cliente/${targetId}`, { timeout: 5000 });
       setPagos(response.data || []);
     } catch (error) {
       console.warn('Error fetching pagos:', error.message);
@@ -66,8 +87,10 @@ export const PaymentsScreen = ({ route }) => {
   };
 
   useEffect(() => {
-    fetchClienteAndBCV();
-    fetchPagos();
+    if (!clienteId) return;
+
+    fetchClienteAndBCV(clienteId);
+    fetchPagos(clienteId);
 
     // Subscribe to WebSocket real-time payment reconciliation events
     const unsubscribe = subscribeClientePayments(
@@ -75,16 +98,16 @@ export const PaymentsScreen = ({ route }) => {
       (eventData) => {
         try {
           Vibration.vibrate([0, 500, 200, 500]); // Haptic vibration feedback
-        } catch (e) {}
-        fetchClienteAndBCV();
-        fetchPagos();
+        } catch (e) { }
+        fetchClienteAndBCV(clienteId);
+        fetchPagos(clienteId);
         Alert.alert('🎉 ¡Pago Conciliado!', 'Su pago ha sido verificado y conciliado exitosamente por la administración. Su membresía está ACTIVA.');
       },
       (eventData) => {
         const motivo = eventData.motivoRechazo || eventData.mensaje || 'El número de referencia no coincide con el comprobante bancario.';
         setMotivoRechazo(motivo);
-        fetchClienteAndBCV();
-        fetchPagos();
+        fetchClienteAndBCV(clienteId);
+        fetchPagos(clienteId);
         setRejectionModalVisible(true);
       }
     );
@@ -153,8 +176,8 @@ export const PaymentsScreen = ({ route }) => {
     setSubmitting(true);
 
     try {
-      const tasaCalculada = bcvData?.tasaBCV || 45.2500;
-      let montoUsdVal = cuponInfo?.montoFinal != null ? cuponInfo.montoFinal : (bcvData?.precioBaseUSD || 30.00);
+      const tasaCalculada = bcvData?.tasaBCV || 0.00;
+      let montoUsdVal = cuponInfo?.montoFinal != null ? cuponInfo.montoFinal : (bcvData?.precioBaseUSD || 0.00);
       let montoVesVal = (montoUsdVal * tasaCalculada);
 
       const payload = {
@@ -259,10 +282,10 @@ export const PaymentsScreen = ({ route }) => {
       <View style={[
         styles.statusCard,
         !hasMembresiaAsignada ? { backgroundColor: '#757575' } :
-        estadoSuscripcionRaw === 'ACTIVA' || estadoSuscripcionRaw === 'AL_DIA' ? { backgroundColor: '#2e7d32' } :
-        estadoSuscripcionRaw === 'CANCELACION_PROGRAMADA' ? { backgroundColor: '#f57c00' } :
-        estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? { backgroundColor: '#ffa000' } :
-        { backgroundColor: '#c62828' }
+          estadoSuscripcionRaw === 'ACTIVA' || estadoSuscripcionRaw === 'AL_DIA' ? { backgroundColor: '#2e7d32' } :
+            estadoSuscripcionRaw === 'CANCELACION_PROGRAMADA' ? { backgroundColor: '#f57c00' } :
+              estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? { backgroundColor: '#ffa000' } :
+                { backgroundColor: '#c62828' }
       ]}>
         <Text style={styles.statusLabel}>
           Membresía Asociada: {hasMembresiaAsignada ? rawNombreMembresia : 'Sin membresía asignada'}
@@ -271,9 +294,9 @@ export const PaymentsScreen = ({ route }) => {
         {hasMembresiaAsignada && (
           <Text style={styles.statusValue}>
             {estadoSuscripcionRaw === 'ACTIVA' || estadoSuscripcionRaw === 'AL_DIA' ? 'MEMBRESÍA ACTIVA' :
-             estadoSuscripcionRaw === 'CANCELACION_PROGRAMADA' ? 'CANCELACIÓN PROGRAMADA' :
-             estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? 'PAGO EN REVISIÓN (ACCESO TEMPORAL)' :
-             'MOROSO / PAGO PENDIENTE'}
+              estadoSuscripcionRaw === 'CANCELACION_PROGRAMADA' ? 'CANCELACIÓN PROGRAMADA' :
+                estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? 'PAGO EN REVISIÓN (ACCESO TEMPORAL)' :
+                  'MOROSO / PAGO PENDIENTE'}
           </Text>
         )}
 
@@ -355,16 +378,16 @@ export const PaymentsScreen = ({ route }) => {
         style={[
           styles.reportBtn,
           !isReportButtonEnabled ? { backgroundColor: '#b0bec5' } :
-          estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? { backgroundColor: '#ffa000' } : {}
+            estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? { backgroundColor: '#ffa000' } : {}
         ]}
         onPress={() => isReportButtonEnabled && setModalVisible(true)}
         disabled={!isReportButtonEnabled}
       >
         <Text style={styles.reportBtnText}>
           {!hasMembresiaAsignada ? '🚫 Sin Membresía Asociada' :
-           estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? '💳 Reportar Otro Pago' :
-           isReportButtonEnabled ? '💳 Reportar Pago Multimoneda' :
-           '✓ Al Día / Sin Pagos Pendientes'}
+            estadoSuscripcionRaw === 'PENDIENTE_CONCILIAR' ? '💳 Reportar Otro Pago' :
+              isReportButtonEnabled ? '💳 Reportar Pago Multimoneda' :
+                '✓ Al Día / Sin Pagos Pendientes'}
         </Text>
       </TouchableOpacity>
 

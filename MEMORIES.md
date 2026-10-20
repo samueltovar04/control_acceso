@@ -1,5 +1,12 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Filtrado de Historial de Pagos y Aislamiento por Cliente (20-Oct-2026)**:
+  - **Problema**: El endpoint `/api/v1/finanzas/pagos` retornaba siempre todos los pagos registrados en el sistema, exponiendo transacciones de otros clientes a la app movil.
+  - **Solucion**:
+    1. En `FinanzasResource.java`: Se anadio parametro opcional `@QueryParam("clienteId") Long clienteId` a `getTodosPagos()`. Si viene presente, delega en `pagoRepository.findByCliente(clienteId)`. Ademas, si la peticion llega con token JWT de un usuario con rol exclusivo `ROLE_CLIENTE`, resuelve el cliente asociado y filtra automaticamente sus pagos, impidiendo el acceso a pagos ajenos.
+    2. En `PaymentsScreen.js` (App movil): En `fetchPagos`, se envia `{ params: { clienteId } }` en la peticion `GET /finanzas/pagos`.
+  - **Validacion**: Compilacion exitosa de `control_server` con `./mvnw compile -DskipTests`.
+
 - **Resolucion de Compilacion Docker Frontend (20-Oct-2026)**:
   - **Problema**: `TS-996008: Component EditarVisitanteComponent is standalone, and cannot be declared in an NgModule`.
   - **Causa**: Al refactorizar `EditarVisitanteComponent` a componente standalone (`standalone: true`), continuaba listado dentro del arreglo `declarations` de `AppModule`.
