@@ -1,5 +1,11 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Resolucion de Compilacion Docker Frontend (20-Oct-2026)**:
+  - **Problema**: `TS-996008: Component EditarVisitanteComponent is standalone, and cannot be declared in an NgModule`.
+  - **Causa**: Al refactorizar `EditarVisitanteComponent` a componente standalone (`standalone: true`), continuaba listado dentro del arreglo `declarations` de `AppModule`.
+  - **Solucion**: En `control_web/src/main/web/src/app/app.module.ts`, se removio `EditarVisitanteComponent` de `declarations` y se paso al arreglo `imports`.
+  - **Validacion**: Compilacion limpia en entorno Docker `node:20-alpine` (`docker build -t test-frontend -f control_web/Dockerfile control_web`) completada con codigo de salida 0.
+
 - **Sede y Permisos Preconfigurados por Usuario en Empleados y Visitantes (20-Oct-2026)**:
   - **Empleados (Crear y Editar)**:
     1. En `crear-empleado.component.ts` y `editar-empleado.component.ts`: Inyeccion de `SedeStateService` y `AuthService`.
