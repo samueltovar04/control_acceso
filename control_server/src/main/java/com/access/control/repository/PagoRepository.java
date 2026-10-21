@@ -9,7 +9,7 @@ import java.util.List;
 public class PagoRepository implements PanacheRepository<Pago> {
 
     public List<Pago> findByCliente(Long clienteId) {
-        return list("cliente.id", clienteId);
+        return list("cliente.id = ?1 order by id desc", clienteId);
     }
 
     public List<Pago> findPendientesPorCliente(Long clienteId) {
