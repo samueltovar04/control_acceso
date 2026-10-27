@@ -6,7 +6,7 @@ import { Piso } from './piso.model';
 @Injectable()
 export class PisoService {
 
-private baseUrl = 'http://localhost:8080/api/v1/pisos';
+private baseUrl = '/api/v1/pisos';
 
 constructor(private http: HttpClient) { }
 
@@ -24,7 +24,7 @@ constructor(private http: HttpClient) { }
   }
 
   deletePiso(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`, { responseType: 'text' });
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
   getPisosList(): Observable<any> {

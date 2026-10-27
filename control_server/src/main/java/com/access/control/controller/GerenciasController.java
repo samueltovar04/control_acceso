@@ -2,51 +2,58 @@ package com.access.control.controller;
 
 import com.access.control.model.Gerencia;
 import com.access.control.services.GerenciaService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/gerencias")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class GerenciasController {
-    @Autowired
-    GerenciaService servicioGerencias;
-    @GetMapping("gerencias/{id}")
-    public ResponseEntity<Gerencia> getArticleById(@PathVariable("id") Long id) {
-        Gerencia gerencias = servicioGerencias.getGerenciaById(id);
-        return new ResponseEntity<Gerencia>(gerencias, HttpStatus.OK);
+
+    @Inject
+    GerenciaService gerenciaService;
+
+    @GET
+    public List<Gerencia> getAllGerencias() {
+        return gerenciaService.getListGerencias();
     }
-    @GetMapping("gerencias")
-    public ResponseEntity<List<Gerencia>> getAllGerencias() {
-        List<Gerencia> list = servicioGerencias.getListGerencias();
-        return new ResponseEntity<List<Gerencia>>(list, HttpStatus.OK);
-    }
-    @PostMapping("gerencias")
-    public ResponseEntity<Void> addGerencias(@RequestBody Gerencia gerencias, UriComponentsBuilder builder) {
-        Gerencia flag = servicioGerencias.addGerencia(gerencias);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+
+    @GET
+    @Path("/{id}")
+    public Response getGerenciaById(@PathParam("id") Long id) {
+        Gerencia g = gerenciaService.getGerenciaById(id);
+        if (g == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/gerencias/{id}").buildAndExpand(gerencias.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return Response.ok(g).build();
     }
-    @PutMapping("gerencias")
-    public ResponseEntity<Gerencia> updateGerencias(@RequestBody Gerencia gerencias,@PathVariable("id") Long id) {
-        gerencias = servicioGerencias.updateGerencia(gerencias,id);
-        return new ResponseEntity<Gerencia>(gerencias, HttpStatus.OK);
+
+    @POST
+    public Response addGerencia(Gerencia gerencia) {
+        Gerencia g = gerenciaService.addGerencia(gerencia);
+        return Response.status(Response.Status.CREATED).entity(g).build();
     }
-    @DeleteMapping("gerencias/{id}")
-    public ResponseEntity<Void> deleteGerencias(@PathVariable("id") Long id) {
-        if(servicioGerencias.deleteGerencia(servicioGerencias.getGerenciaById(id))){
-            return new ResponseEntity<Void>(HttpStatus.OK);
+
+    @PUT
+    @Path("/{id}")
+    public Response updateGerencia(@PathParam("id") Long id, Gerencia gerencia) {
+        Gerencia g = gerenciaService.updateGerencia(gerencia, id);
+        if (g == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.ok(g).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteGerencia(@PathParam("id") Long id) {
+        Gerencia g = gerenciaService.getGerenciaById(id);
+        if (g != null && gerenciaService.deleteGerencia(g)) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }

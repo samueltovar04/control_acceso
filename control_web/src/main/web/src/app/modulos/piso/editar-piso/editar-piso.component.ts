@@ -5,44 +5,55 @@ import { FormBuilder } from '@angular/forms';
 import { PisoService } from '../../../shared/piso/piso.service';
 import { Piso } from "../../../shared/piso/piso.model";
 
+import { SedeService, Sede } from '../../../shared/sede/sede.service';
+
 @Component({
   selector: 'app-editar-piso',
   templateUrl: './editar-piso.component.html',
   styleUrls: ['./editar-piso.component.css']
 })
-
 export class EditarPisoComponent implements OnInit {
 
-piso: Piso;
+  piso: Piso;
+  sedesList: Sede[] = [];
+  id: number;
+  submitted = false;
 
-id: number;
-submitted = false;
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private pisoService: PisoService,
+    private sedeService: SedeService
+  ) { }
 
-constructor(private route: ActivatedRoute,private router: Router,private pisoService: PisoService) { }
+  ngOnInit() {
+    this.submitted = false;
+    this.piso = new Piso();
+    this.id = this.route.snapshot.params['id'];
 
- ngOnInit() {
-   this.submitted = false;
-   this.piso = new Piso();
-   this.id = this.route.snapshot.params['id'];
+    this.sedeService.getListSedes().subscribe(
+      data => this.sedesList = data,
+      err => console.error('Error cargando sedes', err)
+    );
 
     this.pisoService.getPiso(this.id)
       .subscribe(data => {
-        console.log(data)
         this.piso = data;
-      }, error => console.log(error));
-
-  }
-  newEmployee(): void {
-    this.submitted = false;
-    this.piso = new Piso();
+        if (this.piso.sede && this.piso.sede.id) {
+          this.piso.sede_id = this.piso.sede.id;
+          this.piso.sedeId = this.piso.sede.id;
+        }
+      }, error => console.error(error));
   }
 
   save() {
-    console.log(this.piso);
-    this.pisoService.updatePiso(this.id,this.piso)
-      .subscribe(data => console.log(data), error => console.log(error));
-    this.piso = new Piso();
-    this.gotoList();
+    if (this.piso.sede_id) {
+      this.piso.sedeId = this.piso.sede_id;
+    }
+    this.pisoService.updatePiso(this.id, this.piso)
+      .subscribe(data => {
+        this.gotoList();
+      }, error => console.error(error));
   }
 
   onSubmit() {

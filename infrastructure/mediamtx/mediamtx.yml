@@ -1,0 +1,41 @@
+# Paths are registered at runtime by the Quarkus backend (cam-{dispositivoId}) from the dispositivos table.
+api: yes
+apiAddress: :9997
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcAdditionalHosts: [127.0.0.1, host.docker.internal]
+
+rtsp: yes
+rtspAddress: :8554
+rtmp: no
+hls: no
+srt: no
+paths:
+  entrada:
+    source: rtsp://admin:Family09@192.168.1.197:554/Streaming/Channels/102
+    sourceOnDemand: yes
+  cam1:
+    source: rtsp://admin:Family09@192.168.1.197:554/Streaming/Channels/202
+    sourceOnDemand: yes
+  cam2:
+    source: rtsp://admin:Family09@192.168.1.197:554/Streaming/Channels/302
+    sourceOnDemand: yes
+  cam3:
+    source: rtsp://admin:Family09@192.168.1.197:554/Streaming/Channels/402
+    sourceOnDemand: yes
+authMethod: internal
+authInternalUsers:
+  # Viewers: read-only, nobody may publish
+  - user: any
+    pass:
+    ips: []
+    permissions:
+      - action: read
+  # Control API only from localhost and the docker bridge networks (backend container)
+  - user: any
+    pass:
+    ips: ["127.0.0.1", "::1", "172.16.0.0/12"]
+    permissions:
+      - action: api

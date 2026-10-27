@@ -1,36 +1,20 @@
 package com.access.control.services;
 
 import com.access.control.model.Dispositivo;
-import org.springframework.http.ResponseEntity;
-
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public interface DispositivoService {
-    List<Dispositivo> getListDispositivos();
-
-    List<Dispositivo> findAllEnabled();
-
-    Optional<Dispositivo> findById(Long id);
-
     Dispositivo getDispositivoById(Long id);
-
-    Dispositivo getOneDispositivo(Long id);
-
-    ResponseEntity<List<Dispositivo>> getListDispositivosActivos();
-
-    Dispositivo addDispositivo(Dispositivo stock);
-
+    List<Dispositivo> getListDispositivos();
+    List<Dispositivo> findAllEnabled();
+    Dispositivo addDispositivo(Dispositivo dispositivo);
     Dispositivo updateDispositivo(Dispositivo dispositivo, Long id);
-
-    Dispositivo saveDispositivo(Dispositivo dispositivo);
-
-    Boolean deleteById(Long id);
-
-    Boolean deleteDispositivo(Dispositivo obj);
-
-    ResponseEntity<Map<String, String>> checkFingerPrint();
-
-    ResponseEntity<Map<String, String>> getHuella();
+    Dispositivo toggleState(Long id);
+    boolean deleteDispositivo(Dispositivo dispositivo);
+    boolean checkPing(Dispositivo dispositivo);
+    List<Dispositivo> pingAllDispositivos();
+    com.access.control.dto.DispositivoEscaneoDTO escanearDispositivo(Long id);
+    List<com.access.control.dto.DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados();
+    List<com.access.control.dto.DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados(String subredBase, List<String> ipsEspecificas);
+    List<Dispositivo> registrarLote(List<Dispositivo> dispositivos);
 }

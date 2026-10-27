@@ -1,26 +1,16 @@
 package com.access.control.model;
 
-import javax.persistence.*;
-import java.io.Serializable;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name="gerencias")
-public class Gerencia implements Serializable {
-    private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    @Column(name = "id")
-    private Long id;
-    @Column
+@Table(name = "gerencias")
+public class Gerencia extends AbstractEntity {
+
+    @Column(name = "gerencia")
     private String gerencia;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getGerencia() {
         return gerencia;
@@ -28,5 +18,13 @@ public class Gerencia implements Serializable {
 
     public void setGerencia(String gerencia) {
         this.gerencia = gerencia;
+    }
+
+    public String getNombre() {
+        return gerencia;
+    }
+
+    public void setNombre(String nombre) {
+        this.gerencia = nombre;
     }
 }

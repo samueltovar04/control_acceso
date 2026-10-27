@@ -1,0 +1,18 @@
+name: control_de_acceso_mobile
+description: "Aplicación móvil oficial de Control de Acceso, Biometría Facial Multi-Ángulo, Pase Digital QR y Telemetría IoT Wearable"
+version: 1.0.0+1
+homepage: https://acceso.andessistemas.com
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

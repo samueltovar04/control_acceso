@@ -1,54 +1,21 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import javax.persistence.*;
-import java.io.Serializable;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name="piso_permiso")
-public class PisoPermisoVisita extends AbstractEntity implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Table(name = "piso_permiso_visitas")
+public class PisoPermisoVisita extends AbstractEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference(value = "visitaJson")
-    @JoinColumn(name = "badge_access",referencedColumnName = "badge_access")
+    @ManyToOne
+    private Piso piso;
+
+    @ManyToOne
     private Visita visita;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonBackReference(value = "pisovJson")
-    @JoinColumn(name = "piso_id",referencedColumnName = "id")
-    private PisoVisita piso;
+    public Piso getPiso() { return piso; }
+    public void setPiso(Piso piso) { this.piso = piso; }
 
-    private Long pisoId;
-
-    public Long getPisoId() {
-        return pisoId;
-    }
-
-    public void setPisoId(Long pisoId) {
-        this.pisoId = pisoId;
-    }
-
-    public PisoPermisoVisita(PisoVisita piso,Integer state){
-        this.piso=piso;
-        this.setState(state);
-    }
-
-    public PisoVisita getPiso() {
-        return piso;
-    }
-
-    public void setPiso(PisoVisita piso) {
-        this.piso = piso;
-    }
-
-    public Visita getVisita() {
-        return visita;
-    }
-
-    public void setVisita(Visita visita) {
-        this.visita = visita;
-    }
+    public Visita getVisita() { return visita; }
+    public void setVisita(Visita visita) { this.visita = visita; }
 }

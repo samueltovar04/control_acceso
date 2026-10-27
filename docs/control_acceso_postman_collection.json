@@ -1,0 +1,435 @@
+{
+  "info": {
+    "_postman_id": "c8f93e2b-1a42-4f11-9e73-9821a4bc5190",
+    "name": "Sistema Control de Acceso, Membresias y Pagos BCV",
+    "description": "Coleccion de pruebas de integracion para el backend Quarkus 3.x con soporte de membresias, tasas oficiales BCV multimoneda, control de acceso de baja latencia (<50ms) y conciliacion bancaria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "type": "string"
+    },
+    {
+      "key": "cliente_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pago_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Clientes y Verificacion",
+      "item": [
+        {
+          "name": "Validar Disponibilidad (Cedula y Correo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/clientes/validar-disponibilidad?cedula=V-24123456&correo=cliente@gymaccess.com",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes", "validar-disponibilidad"],
+              "query": [
+                {
+                  "key": "cedula",
+                  "value": "V-24123456"
+                },
+                {
+                  "key": "correo",
+                  "value": "cliente@gymaccess.com"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registro de Cliente desde App",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documento\": \"V-24123456\",\n  \"nombre\": \"Mariana\",\n  \"apellido\": \"Torres\",\n  \"email\": \"mariana.torres@gmail.com\",\n  \"telefono\": \"+584121234567\",\n  \"membresiaId\": 1,\n  \"faceVector\": \"data:image/jpeg;base64,/9j/4AAQ...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/clientes/registro",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clientes", "registro"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Membresias y Tasas BCV",
+      "item": [
+        {
+          "name": "Consultar Cotizacion BCV y Desglose",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/finanzas/cotizacion-actual?clienteId={{cliente_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "finanzas", "cotizacion-actual"],
+              "query": [
+                {
+                  "key": "clienteId",
+                  "value": "{{cliente_id}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Catalogo de Membresias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/membresias",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "membresias"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sincronizar Tasas Oficiales BCV Manual (DolarApi)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/tasa-bcv/sincronizar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "tasa-bcv", "sincronizar"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Pagos y Conciliacion",
+      "item": [
+        {
+          "name": "Reportar Pago Multimoneda (App Cliente Multipart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "clienteId",
+                  "value": "{{cliente_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "montoOriginal",
+                  "value": "50.00",
+                  "type": "text"
+                },
+                {
+                  "key": "monedaDeclarada",
+                  "value": "USD",
+                  "type": "text"
+                },
+                {
+                  "key": "tasaBcv",
+                  "value": "45.2500",
+                  "type": "text"
+                },
+                {
+                  "key": "montoEquivalenteVES",
+                  "value": "2262.50",
+                  "type": "text"
+                },
+                {
+                  "key": "metodoPago",
+                  "value": "PAGO_MOVIL",
+                  "type": "text"
+                },
+                {
+                  "key": "numeroReferencia",
+                  "value": "9812401",
+                  "type": "text"
+                },
+                {
+                  "key": "fechaPago",
+                  "value": "2026-10-13",
+                  "type": "text"
+                },
+                {
+                  "key": "ticketFile",
+                  "description": "Comprobante de pago o captura de pantalla",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/finanzas/pagos/reportar-multimoneda",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "finanzas", "pagos", "reportar-multimoneda"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar Pago Directo en Caja (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": {{cliente_id}},\n  \"monto\": 50.00,\n  \"metodoPago\": \"EFECTIVO_USD\",\n  \"monedaDeclarada\": \"USD\",\n  \"registradoPor\": \"Admin Central\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pagos/registrar-directo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pagos", "registrar-directo"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bandeja de Pagos Pendientes por Conciliar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/finanzas/conciliacion/pendientes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "finanzas", "conciliacion", "pendientes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Conciliar Pago (Aprobar y Activar Membresia)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioConciliaId\": 1,\n  \"observaciones\": \"Conciliado exitosamente contra estado de cuenta BDV\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pagos/{{pago_id}}/conciliar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pagos", "{{pago_id}}", "conciliar"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar Pago (Bloquear Acceso)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"El numero de referencia no coincide con las transferencias del dia.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pagos/{{pago_id}}/rechazar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pagos", "{{pago_id}}", "rechazar"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Torniquetes y Acceso IoT (<50ms)",
+      "item": [
+        {
+          "name": "Validar Paso en Torniquete (Cedula / RFID / QR)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/acceso/validar/V-24123456?dispositivo=TORNIQUETE_ENTRADA_1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "acceso", "validar", "V-24123456"],
+              "query": [
+                {
+                  "key": "dispositivo",
+                  "value": "TORNIQUETE_ENTRADA_1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Apertura Remota de Rele (Admin Manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operador\": \"Supervisor Sala\",\n  \"ip\": \"192.168.1.168\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/acceso/dispositivo/1/abrir",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "acceso", "dispositivo", "1", "abrir"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. Dashboard y Reportes Financieros",
+      "item": [
+        {
+          "name": "Metricas Consolidadas del Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/dashboard/metricas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "dashboard", "metricas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reporte Financiero (Mensual / Semanal)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reportes/financiero?periodo=mensual",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reportes", "financiero"],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "mensual"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Bancos y Cuentas Receptoras",
+      "item": [
+        {
+          "name": "Listar Bancos Activos para Pagos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/bancos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bancos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar Bancos por Tipo (PAGO_MOVIL, TRANSFERENCIA, ZELLE, BINANCE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/bancos?tipo=PAGO_MOVIL",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bancos"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "PAGO_MOVIL"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear / Registrar Cuenta Bancaria Receptora",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Banesco Banco Universal\",\n  \"codigo\": \"0134\",\n  \"tipo\": \"PAGO_MOVIL\",\n  \"numeroCuenta\": \"01340001000000000001\",\n  \"titular\": \"Control Acceso C.A.\",\n  \"documentoTitular\": \"J-123456789\",\n  \"telefono\": \"04141234567\",\n  \"email\": \"pagos@controlacceso.com\",\n  \"moneda\": \"VES\",\n  \"notasInstruccion\": \"Reportar numero de referencia\",\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/bancos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bancos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar Cuenta Bancaria por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/bancos/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bancos", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

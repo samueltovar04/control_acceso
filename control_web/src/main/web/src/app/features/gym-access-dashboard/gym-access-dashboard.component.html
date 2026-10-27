@@ -1,0 +1,204 @@
+<div class="gym-dashboard-wrapper">
+  <!-- PESTANIAS DE ACCION DEL DASHBOARD (SIN TOPBAR DUPLICADO) -->
+  <nav class="dashboard-tabs-bar" aria-label="Dashboard Tabs">
+    <div class="tabs-list">
+      <button 
+        *ngFor="let tab of tabs" 
+        class="tab-btn" 
+        [class.active]="activeTab === tab.id"
+        (click)="setTab(tab.id)"
+        type="button">
+        <i class="bi" [ngClass]="tab.icon"></i>
+        <span>{{ tab.label }}</span>
+        <span *ngIf="activeTab === tab.id" class="tab-indicator"></span>
+      </button>
+    </div>
+
+    <div class="tabs-status-pill">
+      <span class="live-dot"></span>
+      <span class="status-text">SISTEMA EN VIVO</span>
+    </div>
+  </nav>
+
+  <!-- VISTA 1: ACTIVE ACCESS CONTROL (GRID 3 COLUMNAS) -->
+  <main class="gym-grid-container" *ngIf="activeTab === 'access'">
+    <!-- COLUMNA 1: LIVE ACCESS LOG -->
+    <section class="grid-col col-log">
+      <app-live-access-log></app-live-access-log>
+    </section>
+
+    <!-- COLUMNA 2: HIGHLIGHT PANEL (BADGE DE ASISTENCIA) -->
+    <section class="grid-col col-highlight">
+      <app-highlight-badge></app-highlight-badge>
+    </section>
+
+    <!-- COLUMNA 3: LIVE METRICS & STATUS -->
+    <section class="grid-col col-metrics">
+      <app-live-metrics-status></app-live-metrics-status>
+    </section>
+  </main>
+
+  <!-- VISTA 2: MEMBERS -->
+  <section class="tab-view-container" *ngIf="activeTab === 'members'">
+    <div class="tab-view-header">
+      <div class="view-title-group">
+        <h3 class="view-title">Miembros Registrados</h3>
+        <p class="view-subtitle">Gestion y consulta rapida de clientes y membresias activas</p>
+      </div>
+      <div class="search-input-wrap">
+        <i class="bi bi-search"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="membersSearch" 
+          placeholder="Buscar por nombre o documento..." 
+          class="dark-search-input" />
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div *ngIf="loadingMembers" class="loading-state">
+        <i class="bi bi-arrow-repeat spin"></i>
+        <span>Cargando miembros...</span>
+      </div>
+
+      <table *ngIf="!loadingMembers" class="dark-data-table">
+        <thead>
+          <tr>
+            <th>CLIENTE</th>
+            <th>DOCUMENTO</th>
+            <th>TELEFONO</th>
+            <th>MEMBRESIA</th>
+            <th>ESTADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of filteredMembers">
+            <td>
+              <div class="client-cell">
+                <img 
+                  [src]="m.foto || 'https://ui-avatars.com/api/?name=' + (m.nombre || 'U') + '&background=0284c7&color=fff'" 
+                  alt="" 
+                  class="client-avatar-mini" />
+                <span class="client-name">{{ m.nombre }} {{ m.apellido }}</span>
+              </div>
+            </td>
+            <td>{{ m.documento || '---' }}</td>
+            <td>{{ m.telefono || '---' }}</td>
+            <td>{{ m.membresia?.nombre || 'General' }}</td>
+            <td>
+              <span class="status-badge" [class.badge-active]="m.estadoSuscripcion === 'ACTIVA' || m.estadoSuscripcion === 'PAGADO'">
+                {{ m.estadoSuscripcion || 'ACTIVA' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="filteredMembers.length === 0">
+            <td colspan="5" class="empty-cell">No se encontraron clientes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- VISTA 3: HISTORY -->
+  <section class="tab-view-container" *ngIf="activeTab === 'history'">
+    <div class="tab-view-header">
+      <div class="view-title-group">
+        <h3 class="view-title">Historial de Accesos al Gimnasio</h3>
+        <p class="view-subtitle">Registros verificados de ingreso por torniquete biometrico</p>
+      </div>
+      <div class="search-input-wrap">
+        <i class="bi bi-search"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="historySearch" 
+          placeholder="Buscar en historial..." 
+          class="dark-search-input" />
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div *ngIf="loadingHistory" class="loading-state">
+        <i class="bi bi-arrow-repeat spin"></i>
+        <span>Cargando historial de accesos...</span>
+      </div>
+
+      <table *ngIf="!loadingHistory" class="dark-data-table">
+        <thead>
+          <tr>
+            <th>FECHA / HORA</th>
+            <th>CLIENTE</th>
+            <th>DOCUMENTO</th>
+            <th>METODO</th>
+            <th>RESULTADO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of filteredHistory">
+            <td>{{ h.fechaHora | date:'medium' }}</td>
+            <td>
+              <div class="client-cell">
+                <img 
+                  [src]="h.cliente?.foto || 'https://ui-avatars.com/api/?name=' + (h.cliente?.nombre || 'U') + '&background=10b981&color=fff'" 
+                  alt="" 
+                  class="client-avatar-mini" />
+                <span class="client-name">{{ h.cliente?.nombre }} {{ h.cliente?.apellido }}</span>
+              </div>
+            </td>
+            <td>{{ h.cliente?.documento || '---' }}</td>
+            <td>{{ h.metodoVerificacion || 'FACIAL / BIOMETRICO' }}</td>
+            <td>
+              <span class="status-badge" [class.badge-active]="h.concedido">
+                {{ h.concedido ? 'PERMITIDO' : 'DENEGADO' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="filteredHistory.length === 0">
+            <td colspan="5" class="empty-cell">No hay registros de accesos con clientes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- VISTA 4: SETTINGS -->
+  <section class="tab-view-container" *ngIf="activeTab === 'settings'">
+    <div class="tab-view-header">
+      <div class="view-title-group">
+        <h3 class="view-title">Configuracion del Dashboard</h3>
+        <p class="view-subtitle">Parametros de aforo, pulso de rele y monitoreo en tiempo real</p>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-form">
+        <div class="form-group">
+          <label>Capacidad Maxima del Gimnasio (Aforo)</label>
+          <input type="number" [(ngModel)]="maxCapacity" class="dark-input" />
+          <small class="hint">Define el aforo limite para el calculo del porcentaje en vivo.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Tiempo de Pulso de Apertura Remota (ms)</label>
+          <input type="number" [(ngModel)]="relayPulseMs" class="dark-input" />
+          <small class="hint">Duracion en milisegundos que permanece activado el rele del torniquete.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Frecuencia de Actualizacion Radar (segundos)</label>
+          <input type="number" [(ngModel)]="autoRefreshSeconds" class="dark-input" />
+          <small class="hint">Intervalo para sincronizar las metricas activas en pantalla.</small>
+        </div>
+
+        <div class="form-actions">
+          <button (click)="guardarSettings()" class="btn-save-settings" type="button">
+            <i class="bi bi-check-circle-fill"></i>
+            Guardar Parametros
+          </button>
+          <span *ngIf="settingsSaved" class="saved-alert">
+            <i class="bi bi-check2"></i> Parametros guardados con exito
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -2,57 +2,50 @@ package com.access.control.services;
 
 import com.access.control.model.Gerencia;
 import com.access.control.repository.GerenciaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
 
-@Service
-public class GerenciaServiceImpl implements GerenciaService{
-    @Autowired
-    GerenciaRepository dao;
-    @Override
-    public List<Gerencia> getListGerencias(Object... params) {
-        if(params != null && params.length>0){
-            return dao.findAll();
-        }else {
-            return (List<Gerencia>) dao.findAll();
-        }
-    }
+@ApplicationScoped
+public class GerenciaServiceImpl implements GerenciaService {
 
-    @Override
-    public Gerencia getGerencia(Gerencia params) {
-        return null;
-    }
-
-    @Override
-    public Optional<Gerencia> findById(Long id) {
-        return Optional.empty();
-    }
+    @Inject
+    GerenciaRepository gerenciaRepository;
 
     @Override
     public Gerencia getGerenciaById(Long id) {
-        return null;
+        return gerenciaRepository.findById(id);
     }
 
     @Override
-    public Gerencia addGerencia(Gerencia obj) {
-        return dao.save(obj);
+    public List<Gerencia> getListGerencias() {
+        return gerenciaRepository.listAll();
     }
 
     @Override
-    public Gerencia updateGerencia(Gerencia obj, Long id) {
-        if(dao.findById(id).isPresent()) {
-            return dao.save(obj);
-        }else{
-            return null;
+    @Transactional
+    public Gerencia addGerencia(Gerencia gerencia) {
+        gerenciaRepository.persist(gerencia);
+        return gerencia;
+    }
+
+    @Override
+    @Transactional
+    public Gerencia updateGerencia(Gerencia gerencia, Long id) {
+        Gerencia g = gerenciaRepository.findById(id);
+        if (g != null) {
+            g.setGerencia(gerencia.getGerencia() != null ? gerencia.getGerencia() : gerencia.getNombre());
         }
+        return g;
     }
 
     @Override
-    public Boolean deleteGerencia(Gerencia obj) {
-        dao.delete(obj);
-        return dao.existsById(obj.getId());
+    @Transactional
+    public boolean deleteGerencia(Gerencia gerencia) {
+        if (gerencia != null && gerencia.getId() != null) {
+            return gerenciaRepository.deleteById(gerencia.getId());
+        }
+        return false;
     }
 }

@@ -1,0 +1,75 @@
+/* left-menu.component.css */
+.sidebar-wrapper {
+  background: radial-gradient(circle at top left, #111827 0%, #090d16 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.brand-badge {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.menu-section {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.08em;
+  color: #64748b !important;
+}
+
+.nav-link {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+  color: #94a3b8 !important;
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+
+.nav-link.active {
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.05) 100%) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15);
+  font-weight: 600;
+}
+
+.nav-link.active i {
+  color: #38bdf8 !important;
+}
+
+/* Custom modern scrollbar for sidebar */
+.sidebar-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.5);
+}
+

@@ -1,122 +1,119 @@
 package com.access.control.services;
 
 import com.access.control.dto.VisitaDto;
-import com.access.control.model.PisoPermisoVisita;
-import com.access.control.model.PisoVisita;
 import com.access.control.model.Visita;
-import com.access.control.repository.PisoVisitaRepository;
 import com.access.control.repository.VisitaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
-@Service("visitasServiceImpl")
-public class VisitasServiceImpl implements VisitasService{
-    @Autowired
-    VisitaRepository dao;
-    @Autowired
-    PisoVisitaRepository pisoDao;
+@ApplicationScoped
+public class VisitasServiceImpl implements VisitasService {
+
+    @Inject
+    VisitaRepository visitaRepository;
+
+    @Inject
+    com.access.control.repository.PisoRepository pisoRepository;
+
+    @Inject
+    com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
 
     @Override
-    @Transactional
     public List<Visita> getListVisitas() {
-        return dao.findAll();
+        return visitaRepository.listAll();
     }
 
     @Override
-    @Transactional
     public Visita getVisitaById(Long id) {
-        Visita vis = dao.findById(id).orElse(null);
-        if (vis != null)
-            vis.getListPisos().forEach(
-                    p->{
-                        if(p!=null)
-                            p.setPisoId(p.getPiso().getId());
-                    }
-            );
-        return vis;
+        return visitaRepository.findById(id);
     }
 
     @Override
     @Transactional
-    public Visita addVisita(VisitaDto visitante) {
-        List<PisoVisita> pisos = pisoDao.findAllState(1);
-
-        List<PisoPermisoVisita> listpp = new ArrayList<>();
-        pisos.forEach(
-                p->{
-                    listpp.add(new PisoPermisoVisita(p,0));
-                }
-        );
-        Visita visita = new Visita(listpp);
-        visita.setBadgeAccess(visitante.getBadgeAccess());
-        visita.setDocument(visitante.getDocument());
-        visita.setTypeDocument(visitante.getTypeDocument());
-        visita.setName(visitante.getName());
-        visita.setLastName(visitante.getLastName());
-        visita.setSex(visitante.getSex());
-        visita.setElements(visitante.getElements());
-        visita.setVisitDate(visitante.getVisitDate());
-        visita.setPicture(Base64.getDecoder().decode(Arrays.asList(visitante.getPicture().split(",")).get(1)));
-        visita.setState(1);
-        final Visita visitaFinal = dao.save(visita);
-
-        return visitaFinal;
-    }
-
-    @Override
-    @Transactional
-    public Visita updateVisita(VisitaDto visitante,Long id) {
-        Visita visita = new Visita();
-        visita.setId(id);
-        visita.setBadgeAccess(visitante.getBadgeAccess());
-        visita.setDocument(visitante.getDocument());
-        visita.setTypeDocument(visitante.getTypeDocument());
-        visita.setName(visitante.getName());
-        visita.setLastName(visitante.getLastName());
-        visita.setSex(visitante.getSex());
-        visita.setElements(visitante.getElements());
-        visita.setVisitDate(visitante.getVisitDate());
-        visita.setPicture(Base64.getDecoder().decode(Arrays.asList(visitante.getPicture().split(",")).get(1)));
-        visita.setState(visitante.getState());
-        Visita visit = dao.getOne(id);
-        if(visit!=null){
-            visita.setHuella1(visit.getHuella1());
-            visita.setHuella2(visit.getHuella2());
-            return dao.saveAndFlush(visita);
+    public Visita addVisita(VisitaDto dto) {
+        Visita v = new Visita();
+        v.setName(dto.getNombre());
+        v.setLastName(dto.getApellido());
+        v.setDocumento(dto.getDocumento());
+        v.setEmail(dto.getEmail());
+        v.setTelefono(dto.getTelefono());
+        v.setSex(dto.getSexo());
+        if (dto.getFoto() != null) {
+            v.setFoto(dto.getFoto());
         }
-        return null;
-
+        if (dto.getFaceVector() != null) {
+            v.setFaceVector(dto.getFaceVector());
+        }
+        v.setVisitDate(dto.getFechaIngreso() != null ? dto.getFechaIngreso() : new java.util.Date());
+        if (dto.getEmpleadoId() != null) {
+            v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+        }
+        if (dto.getPisoIds() != null && !dto.getPisoIds().isEmpty()) {
+            v.setPisosPermitidos(pisoRepository.list("id in ?1", dto.getPisoIds()));
+        }
+        visitaRepository.persist(v);
+        if (dto.getFaceVector() != null) {
+            biometriaVectorRepository.updateFaceEmbeddingFromString("visitantes", v.getId(), dto.getFaceVector());
+        }
+        return v;
     }
+
     @Override
     @Transactional
-    public Visita updateVisitaHuella(Visita visita,Long id) {
+    public Visita updateVisita(VisitaDto dto, Long id) {
+        Visita v = visitaRepository.findById(id);
+        if (v != null) {
+            v.setName(dto.getNombre());
+            v.setLastName(dto.getApellido());
+            v.setEmail(dto.getEmail());
+            v.setTelefono(dto.getTelefono());
+            if (dto.getDocumento() != null) {
+                v.setDocumento(dto.getDocumento());
+            }
+            if (dto.getSexo() != null) {
+                v.setSex(dto.getSexo());
+            }
+            if (dto.getFoto() != null) {
+                v.setFoto(dto.getFoto());
+            }
+            if (dto.getFaceVector() != null) {
+                v.setFaceVector(dto.getFaceVector());
+                biometriaVectorRepository.updateFaceEmbeddingFromString("visitantes", v.getId(), dto.getFaceVector());
+            }
+            if (dto.getEmpleadoId() != null) {
+                v.setEmpleadoAVisitar(com.access.control.model.Empleado.findById(dto.getEmpleadoId()));
+            }
+            if (dto.getPisoIds() != null) {
+                if (dto.getPisoIds().isEmpty()) {
+                    v.setPisosPermitidos(new java.util.ArrayList<>());
+                } else {
+                    v.setPisosPermitidos(pisoRepository.list("id in ?1", dto.getPisoIds()));
+                }
+            }
+        }
+        return v;
+    }
 
-        dao.saveAndFlush(visita);
-        return getVisitaById(id);
+    @Override
+    @Transactional
+    public Visita updateVisitaHuella(Visita visitante, Long id) {
+        return visitaRepository.findById(id);
     }
 
     @Override
     @Transactional
     public boolean deleteVisita(Visita visita) {
-        dao.deleteById(visita.getId());
-        return dao.existsById(visita.getId());
+        if (visita != null && visita.getId() != null) {
+            return visitaRepository.deleteById(visita.getId());
+        }
+        return false;
     }
 
     @Override
     @Transactional
-    public Visita updatePisos(VisitaDto visita,Long id){
-
-        Visita visit = dao.getOne(id);
-        if(visit!=null){
-            visit.addListPisos(visita.getListPisos());
-            return dao.saveAndFlush(visit);
-        }
-        return null;
+    public Visita updatePisos(VisitaDto visita, Long id) {
+        return visitaRepository.findById(id);
     }
 }

@@ -1,0 +1,64 @@
+<div class="highlight-panel-card">
+  <!-- CABECERA DE RECONOCIMIENTO -->
+  <div class="panel-header">
+    <span class="pill-tag">ATTENDANCE SPOTLIGHT</span>
+    <h3 class="panel-title">Insignia de Asistencia</h3>
+    <p class="panel-desc">Reconocimiento biométrico al miembro más constante del mes</p>
+  </div>
+
+  <!-- CONTENEDOR DEL BADGE MASIVO DORADO -->
+  <div class="massive-badge-stage">
+    <div class="gold-halo-emitter">
+      <!-- BADGE CIRCULAR PRINCIPAL -->
+      <div class="massive-circular-badge">
+        <!-- TEXTO CURVADO / CIRCULAR SUPERIOR CON SVG -->
+        <svg class="circular-text-svg" viewBox="0 0 300 300">
+          <path 
+            id="textPathArc" 
+            d="M 40, 150 A 110, 110 0 1, 1 260, 150" 
+            fill="none" />
+          <text class="arc-text">
+            <textPath href="#textPathArc" startOffset="50%" text-anchor="middle">
+              PERFECT ATTENDANCE • 100% CHECK-IN
+            </textPath>
+          </text>
+        </svg>
+
+        <!-- CENTRO DEL BADGE -->
+        <div class="badge-core">
+          <div class="star-row">
+            <i class="bi bi-star-fill star-icon"></i>
+            <i class="bi bi-star-fill star-icon center-star"></i>
+            <i class="bi bi-star-fill star-icon"></i>
+          </div>
+
+          <h2 class="core-highlight-text">EXCEPCIONAL</h2>
+
+          <div class="laurel-divider">
+            <span class="line"></span>
+            <i class="bi bi-award-fill award-icon"></i>
+            <span class="line"></span>
+          </div>
+
+          <span class="streak-label">{{ memberOfMonth.streakDays }} DIAS CONSECUTIVOS</span>
+        </div>
+
+        <!-- ANILLO PERIMETRAL EXTERIOR -->
+        <div class="badge-ring-outer"></div>
+        <div class="badge-ring-inner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARJETA DEL USUARIO RECONOCIDO -->
+  <div class="spotlight-user-footer">
+    <div class="user-avatar-wrap">
+      <img [src]="memberOfMonth.avatar" [alt]="memberOfMonth.name" class="avatar-img" />
+      <span class="gold-crown-badge"><i class="bi bi-trophy-fill"></i></span>
+    </div>
+    <div class="user-detail">
+      <h5 class="user-name">{{ memberOfMonth.name }}</h5>
+      <span class="user-sub">{{ memberOfMonth.category }} • {{ memberOfMonth.checkIns }} Check-ins Totales</span>
+    </div>
+  </div>
+</div>

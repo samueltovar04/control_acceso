@@ -1,22 +1,26 @@
 package com.access.control.model.generic;
 
-import javax.persistence.*;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.*;
 
 @MappedSuperclass
-public class AbstractEntity {
-
-    /**
-     * Path separator for hibernate aliases. Value: {@value DOT}
-     */
-    protected static final String DOT = ".";
+public abstract class AbstractEntity extends PanacheEntityBase {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-    public static final String ID = "id";
 
-    private Integer state;
+    @Column(name = "state")
+    private Integer state = 1;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Integer getState() {
         return state;
@@ -25,38 +29,4 @@ public class AbstractEntity {
     public void setState(Integer state) {
         this.state = state;
     }
-
-    /**
-     * @param id
-     *            the id to set
-     */
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the id
-     */
-    public Long getId() {
-        return id;
-    }
-
-    /**
-     * Generate path from properties list.
-     *
-     * @param properties
-     *            hierarchy of a property
-     * @return String representation of property path that looks like "property1.property2.property3"
-     */
-    public static String path(final String... properties) {
-        StringBuilder pathBuilder = new StringBuilder();
-
-        for (String string : properties) {
-            pathBuilder.append(string).append(DOT);
-        }
-        String path = pathBuilder.toString();
-
-        return path.substring(0, path.length() - 1);
-    }
 }
-

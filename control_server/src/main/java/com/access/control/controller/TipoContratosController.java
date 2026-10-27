@@ -2,56 +2,58 @@ package com.access.control.controller;
 
 import com.access.control.model.TipoContrato;
 import com.access.control.services.TipoContratoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/tipocontratos")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class TipoContratosController {
-    @Autowired
-    TipoContratoService servicioTipoContratos;
 
-    @GetMapping("tipoContratos/{id}")
-    public ResponseEntity<TipoContrato> getArticleById(@PathVariable("id") Long id) {
-        TipoContrato tipoContratos = servicioTipoContratos.getTipoContratoById(id);
-        return new ResponseEntity<TipoContrato>(tipoContratos, HttpStatus.OK);
+    @Inject
+    TipoContratoService tipoContratoService;
+
+    @GET
+    public List<TipoContrato> getAllTipoContratos() {
+        return tipoContratoService.getListTipoContratos();
     }
 
-    @GetMapping("tipoContratos")
-    public ResponseEntity<List<TipoContrato>> getAllTipoContratos() {
-        List<TipoContrato> list = servicioTipoContratos.getListTipoContratos();
-        return new ResponseEntity<List<TipoContrato>>(list, HttpStatus.OK);
-    }
-
-    @PostMapping("tipoContratos")
-    public ResponseEntity<Void> addTipoContratos(@RequestBody TipoContrato tipoContratos, UriComponentsBuilder builder) {
-        TipoContrato flag = servicioTipoContratos.addTipoContrato(tipoContratos);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+    @GET
+    @Path("/{id}")
+    public Response getTipoContratoById(@PathParam("id") Long id) {
+        TipoContrato tc = tipoContratoService.getTipoContratoById(id);
+        if (tc == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/tipoContratos/{id}").buildAndExpand(tipoContratos.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return Response.ok(tc).build();
     }
 
-    @PutMapping("tipoContratos")
-    public ResponseEntity<TipoContrato> updateTipoContratos(@RequestBody TipoContrato tipoContratos, @PathVariable("id") Long id) {
-        tipoContratos = servicioTipoContratos.updateTipoContrato(tipoContratos, id);
-        return new ResponseEntity<TipoContrato>(tipoContratos, HttpStatus.OK);
+    @POST
+    public Response addTipoContrato(TipoContrato tipoContrato) {
+        TipoContrato tc = tipoContratoService.addTipoContrato(tipoContrato);
+        return Response.status(Response.Status.CREATED).entity(tc).build();
     }
 
-    @DeleteMapping("tipoContratos/{id}")
-    public ResponseEntity<Void> deleteTipoContratos(@PathVariable("id") Long id) {
-        if (servicioTipoContratos.deleteTipoContrato(servicioTipoContratos.getTipoContratoById(id))) {
-            return new ResponseEntity<Void>(HttpStatus.OK);
+    @PUT
+    @Path("/{id}")
+    public Response updateTipoContrato(@PathParam("id") Long id, TipoContrato tipoContrato) {
+        TipoContrato tc = tipoContratoService.updateTipoContrato(tipoContrato, id);
+        if (tc == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.ok(tc).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteTipoContrato(@PathParam("id") Long id) {
+        TipoContrato tc = tipoContratoService.getTipoContratoById(id);
+        if (tc != null && tipoContratoService.deleteTipoContrato(tc)) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }

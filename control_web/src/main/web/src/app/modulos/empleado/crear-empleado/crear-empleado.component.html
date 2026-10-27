@@ -1,74 +1,116 @@
-<h3>Registrar Empleado</h3>
-<div [hidden]="submitted">
+<div class="container-fluid p-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-dark m-0"><i class="bi bi-person-plus-fill text-primary me-2"></i>Registrar Nuevo Empleado</h3>
+      <p class="text-muted small m-0">Alta de personal con enrolamiento facial y digitalización de huellas</p>
+    </div>
+    <a routerLink="/home/empleados" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Volver al listado
+    </a>
+  </div>
+
   <form (ngSubmit)="onSubmit()">
-    <div class="row">
-    <div class="col-md-4 col-sm-4 col-lg-4 col-md-offset-4" style="position:absolute;left:40%;text-align:left">
-      <app-camera (pictureTaken)="handleImage($event)"></app-camera>
-      <div class="form-group">
-        <label for="name">Foto</label>
-        <div class="snapshot" *ngIf="webcamImage">
-          <img width="200px" [src]="webcamImage.imageAsDataUrl" />
-          <input type="hidden" class="form-control" required [(ngModel)]="employee.picture" name="picture" id="picture">
+    <div class="row g-4">
+      <!-- DATOS GENERALES -->
+      <div class="col-lg-6">
+        <div class="card p-4 border-0 shadow-sm rounded-3 bg-white h-100">
+          <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-card-heading me-2"></i>Información Personal y Laboral</h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Documento / Cédula</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.documento" name="documento" required placeholder="V-12345678">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Código Insignia / RFID</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.codigoInsignia" name="codigoInsignia" placeholder="TAG-889021">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Nombre</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.nombre" name="nombre" required placeholder="Nombre">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Apellido</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.apellido" name="apellido" required placeholder="Apellido">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Correo Electrónico</label>
+              <input type="email" class="form-control" [(ngModel)]="employee.email" name="email" placeholder="empleado@empresa.com">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold">Teléfono de Contacto</label>
+              <input type="text" class="form-control" [(ngModel)]="employee.telefono" name="telefono" placeholder="+58 412 0000000">
+            </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Sexo</label>
+                <select class="form-select" [(ngModel)]="employee.sexo" name="sexo">
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </div>
+
+              <!-- PREVISUALIZACION DEL FOTOGRAMA CAPTURADO AL LADO IZQUIERDO DEBAJO DE SEXO -->
+              <div class="col-12 mt-3">
+                <label class="form-label small fw-bold d-block text-secondary">
+                  <i class="bi bi-camera-fill me-1 text-primary"></i> Fotograma Facial Registrado:
+                </label>
+                <div class="border rounded p-2 text-center bg-light position-relative d-flex flex-column align-items-center justify-content-center" style="min-height: 140px;">
+                  <div *ngIf="employee.foto" class="d-flex flex-column align-items-center">
+                    <img [src]="employee.foto" alt="Fotograma Facial" class="img-thumbnail shadow-sm rounded-circle mb-2" style="width: 110px; height: 110px; object-fit: cover; border: 3px solid #0d6efd;" />
+                    <span class="badge bg-success-subtle text-success border border-success-subtle small">
+                      <i class="bi bi-check-circle-fill me-1"></i> Imagen Facial Lista para Torniquetes
+                    </span>
+                  </div>
+                  <div *ngIf="!employee.foto" class="text-muted small py-3">
+                    <i class="bi bi-person-bounding-box fs-1 d-block mb-1 text-secondary opacity-50"></i>
+                    <span>Sin fotograma facial capturado. Use el módulo de enrolamiento de la derecha.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Sede</label>
+                <select class="form-select" [(ngModel)]="employee.sedeId" name="sedeId" [disabled]="sedeBloqueada">
+                  <option *ngIf="!sedeBloqueada" [ngValue]="null">Seleccionar Sede...</option>
+                  <ng-container *ngFor="let s of sedesList">
+                    <option *ngIf="!sedeBloqueada || s.id === employee.sedeId" [value]="s.id">{{ s.sede }}</option>
+                  </ng-container>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Gerencia / Dpto.</label>
+                <select class="form-select" [(ngModel)]="employee.gerenciaId" name="gerenciaId">
+                  <option [ngValue]="null">Seleccionar Gerencia...</option>
+                  <option *ngFor="let g of gerenciasList" [value]="g.id">{{ g.gerencia }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Tipo de Contrato</label>
+                <select class="form-select" [(ngModel)]="employee.tipoContratoId" name="tipoContratoId">
+                  <option [ngValue]="null">Seleccionar Contrato...</option>
+                  <option *ngFor="let c of contratosList" [value]="c.id">{{ c.contrato }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- COMPONENTE BIOMÉTRICO (FACIAL + HUELLAS) -->
+      <div class="col-lg-6">
+        <app-biometric-capture
+          titulo="Enrolamiento Biométrico del Empleado"
+          (biometricDataChange)="onBiometricData($event)">
+        </app-biometric-capture>
+
+        <div class="card p-3 border-0 shadow-sm rounded-3 bg-white text-end">
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" routerLink="/home/empleados" class="btn btn-light px-4">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" [disabled]="guardando">
+              <i class="bi bi-save me-1"></i> {{ guardando ? 'Guardando...' : 'Guardar Empleado' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3 col-sm-3 col-lg-3">
-
-      <div class="form-group">
-        <label for="name">Tarjeta Acceso</label>
-        <input type="number" class="form-control" id="badgeAccess" required [(ngModel)]="employee.badgeAccess" name="badgeAccess">
-      </div>
-
-    <div class="form-group">
-      <label for="name">DNI</label>
-      <input type="number" class="form-control" id="document" required [(ngModel)]="employee.document" name="document">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Nombre</label>
-      <input type="text" class="form-control" id="name" required [(ngModel)]="employee.name" name="name">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Apellido</label>
-      <input type="text" class="form-control" id="lastName" required [(ngModel)]="employee.lastName" name="lastName">
-    </div>
-    </div>
-      <div class="col-md-3 col-sm-3 col-lg-3">
-    <div class="form-group">
-      <label for="name">Correo</label>
-      <input type="text" class="form-control" id="email" required [(ngModel)]="employee.email" name="email">
-    </div>
-
-      <div class="form-group">
-        <label for="name">Fecha Nacimiento</label>
-        <input type="date" class="form-control" id="birthDate" required [(ngModel)]="employee.birthDate" name="birthDate">
-      </div>
-
-    <div class="form-group">
-      <section class="form-control">
-        <label for="name">Sexo</label>
-        <input name="sex" value="m" type="radio" selected [(ngModel)]="employee.sex" />
-        <i>Masculino</i>
-        <input name="sexr" value="f" type="radio" [(ngModel)]="employee.sex" />
-        <i>Femenino</i>
-      </section>
-    </div>
-
-    <div class="form-group">
-      <label for="name">Celular</label>
-      <input type="number" class="form-control" id="telephone" required [(ngModel)]="employee.telephone" name="telephone">
-    </div>
-
-    <button type="submit" class="btn btn-success">Submit</button>
-    </div>
-</div>
   </form>
-</div>
-
-<div [hidden]="!submitted">
-  <h4>You submitted successfully!</h4>
-  <div *ngFor="let piso of pisos$ ">
-    {{piso}}
-  </div>
 </div>

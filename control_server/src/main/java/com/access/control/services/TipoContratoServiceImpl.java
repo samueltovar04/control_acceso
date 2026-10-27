@@ -2,57 +2,50 @@ package com.access.control.services;
 
 import com.access.control.model.TipoContrato;
 import com.access.control.repository.TipoContratoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
 
-@Service
+@ApplicationScoped
 public class TipoContratoServiceImpl implements TipoContratoService {
-    @Autowired
-    TipoContratoRepository dao;
-    @Override
-    public List<TipoContrato> getListTipoContratos(Object... params) {
-        if(params != null && params.length>0){
-            return dao.findAll();
-        }else {
-            return (List<TipoContrato>) dao.findAll();
-        }
-    }
 
-    @Override
-    public TipoContrato getTipoContrato(TipoContrato params) {
-        return null;
-    }
-
-    @Override
-    public Optional<TipoContrato> findById(Long id) {
-        return Optional.empty();
-    }
+    @Inject
+    TipoContratoRepository tipoContratoRepository;
 
     @Override
     public TipoContrato getTipoContratoById(Long id) {
-        return null;
+        return tipoContratoRepository.findById(id);
     }
 
     @Override
-    public TipoContrato addTipoContrato(TipoContrato obj) {
-        return dao.save(obj);
+    public List<TipoContrato> getListTipoContratos() {
+        return tipoContratoRepository.listAll();
     }
 
     @Override
-    public TipoContrato updateTipoContrato(TipoContrato obj, Long id) {
-        if(dao.findById(id).isPresent()) {
-            return dao.save(obj);
-        }else{
-            return null;
+    @Transactional
+    public TipoContrato addTipoContrato(TipoContrato tipoContrato) {
+        tipoContratoRepository.persist(tipoContrato);
+        return tipoContrato;
+    }
+
+    @Override
+    @Transactional
+    public TipoContrato updateTipoContrato(TipoContrato tipoContrato, Long id) {
+        TipoContrato tc = tipoContratoRepository.findById(id);
+        if (tc != null) {
+            tc.setContrato(tipoContrato.getContrato() != null ? tipoContrato.getContrato() : tipoContrato.getNombre());
         }
+        return tc;
     }
 
     @Override
-    public Boolean deleteTipoContrato(TipoContrato obj) {
-        dao.delete(obj);
-        return dao.existsById(obj.getId());
+    @Transactional
+    public boolean deleteTipoContrato(TipoContrato tipoContrato) {
+        if (tipoContrato != null && tipoContrato.getId() != null) {
+            return tipoContratoRepository.deleteById(tipoContrato.getId());
+        }
+        return false;
     }
 }

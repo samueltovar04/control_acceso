@@ -1,54 +1,237 @@
-<div class="container-left-menu">
-  <div id="leftMenu" class="left-menu" [ngClass]="{'left-menu-open' : showLeftMenu}" clickOutside
-    (clickOutside)="showLeftMenu = !showLeftMenu" >
-    <div class="logo-menu" (click)="openLeftMenu()">
-      <span>Logo</span>
+<div class="sidebar-wrapper bg-dark text-white d-flex flex-column h-100 w-100" style="min-height: 100vh;">
+  <!-- BRAND / HEADER -->
+  <div class="sidebar-header p-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 34px; width: auto; object-fit: contain;" class="me-2 rounded" />
+      <div class="d-flex flex-column">
+        <span class="fs-6 fw-bold tracking-tight text-white line-height-1">ANDES</span>
+        <span class="text-info fw-semibold" style="font-size: 0.68rem; letter-spacing: 1px;">CONTROL ACCESO</span>
+      </div>
     </div>
-    <ul class="left-menu-buttons">
-      <li id="buttonCustomers" routerLinkActive="li-active" (click)="openCustomersSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
-        <i class="icon-user"></i>
-        <span>Empleados</span>
-        <i class="icon-down_arrow"></i>
-      </li>
-      <ul id="customersSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
-        <li routerLink="empleados" routerLinkActive="li-active" (click)="closeCustomerSubmenu()">Lista de empleados</li>
-        <li routerLink="empleado-add" routerLinkActive="li-active" (click)="closeCustomerSubmenu()">Agregar</li>
-      </ul>
-      <li id="buttonVisits" routerLinkActive="li-active" (click)="openVisitsSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
-        <i class="icon-user"></i>
-        <span>Visitantes</span>
-        <i class="icon-down_arrow"></i>
-      </li>
-      <ul id="visitsSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
-        <li routerLink="visitantes" routerLinkActive="li-active" (click)="closeVisitSubmenu()">Lista de Visitas</li>
-        <li routerLink="visitante-add" routerLinkActive="li-active" (click)="closeVisitSubmenu()">Agregar</li>
-      </ul>
-      <li id="buttonDispos" routerLinkActive="li-active" (click)="openDisposSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
-      <i class="icon-user"></i>
-      <span>Dispositivos</span>
-      <i class="icon-down_arrow"></i>
-    </li>
-      <ul id="disposSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
-        <li routerLink="dispositivos" routerLinkActive="li-active" (click)="closeDisposSubmenu()">Lista de Dispositivos</li>
-        <li routerLink="dispositivo-add" routerLinkActive="li-active" (click)="closeDisposSubmenu()">Agregar</li>
-      </ul>
-      <li id="buttonPisos" routerLinkActive="li-active" (click)="openPisosSubmenu()"  [ngClass]="{'toogle-button' : showLeftMenu}">
-        <i class="icon-user"></i>
-        <span>Pisos</span>
-        <i class="icon-down_arrow"></i>
-      </li>
-      <ul id="pisosSubmenu" class="left-menu-submenu" [ngClass]="{'submenu-open' : showLeftMenu}">
-        <li routerLink="pisos" routerLinkActive="li-active" (click)="closePisosSubmenu()">Lista de Pisos</li>
-        <li routerLink="piso-add" routerLinkActive="li-active" (click)="closePisosSubmenu()">Agregar</li>
-      </ul>
-    </ul>
-    <div class="user-profile">
-      <div class="user-profile-data" (click)="openLeftMenu()">
+    <button 
+      type="button" 
+      class="btn btn-sm btn-link text-white-50 d-md-none p-1" 
+      (click)="sidebarService.close()" 
+      title="Cerrar Menú"
+      aria-label="Cerrar Menú">
+      <i class="bi bi-x-lg fs-5"></i>
+    </button>
+  </div>
 
-      </div>
-      <div class="user-profile-session">
-        <button routerLink=""><i class="icon-exit"></i><span>Cerrar Sesión</span></button>
-      </div>
+  <!-- NAVEGACIÓN -->
+  <div class="sidebar-menu flex-grow-1 py-3 px-2 overflow-auto">
+
+    <!-- PORTAL CLIENTE (DISPONIBLE PARA CLIENTE O ADMIN) -->
+    <div *ngIf="canViewPortalCliente()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      <i class="bi bi-person-circle me-1 text-info"></i>Mi Cuenta
     </div>
+    <ul *ngIf="canViewPortalCliente()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          routerLink="/home/portal-cliente" routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-person-badge me-3 fs-5 text-info"></i> Datos y Pagos Personales
+        </a>
+      </li>
+    </ul>
+
+    <!-- PANEL & VISION (RECEPCION, OPERACION, ADMIN, SUPERADMIN) -->
+    <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      Panel & Visión
+    </div>
+    <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          routerLink="/home/gym-dashboard" routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-speedometer me-3 fs-5 text-info"></i> Gym Dashboard Pro
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          routerLink="/home/acceso-torniquetes" routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-door-open-fill me-3 fs-5 text-warning"></i> Control de Torniquetes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/monitor-salud"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-heart-pulse me-3 fs-5"></i> Monitor de Salud IoT
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          href="/dashboard-dinamico.html" target="_blank"
+          (click)="onNavClick()">
+          <i class="bi bi-activity me-3 fs-5 text-danger"></i> Telemetría Dinámica
+        </a>
+      </li>
+    </ul>
+
+    <!-- MODULO PAGOS Y FINANZAS (CONTABLE, ADMIN, SUPERADMIN) -->
+    <div *ngIf="canViewPagos()"
+      class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
+      style="cursor: pointer;" (click)="menuPagosAbierto = !menuPagosAbierto">
+      <span><i class="bi bi-cash-coin me-2 text-success"></i>Gestion de Pagos</span>
+      <i class="bi" [ngClass]="menuPagosAbierto ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+    </div>
+    <ul class="nav flex-column mb-3" *ngIf="canViewPagos() && menuPagosAbierto">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/admin-dashboard"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-speedometer2 me-3 fs-5"></i> Control Finanzas
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pagos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-cash-stack me-3 fs-5 text-success"></i> Control Pagos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/conciliacion"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-wallet2 me-3 fs-5 text-info"></i> Conciliacion Pagos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tasas"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-currency-exchange me-3 fs-5 text-warning"></i> Tasas Cambiarias BCV
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/bancos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-bank2 me-3 fs-5 text-primary"></i> Cuentas Bancarias
+        </a>
+      </li>
+    </ul>
+
+    <!-- GESTION DE ACCESO (RECEPCION, OPERACION, ADMIN, SUPERADMIN) -->
+    <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      Gestion de Acceso
+    </div>
+    <ul *ngIf="canViewGestionAcceso()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/clientes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-people-fill me-3 fs-5"></i> Clientes & Membresias
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/empleados"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-person-badge-fill me-3 fs-5"></i> Empleados
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/visitantes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-person-lines-fill me-3 fs-5"></i> Visitantes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/membresias"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-card-checklist me-3 fs-5"></i> Catalogo Membresias
+        </a>
+      </li>
+    </ul>
+
+    <!-- INFRAESTRUCTURA (SOLO ADMIN Y SUPERADMIN) -->
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      Infraestructura
+    </div>
+    <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/dispositivos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-hdd-network-fill me-3 fs-5"></i> Network
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pisos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-layers-fill me-3 fs-5"></i> Pisos & Zonas
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/permisos-pisos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-shield-check me-3 fs-5"></i> Permisos por Pisos
+        </a>
+      </li>
+    </ul>
+
+    <!-- UBICACIONES (SOLO ADMIN Y SUPERADMIN) -->
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      Ubicaciones
+    </div>
+    <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/sedes"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-geo-alt-fill me-3 fs-5"></i> Sedes
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/gerencias"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-briefcase-fill me-3 fs-5"></i> Gerencias
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tipo-contratos"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-file-earmark-text-fill me-3 fs-5"></i> Tipos de Contrato
+        </a>
+      </li>
+    </ul>
+
+    <!-- ADMINISTRACION DEL SISTEMA (SOLO ADMIN Y SUPER_ADMIN) -->
+    <div *ngIf="isAdminOrSuperAdmin()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
+      <i class="bi bi-shield-lock me-1 text-danger"></i>Seguridad
+    </div>
+    <ul *ngIf="isAdminOrSuperAdmin()" class="nav flex-column mb-3">
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/usuarios"
+          routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-people-fill me-3 fs-5 text-warning"></i> Usuarios y Permisos
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FOOTER LATERAL CON BOTON CERRAR SESION -->
+  <div class="sidebar-footer p-3 border-top border-secondary text-secondary small">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span>Acceso 2.0.0-PRO</span>
+      <span class="badge bg-success">Online</span>
+    </div>
+    <button class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1"
+            (click)="cerrarSesion()" 
+            title="Cerrar Sesión del Sistema">
+      <i class="bi bi-box-arrow-right fs-6"></i>
+      <span>Cerrar Sesión</span>
+    </button>
   </div>
 </div>

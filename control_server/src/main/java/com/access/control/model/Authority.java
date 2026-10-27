@@ -1,23 +1,20 @@
 package com.access.control.model;
 
-import javax.persistence.*;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "authority")
-public class Authority {
+@Table(name = "authorities")
+public class Authority extends AbstractEntity {
 
-    @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    private Long id;
+    private String name; // ROLE_ADMIN, ROLE_EMPLEADO, ROLE_CLIENTE, ROLE_RECEPCION, ROLE_TECNICO
 
-    @Column
-    private String authority;
-
-    public String getAuthority() {
-        return authority;
+    public String getName() {
+        return name;
     }
 
-    public void setAuthority(String authority) {
-        this.authority = authority;
+    public void setName(String name) {
+        this.name = name;
     }
 }

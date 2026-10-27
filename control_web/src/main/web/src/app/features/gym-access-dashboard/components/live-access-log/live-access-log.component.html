@@ -1,0 +1,56 @@
+<div class="access-log-card">
+  <!-- HEADER DE LA SECCIÓN -->
+  <div class="log-header">
+    <div class="title-wrap">
+      <div class="icon-pulse">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div>
+        <h4 class="card-title">Live Access Log</h4>
+        <span class="card-subtitle">Escaner Facial y RFID Suprema</span>
+      </div>
+    </div>
+    <span class="counter-badge">{{ accessLogs().length }} Eventos</span>
+  </div>
+
+  <!-- LISTA SCROLLABLE CON TARJETAS DE USUARIOS -->
+  <div class="log-scroll-container">
+    <div 
+      *ngFor="let user of accessLogs()" 
+      class="user-scan-card"
+      [class.card-granted]="user.status === 'GRANTED'"
+      [class.card-expired]="user.status === 'EXPIRED'">
+      
+      <!-- AVATAR & INFO -->
+      <div class="user-meta">
+        <div class="avatar-wrapper">
+          <img [src]="user.avatarUrl" [alt]="user.name" class="user-avatar" />
+          <span 
+            class="status-dot" 
+            [class.dot-green]="user.status === 'GRANTED'"
+            [class.dot-red]="user.status === 'EXPIRED'">
+          </span>
+        </div>
+
+        <div class="user-info">
+          <h5 class="user-name">{{ user.name }}</h5>
+          <div class="time-meta">
+            <span class="timestamp"><i class="bi bi-stopwatch me-1"></i>{{ user.timestamp }}</span>
+            <span class="plan-label">• {{ user.planName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS BADGE NEON -->
+      <div class="badge-container">
+        <span 
+          class="neon-status-badge"
+          [class.badge-granted]="user.status === 'GRANTED'"
+          [class.badge-expired]="user.status === 'EXPIRED'">
+          <i class="bi" [ngClass]="user.status === 'GRANTED' ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+          {{ user.status === 'GRANTED' ? 'ACCESS GRANTED' : 'MEMBERSHIP EXPIRED' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

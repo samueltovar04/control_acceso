@@ -1,152 +1,71 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { SidebarService } from '../../shared/services/sidebar.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-left-menu',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './left-menu.component.html',
-  styleUrls: ['./left-menu.component.scss']
+  styleUrls: ['./left-menu.component.css']
 })
-export class LeftMenuComponent implements OnInit {
-  showLeftMenu: boolean = false;
-  showSubmenu: boolean = false;
-  changeOnlySubmenu: boolean = false;
+export class LeftMenuComponent implements OnInit, OnDestroy {
+  public sidebarService = inject(SidebarService);
+  public authService = inject(AuthService);
+  public router = inject(Router);
+  menuPagosAbierto: boolean = true;
+  private navSub?: Subscription;
 
-  constructor() { }
-
-  ngOnInit() {
-      this.showLeftMenu=false;
-  }
-
-  openLeftMenu(){
-    if(!this.changeOnlySubmenu){
-      if(this.showSubmenu === false){
-        var element= document.getElementById("leftMenu");
-        element.classList.toggle('left-menu-open');
-        this.showLeftMenu = !this.showLeftMenu;
+  ngOnInit(): void {
+    this.navSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      if (window.innerWidth < 768) {
+        this.sidebarService.close();
       }
-    }
-    else{
-      this.changeOnlySubmenu = false;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.navSub?.unsubscribe();
+  }
+
+  onNavClick(): void {
+    if (window.innerWidth < 768) {
+      this.sidebarService.close();
     }
   }
 
-  openCustomersSubmenu(){
-    var element = document.getElementById("customersSubmenu");
-    var button = document.getElementById("buttonCustomers");
-
-    if(this.showLeftMenu === true){
-      element.classList.toggle('submenu-open');
-      button.classList.toggle('toogle-button');
-      this.showSubmenu = !this.showSubmenu;
-      this.changeOnlySubmenu = true;
-    }
-    else {
-      var element= document.getElementById("leftMenu");
-      element.classList.toggle('left-menu-open');
-      this.showLeftMenu = !this.showLeftMenu;
-      this.changeOnlySubmenu = true;
-    }
-
+  cerrarSesion(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
-  closeCustomerSubmenu(){
-    var leftMenu= document.getElementById("leftMenu");
-    var submenu = document.getElementById("customersSubmenu");
-
-    this.showLeftMenu = false;
-    this.showSubmenu = false;
-    this.changeOnlySubmenu = true;
-    submenu.classList.toggle('submenu-open');
-    leftMenu.classList.toggle('left-menu-open');
+  isAdminOrSuperAdmin(): boolean {
+    return this.authService.isAdminOrSuperAdmin();
   }
 
-openVisitsSubmenu(){
-    var element = document.getElementById("visitsSubmenu");
-    var button = document.getElementById("buttonVisits");
-
-    if(this.showLeftMenu === true){
-      element.classList.toggle('submenu-open');
-      button.classList.toggle('toogle-button');
-      this.showSubmenu = !this.showSubmenu;
-      this.changeOnlySubmenu = true;
-    }
-    else {
-      var element= document.getElementById("leftMenu");
-      element.classList.toggle('left-menu-open');
-      this.showLeftMenu = !this.showLeftMenu;
-      this.changeOnlySubmenu = true;
-    }
-
+  canViewPanelVision(): boolean {
+    return this.authService.canViewPanelVision();
   }
 
-closeVisitSubmenu(){
-    var leftMenu= document.getElementById("leftMenu");
-    var submenu = document.getElementById("visitsSubmenu");
-
-    this.showLeftMenu = false;
-    this.showSubmenu = false;
-    this.changeOnlySubmenu = true;
-    submenu.classList.toggle('submenu-open');
-    leftMenu.classList.toggle('left-menu-open');
+  canViewPagos(): boolean {
+    return this.authService.canViewPagos();
   }
 
-openDisposSubmenu(){
-    var element = document.getElementById("disposSubmenu");
-    var button = document.getElementById("buttonDispos");
-
-    if(this.showLeftMenu === true){
-      element.classList.toggle('submenu-open');
-      button.classList.toggle('toogle-button');
-      this.showSubmenu = !this.showSubmenu;
-      this.changeOnlySubmenu = true;
-    }
-    else {
-      var element= document.getElementById("leftMenu");
-      element.classList.toggle('left-menu-open');
-      this.showLeftMenu = !this.showLeftMenu;
-      this.changeOnlySubmenu = true;
-    }
-
+  canViewGestionAcceso(): boolean {
+    return this.authService.canViewGestionAcceso();
   }
 
-closeDisposSubmenu(){
-    var leftMenu= document.getElementById("leftMenu");
-    var submenu = document.getElementById("disposSubmenu");
-
-    this.showLeftMenu = false;
-    this.showSubmenu = false;
-    this.changeOnlySubmenu = true;
-    submenu.classList.toggle('submenu-open');
-    leftMenu.classList.toggle('left-menu-open');
+  canViewInfraestructura(): boolean {
+    return this.authService.canViewInfraestructura();
   }
 
-openPisosSubmenu(){
-    var element = document.getElementById("pisosSubmenu");
-    var button = document.getElementById("buttonPisos");
-
-    if(this.showLeftMenu === true){
-      element.classList.toggle('submenu-open');
-      button.classList.toggle('toogle-button');
-      this.showSubmenu = !this.showSubmenu;
-      this.changeOnlySubmenu = true;
-    }
-    else {
-      var element= document.getElementById("leftMenu");
-      element.classList.toggle('left-menu-open');
-      this.showLeftMenu = !this.showLeftMenu;
-      this.changeOnlySubmenu = true;
-    }
-
+  canViewPortalCliente(): boolean {
+    return this.authService.canViewPortalCliente();
   }
-
-closePisosSubmenu(){
-    var leftMenu= document.getElementById("leftMenu");
-    var submenu = document.getElementById("pisosSubmenu");
-
-    this.showLeftMenu = false;
-    this.showSubmenu = false;
-    this.changeOnlySubmenu = true;
-    submenu.classList.toggle('submenu-open');
-    leftMenu.classList.toggle('left-menu-open');
-  }
-
 }

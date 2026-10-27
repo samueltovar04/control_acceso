@@ -1,0 +1,148 @@
+<div class="split-container">
+  <!-- PANEL IZQUIERDO: LISTA DE PAGOS PENDIENTES -->
+  <div class="left-pane shadow-sm">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+      <div>
+        <h5 class="m-0 fw-bold text-dark">Bandeja de Conciliacion</h5>
+        <small class="text-muted">Pagos reportados pendientes por verificar</small>
+      </div>
+      <button class="btn btn-outline-primary btn-sm rounded-pill" (click)="cargarPendientes()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refrescar
+      </button>
+    </div>
+
+    <div class="flex-grow-1 overflow-auto">
+      <div *ngIf="cargando()" class="p-4 text-center text-muted">
+        <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
+        <div>Cargando pagos pendientes...</div>
+      </div>
+
+      <div *ngIf="!cargando() && pagos().length === 0" class="p-5 text-center text-muted">
+        <i class="bi bi-check2-circle fs-1 text-success mb-2 d-block"></i>
+        <h6>No hay pagos pendientes de conciliacion</h6>
+        <small>Todos los pagos reportados han sido verificados.</small>
+      </div>
+
+      <div class="list-group list-group-flush" *ngIf="!cargando() && pagos().length > 0">
+        <button *ngFor="let p of pagos()" 
+                type="button" 
+                class="list-group-item list-group-item-action p-3 border-bottom"
+                [class.active]="pagoSeleccionado()?.id === p.id"
+                (click)="seleccionarPago(p)">
+          <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+            <h6 class="mb-0 fw-bold" [class.text-white]="pagoSeleccionado()?.id === p.id">
+              {{ p.cliente?.nombre }} {{ p.cliente?.apellido }}
+            </h6>
+            <span class="badge bg-warning text-dark font-monospace">Ref: {{ p.numeroReferencia }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <small [class.text-white-50]="pagoSeleccionado()?.id === p.id" class="text-muted">
+              {{ p.metodoPago }} • CI: {{ p.cliente?.documento }}
+            </small>
+            <span class="fw-bold" [class.text-white]="pagoSeleccionado()?.id === p.id" class="text-primary font-monospace">
+              {{ p.monto | multiCurrency:p.monedaDeclarada:(p.tasaBcvAplicada && p.tasaBcvAplicada > 1 ? p.tasaBcvAplicada : (tasaService.tasaUsdSignal() || p.tasaBcvAplicada)) }}
+            </span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DERECHO: VISOR DE COMPROBANTE CON PAN & ZOOM -->
+  <div class="right-pane shadow-sm">
+    <div class="viewer-toolbar">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-secondary">Visor de Ticket</span>
+        <small class="text-white-50" *ngIf="pagoSeleccionado()">
+          Ref: {{ pagoSeleccionado()?.numeroReferencia }}
+        </small>
+      </div>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-dark" (click)="zoomIn()" title="Acercar (+)">
+          <i class="bi bi-zoom-in"></i>
+        </button>
+        <button class="btn btn-dark" (click)="zoomOut()" title="Alejar (-)">
+          <i class="bi bi-zoom-out"></i>
+        </button>
+        <button class="btn btn-dark" (click)="rotate()" title="Rotar 90">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button class="btn btn-dark" (click)="resetVisor()" title="Resetear (1:1)">
+          <i class="bi bi-aspect-ratio"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEWPORT INTERACTIVO CON ARRASTRE -->
+    <div class="ticket-viewport" 
+         (mousedown)="onMouseDown($event)" 
+         (wheel)="onWheel($event)">
+      <img *ngIf="pagoSeleccionado()?.comprobanteUrl" 
+           [src]="pagoSeleccionado()?.comprobanteUrl" 
+           alt="Comprobante de Pago" 
+           class="ticket-image"
+           [style.transform]="'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoomLevel + ') rotate(' + rotation + 'deg)'">
+
+      <div *ngIf="!pagoSeleccionado()?.comprobanteUrl && pagoSeleccionado()" class="text-center text-white-50 p-4">
+        <i class="bi bi-image fs-1 mb-2 d-block"></i>
+        <div>Comprobante digital no adjunto</div>
+        <small>Pago reportado con numero de referencia: {{ pagoSeleccionado()?.numeroReferencia }}</small>
+      </div>
+
+      <div *ngIf="!pagoSeleccionado()" class="text-center text-white-50 p-4">
+        <i class="bi bi-receipt fs-1 mb-2 d-block"></i>
+        <div>Seleccione un pago de la lista para inspeccionar</div>
+      </div>
+    </div>
+
+    <!-- METADATOS Y ACCIONES -->
+    <div class="p-3 bg-dark border-top border-secondary" *ngIf="pagoSeleccionado()">
+      <div class="row align-items-center mb-3">
+        <div class="col-6">
+          <small class="text-white-50 d-block">Cliente y Cedula</small>
+          <div class="fw-bold">{{ pagoSeleccionado()?.cliente?.nombre }} {{ pagoSeleccionado()?.cliente?.apellido }} ({{ pagoSeleccionado()?.cliente?.documento }})</div>
+        </div>
+        <div class="col-6 text-end">
+          <small class="text-white-50 d-block">Monto Reportado</small>
+          <div class="fs-5 fw-bold text-success font-monospace">
+            {{ pagoSeleccionado()?.monto | multiCurrency:pagoSeleccionado()!.monedaDeclarada:(pagoSeleccionado()!.tasaBcvAplicada && pagoSeleccionado()!.tasaBcvAplicada > 1 ? pagoSeleccionado()!.tasaBcvAplicada : (tasaService.tasaUsdSignal() || pagoSeleccionado()!.tasaBcvAplicada)) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-success flex-grow-1 fw-bold py-2" (click)="aprobarPago()">
+          <i class="bi bi-check-circle me-1"></i> Aprobar y Conciliar
+        </button>
+        <button class="btn btn-danger flex-grow-1 fw-bold py-2" (click)="abrirModalRechazo()">
+          <i class="bi bi-x-circle me-1"></i> Rechazar Pago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE RECHAZO -->
+<div *ngIf="mostrarModalRechazo" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title fw-bold">Rechazar Comprobante de Pago</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="mostrarModalRechazo = false"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">
+          Al rechazar este comprobante, el estado del cliente pasara a <strong>MOROSO</strong> y se bloqueara inmediatamente el acceso a los torniquetes.
+        </p>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Motivo del Rechazo *</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="motivoRechazo" placeholder="Ej: Numero de referencia no figura en extracto bancario"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="mostrarModalRechazo = false">Cancelar</button>
+        <button type="button" class="btn btn-danger" [disabled]="!motivoRechazo.trim()" (click)="confirmarRechazo()">Confirmar Rechazo</button>
+      </div>
+    </div>
+  </div>
+</div>

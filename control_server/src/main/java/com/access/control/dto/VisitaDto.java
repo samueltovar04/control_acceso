@@ -1,168 +1,63 @@
 package com.access.control.dto;
 
-import com.access.control.model.PisoPermiso;
-import com.access.control.model.PisoPermisoVisita;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.persistence.Column;
-import javax.validation.constraints.Past;
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class VisitaDto implements Serializable {
-
-    private static final long serialVersionUID =7L;
+public class VisitaDto {
     private Long id;
-    private Integer state;
-    private Integer document;
-    private String typeDocument;
-    private Integer badgeAccess;
+    private String documento;
+    private String nombre;
+    private String apellido;
+    private String email;
+    private String telefono;
+    private String foto;
+    private String sexo;
+    private Date fechaNacimiento;
+    private Date fechaIngreso;
+    private Date fechaSalida;
+    private Long empleadoId;
+    private List<Long> pisoIds;
+    private String faceVector;
 
-    private String name;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    private String lastName;
+    public String getDocumento() { return documento; }
+    public void setDocumento(String documento) { this.documento = documento; }
 
-    private Boolean enabled;
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    private String elements;
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
 
-    private String picture;
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    private String sex;
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
 
-    @JsonProperty("visitDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    @Past
-    @Column(name="visit_date")
-    private Date visitDate;
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
 
-    private String huella1;
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
 
-    private String huella2;
+    public Date getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(Date fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
-    private List<PisoPermisoVisita> listPisos = new ArrayList<>();
+    public Date getFechaIngreso() { return fechaIngreso; }
+    public void setFechaIngreso(Date fechaIngreso) { this.fechaIngreso = fechaIngreso; }
 
-    public Long getId() {
-        return id;
-    }
+    public Date getFechaSalida() { return fechaSalida; }
+    public void setFechaSalida(Date fechaSalida) { this.fechaSalida = fechaSalida; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getEmpleadoId() { return empleadoId; }
+    public void setEmpleadoId(Long empleadoId) { this.empleadoId = empleadoId; }
 
-    public Integer getState() {
-        return state;
-    }
+    public List<Long> getPisoIds() { return pisoIds; }
+    public void setPisoIds(List<Long> pisoIds) { this.pisoIds = pisoIds; }
 
-    public void setState(Integer state) {
-        this.state = state;
-    }
-
-    public Integer getDocument() {
-        return document;
-    }
-
-    public void setDocument(Integer document) {
-        this.document = document;
-    }
-
-    public Integer getBadgeAccess() {
-        return badgeAccess;
-    }
-
-    public void setBadgeAccess(Integer badgeAccess) {
-        this.badgeAccess = badgeAccess;
-    }
-
-    public String getTypeDocument() {
-        return typeDocument;
-    }
-
-    public void setTypeDocument(String typeDocument) {
-        this.typeDocument = typeDocument;
-    }
-
-    public String getElements() {
-        return elements;
-    }
-
-    public void setElements(String elements) {
-        this.elements = elements;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getPicture() {
-        return picture;
-    }
-
-    public void setPicture(String picture) {
-        this.picture = picture;
-    }
-
-    public String getSex() {
-        return sex;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
-    }
-
-    public Date getVisitDate() {
-        return visitDate;
-    }
-
-    public void setVisitDate(Date visitDate) {
-        this.visitDate = visitDate;
-    }
-
-    public String getHuella1() {
-        return huella1;
-    }
-
-    public void setHuella1(String huella1) {
-        this.huella1 = huella1;
-    }
-
-    public String getHuella2() {
-        return huella2;
-    }
-
-    public void setHuella2(String huella2) {
-        this.huella2 = huella2;
-    }
-
-    public List<PisoPermisoVisita> getListPisos() {
-        return listPisos;
-    }
-
-    public void setListPisos(List<PisoPermisoVisita> listPisos) {
-        this.listPisos = listPisos;
-    }
-
+    public String getFaceVector() { return faceVector; }
+    public void setFaceVector(String faceVector) { this.faceVector = faceVector; }
 }

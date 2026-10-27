@@ -2,51 +2,61 @@ package com.access.control.controller;
 
 import com.access.control.model.Piso;
 import com.access.control.services.PisoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/pisos")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class PisosController {
-    @Autowired
-    PisoService servicioPisos;
-    @GetMapping("pisos/{id}")
-    public ResponseEntity<Piso> getArticleById(@PathVariable("id") Long id) {
-        Piso pisos = servicioPisos.getPisoById(id);
-        return new ResponseEntity<Piso>(pisos, HttpStatus.OK);
-    }
-    @GetMapping("pisos")
-    public ResponseEntity<List<Piso>> getAllPisos() {
-        List<Piso> list = servicioPisos.getListPisos();
-        return new ResponseEntity<List<Piso>>(list, HttpStatus.OK);
-    }
-    @PostMapping("pisos")
-    public ResponseEntity<Void> addPisos(@RequestBody Piso pisos, UriComponentsBuilder builder) {
-        Piso flag = servicioPisos.addPiso(pisos);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+
+    @Inject
+    PisoService pisoService;
+
+    @GET
+    public List<Piso> getAllPisos(@QueryParam("sedeId") Long sedeId) {
+        if (sedeId != null) {
+            return Piso.find("sede.id = ?1 and state = 1", sedeId).list();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/pisos/{id}").buildAndExpand(pisos.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return pisoService.getListPisos();
     }
-    @PutMapping("pisos")
-    public ResponseEntity<Piso> updatePisos(@RequestBody Piso pisos,@PathVariable("id") Long id) {
-        pisos = servicioPisos.updatePiso(pisos,id);
-        return new ResponseEntity<Piso>(pisos, HttpStatus.OK);
-    }
-    @DeleteMapping("pisos/{id}")
-    public ResponseEntity<Void> deletePisos(@PathVariable("id") Long id) {
-        if(servicioPisos.deletePiso(servicioPisos.getPisoById(id))){
-            return new ResponseEntity<Void>(HttpStatus.OK);
+
+    @GET
+    @Path("/{id}")
+    public Response getPisoById(@PathParam("id") Long id) {
+        Piso p = pisoService.getPisoById(id);
+        if (p == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.ok(p).build();
+    }
+
+    @POST
+    public Response addPiso(Piso piso) {
+        Piso p = pisoService.addPiso(piso);
+        return Response.status(Response.Status.CREATED).entity(p).build();
+    }
+
+    @PUT
+    @Path("/{id}")
+    public Response updatePiso(@PathParam("id") Long id, Piso piso) {
+        Piso p = pisoService.updatePiso(piso, id);
+        if (p == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(p).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deletePiso(@PathParam("id") Long id) {
+        Piso p = pisoService.getPisoById(id);
+        if (p != null && pisoService.deletePiso(p)) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }

@@ -1,70 +1,181 @@
-<h3>Registrar Visitante</h3>
-<div [hidden]="submitted">
-  <form (ngSubmit)="onSubmit()">
-    <div class="row">
-    <div class="col-md-4 col-sm-4 col-lg-4 col-md-offset-4" style="position:absolute;left:40%;text-align:left">
-      <app-camera (pictureTaken)="handleImage($event)"></app-camera>
-      <div class="form-group">
-        <label for="name">Foto</label>
-        <div class="snapshot" *ngIf="webcamImage">
-          <img width="200px" [src]="webcamImage.imageAsDataUrl" />
-          <input type="hidden" class="form-control" required [(ngModel)]="visita.picture" name="picture" id="picture">
+<div class="container-fluid mt-4 pb-5">
+  <!-- ENCABEZADO -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a routerLink="/home/visitantes" class="btn btn-outline-secondary btn-sm mb-2">
+        <i class="bi bi-arrow-left me-1"></i>Volver a Visitantes
+      </a>
+      <h2 class="mb-0 text-primary">
+        <i class="bi bi-person-lines-fill me-2"></i>Registrar Visitante
+      </h2>
+      <p class="text-muted small mb-0">Enrolamiento facial en vivo y asignacion de permisos de pisos para control de acceso</p>
+    </div>
+  </div>
+
+  <form (ngSubmit)="save()">
+    <div class="row g-4">
+
+      <!-- COLUMNA IZQUIERDA: CAPTURA FOTOGRAFICA / BIOMETRICA -->
+      <div class="col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 1rem; z-index: 10;">
+          <div class="card-header bg-white border-bottom py-3">
+            <h5 class="card-title mb-0 fw-bold text-dark">
+              <i class="bi bi-camera-fill text-primary me-2"></i>Fotograma Facial
+            </h5>
+            <small class="text-muted">Captura biometrica multi-angulo y analisis de calidad</small>
+          </div>
+          <div class="card-body p-3">
+            <app-biometric-capture
+              [titulo]="'Fotograma de Visitante'"
+              [soloFacial]="true"
+              [alturaCamaraPx]="260"
+              (biometricDataChange)="onBiometricData($event)">
+            </app-biometric-capture>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-6 col-sm-6 col-lg-6">
 
-      <div class="form-group">
-        <label for="name">Tarjeta Acceso</label>
-        <input type="number" class="form-control" id="badgeAccess" required [(ngModel)]="visita.badgeAccess" name="badgeAccess">
+      <!-- COLUMNA DERECHA: DATOS PERSONALES Y PERMISOS POR PISO -->
+      <div class="col-lg-7 col-xl-8">
+        
+        <!-- DATOS DEL VISITANTE -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-white border-bottom py-3">
+            <h5 class="card-title mb-0 fw-bold text-dark">
+              <i class="bi bi-person-vcard text-primary me-2"></i>Datos del Visitante
+            </h5>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label for="documento" class="form-label small fw-bold text-dark">Cedula / DNI / Pasaporte *</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-card-heading"></i></span>
+                  <input type="text" class="form-control" id="documento" required [(ngModel)]="visita.documento" name="documento" placeholder="Ej. V-12345678">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="badgeAccess" class="form-label small fw-bold text-dark">Tarjeta RFID / Codigo Acceso</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-broadcast-pin"></i></span>
+                  <input type="number" class="form-control" id="badgeAccess" [(ngModel)]="visita.badgeAccess" name="badgeAccess" placeholder="Ej. 1042">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="nombre" class="form-label small fw-bold text-dark">Nombre *</label>
+                <input type="text" class="form-control" id="nombre" required [(ngModel)]="visita.nombre" name="nombre" placeholder="Nombre">
+              </div>
+
+              <div class="col-md-6">
+                <label for="apellido" class="form-label small fw-bold text-dark">Apellido</label>
+                <input type="text" class="form-control" id="apellido" [(ngModel)]="visita.apellido" name="apellido" placeholder="Apellido">
+              </div>
+
+              <div class="col-md-6">
+                <label for="email" class="form-label small fw-bold text-dark">Correo Electronico</label>
+                <input type="email" class="form-control" id="email" [(ngModel)]="visita.email" name="email" placeholder="visitante@correo.com">
+              </div>
+
+              <div class="col-md-6">
+                <label for="telefono" class="form-label small fw-bold text-dark">Telefono</label>
+                <input type="text" class="form-control" id="telefono" [(ngModel)]="visita.telefono" name="telefono" placeholder="+58 412 1234567">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark d-block">Sexo</label>
+                <div class="btn-group w-100" role="group">
+                  <input type="radio" class="btn-check" name="sex" id="sexM" value="m" [(ngModel)]="visita.sex">
+                  <label class="btn btn-outline-secondary" for="sexM"><i class="bi bi-gender-male me-1"></i>Masculino</label>
+
+                  <input type="radio" class="btn-check" name="sex" id="sexF" value="f" [(ngModel)]="visita.sex">
+                  <label class="btn btn-outline-secondary" for="sexF"><i class="bi bi-gender-female me-1"></i>Femenino</label>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="empleadoId" class="form-label small fw-bold text-dark">Anfitrion / Empleado a Visitar</label>
+                <select class="form-select" id="empleadoId" [(ngModel)]="visita.empleadoId" name="empleadoId">
+                  <option [ngValue]="null">Seleccione un Empleado...</option>
+                  <option *ngFor="let emp of empleadosList" [value]="emp.id">
+                    {{ emp.name || emp.nombre }} {{ emp.lastName || emp.apellido }} ({{ emp.gerencia?.gerencia || 'Personal' }})
+                  </option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- PERMISOS POR PISO / ZONAS AUTORIZADAS -->
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0 fw-bold text-dark">
+                <i class="bi bi-shield-lock text-primary me-2"></i>Permisos por Pisos y Zonas
+              </h5>
+              <small class="text-muted">Seleccione los niveles y torniquetes a los que tendra paso este visitante</small>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-primary" (click)="seleccionarTodosPisos()">Todos</button>
+              <button type="button" class="btn btn-outline-secondary" (click)="deseleccionarTodosPisos()">Ninguno</button>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <div *ngIf="pisosList.length === 0" class="text-center py-3 text-muted">
+              <i class="bi bi-layers fs-3 d-block mb-1"></i>
+              No hay pisos registrados en el sistema.
+            </div>
+
+            <div class="row g-2" *ngIf="pisosList.length > 0">
+              <div class="col-md-6" *ngFor="let p of pisosList">
+                <div class="p-3 border rounded-3 d-flex align-items-center justify-content-between cursor-pointer transition-all"
+                     [ngClass]="p.id && pisosSeleccionadosIds.has(p.id) ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : 'border-light bg-light bg-opacity-50'"
+                     (click)="togglePiso(p.id)">
+                  <div class="d-flex align-items-center">
+                    <input class="form-check-input me-3 mt-0 fs-5"
+                           type="checkbox"
+                           [checked]="p.id && pisosSeleccionadosIds.has(p.id)"
+                           (click)="$event.stopPropagation(); togglePiso(p.id)">
+                    <div>
+                      <div class="fw-bold text-dark">{{ p.descripcion || p.piso || 'Nivel ' + p.id }}</div>
+                      <small class="text-muted">
+                        <span class="badge bg-secondary me-1">{{ p.piso || 'N/A' }}</span>
+                        {{ p.area || 'Acceso General' }}
+                      </small>
+                    </div>
+                  </div>
+                  <span class="badge bg-light text-secondary border small" *ngIf="p.sede">
+                    <i class="bi bi-geo-alt me-1"></i>{{ p.sede.sede || p.sede.nombre }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3 text-muted small">
+              <i class="bi bi-info-circle me-1 text-primary"></i>
+              Pisos seleccionados: <strong class="text-dark">{{ pisosSeleccionadosIds.size }}</strong> de {{ pisosList.length }}
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES DE ACCION -->
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-body p-3 d-flex justify-content-between align-items-center">
+            <a routerLink="/home/visitantes" class="btn btn-light px-4 border">Cancelar</a>
+            <button type="submit" 
+                    class="btn btn-success fw-bold px-4 py-2 shadow-sm"
+                    [disabled]="guardando || (!visita.documento && !visita.document) || (!visita.nombre && !visita.name)">
+              <i class="bi bi-person-check-fill me-2"></i>
+              {{ guardando ? 'Guardando Visitante...' : 'Guardar y Autorizar Acceso' }}
+            </button>
+          </div>
+        </div>
+
       </div>
 
-    <div class="form-group">
-      <label for="name">DNI</label>
-      <input type="number" class="form-control" id="document" required [(ngModel)]="visita.document" name="document">
     </div>
-
-    <div class="form-group">
-      <label for="name">Nombre</label>
-      <input type="text" class="form-control" id="name" required [(ngModel)]="visita.name" name="name">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Apellido</label>
-      <input type="text" class="form-control" id="lastName" required [(ngModel)]="visita.lastName" name="lastName">
-    </div>
-
-    <div class="form-group">
-      <label for="name">Correo</label>
-      <input type="text" class="form-control" id="email" required [(ngModel)]="visita.email" name="email">
-    </div>
-
-      <div class="form-group">
-        <label for="name">Fecha Nacimiento</label>
-        <input type="date" class="form-control" id="birthDate" required [(ngModel)]="visita.birthDate" name="birthDate">
-      </div>
-
-    <div class="form-group">
-      <section class="form-control">
-        <label for="sex">Sexo</label>
-        <input name="sex" value="m" type="radio" selected [(ngModel)]="visita.sex" />
-        <i>Masculino</i>
-        <input name="sexr" value="f" type="radio" [(ngModel)]="visita.sex" />
-        <i>Femenino</i>
-      </section>
-    </div>
-
-    <div class="form-group">
-      <label for="name">Celular</label>
-      <input type="number" class="form-control" id="telephone" required [(ngModel)]="visita.telephone" name="telephone">
-    </div>
-
-    <button type="submit" class="btn btn-success">Submit</button>
-    </div>
-</div>
   </form>
-</div>
-
-<div [hidden]="!submitted">
-  <h4>You submitted successfully!</h4>
 </div>

@@ -1,45 +1,125 @@
-<h3>Registrar Dispositivo</h3>
-<div [hidden]="submitted">
-  <form (ngSubmit)="onSubmit()">
-    <div class="row">
-    <div class="col-md-6 col-sm-6 col-lg-6">
-
-      <div class="form-group">
-        <label for="descripcion">Descripción:</label>
-        <input type="text" class="form-control" id="descripcion" required [(ngModel)]="dispositivo.descripcion" name="descripcion">
-      </div>
-
-    <div class="form-group">
-      <label for="ip">IP:</label>
-      <input type="text" class="form-control" id="ip" required [(ngModel)]="dispositivo.ip" name="ip">
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a routerLink="/home/dispositivos" class="btn btn-outline-secondary btn-sm mb-2">
+        <i class="pi pi-arrow-left me-1"></i>Volver a Dispositivos
+      </a>
+      <h2 class="mb-0 text-primary"><i class="pi pi-desktop me-2"></i>Registrar Dispositivo / Torniquete</h2>
+      <p class="text-muted small mb-0">Alta de hardware de control de acceso, asignacion de red y piso</p>
     </div>
+  </div>
 
-    <div class="form-group">
-      <label for="port">Puerto:</label>
-      <input type="number" class="form-control" id="port" required [(ngModel)]="dispositivo.port" name="port">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="descripcion" class="form-label fw-bold">Nombre / Descripcion:</label>
+            <input type="text" class="form-control" id="descripcion" required [(ngModel)]="dispositivo.descripcion"
+              name="descripcion" placeholder="Ej: Torniquete Entrada Principal">
+          </div>
+
+          <div class="col-md-4">
+            <label for="ip" class="form-label fw-bold">Direccion IP:</label>
+            <input type="text" class="form-control" id="ip" required [(ngModel)]="dispositivo.ip" name="ip"
+              placeholder="Ej: 192.168.1.168">
+          </div>
+
+          <div class="col-md-4">
+            <label for="port" class="form-label fw-bold">Puerto:</label>
+            <input type="number" class="form-control" id="port" required [(ngModel)]="dispositivo.port" name="port"
+              placeholder="80">
+          </div>
+
+          <div class="col-md-12">
+            <label for="ruta" class="form-label fw-bold">Ruta / Endpoint Adicional (Opcional):</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted font-monospace">
+                {{ dispositivo.ip ? dispositivo.ip : 'ip' }}:{{ dispositivo.port ? dispositivo.port : 'puerto' }}
+              </span>
+              <input type="text" class="form-control font-monospace" id="ruta" [(ngModel)]="dispositivo.ruta" name="ruta"
+                placeholder="/cam1/whep o /snapshot.jpg o /stream/channel1">
+            </div>
+            <div class="form-text small text-muted">
+              Concatenacion URL resultante: <code>http://{{ dispositivo.ip || '127.0.0.1' }}:{{ dispositivo.port || '80' }}{{ dispositivo.ruta ? (dispositivo.ruta.startsWith('/') ? dispositivo.ruta : '/' + dispositivo.ruta) : '' }}</code>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="sede_id" class="form-label fw-bold">Sede:</label>
+            <select class="form-select" id="sede_id" [disabled]="sedeBloqueada" [(ngModel)]="sedeSeleccionadaId"
+              (ngModelChange)="onSedeChange($event)" name="sede_id">
+              <option [ngValue]="null">Todas las Sedes / Seleccione Sede...</option>
+              <option *ngFor="let s of sedesList" [value]="s.id">
+                {{ s.sede }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="piso_id" class="form-label fw-bold">Piso / Nivel Asignado:</label>
+            <select class="form-select" id="piso_id" [(ngModel)]="dispositivo.piso_id"
+              (ngModelChange)="onPisoChange($event)" name="piso_id">
+              <option [ngValue]="null">Seleccione un Piso...</option>
+              <option *ngFor="let p of pisosFiltrados" [value]="p.id">
+                {{ p.sede?.sede ? ('[' + p.sede.sede + '] ') : '' }}Piso {{ p.numeroPiso || p.piso }} - {{ p.descripcion
+                || p.area || 'Sin descripcion' }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="entradaSalida" class="form-label fw-bold">Sentido de Paso:</label>
+            <select class="form-select" id="entradaSalida" [(ngModel)]="dispositivo.entradaSalida" name="entradaSalida">
+              <option [ngValue]="0">Entrada</option>
+              <option [ngValue]="1">Salida</option>
+              <option [ngValue]="2">Bidireccional</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="state" class="form-label fw-bold">Estado Operativo:</label>
+            <select class="form-select" id="state" [(ngModel)]="dispositivo.state" name="state">
+              <option [ngValue]="1">Habilitado</option>
+              <option [ngValue]="0">Deshabilitado</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="tipoDispositivo" class="form-label fw-bold">Tipo de Dispositivo Estimado:</label>
+            <select class="form-select" id="tipoDispositivo" [(ngModel)]="dispositivo.tipoDispositivo"
+              name="tipoDispositivo">
+              <option value="Torniquete con Relay TCP">Torniquete con Relay TCP</option>
+              <option value="Terminal Biometrica Facial">Terminal Biometrica Facial</option>
+              <option value="Gateway ESP32 VNPPB">Gateway ESP32 VNPPB</option>
+              <option value="Lector ZKTeco">Lector ZKTeco</option>
+              <option value="Terminal Movil">Terminal Movil</option>
+              <option value="Camara Web">Camara Web</option>
+              <option value="Camara IP">Camara IP</option>
+              <option value="Captahuellas USB Generic">Captahuellas USB Generic</option>
+              <option value="Servidor de Control">Servidor de Control</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="sistemaOperativo" class="form-label fw-bold">Sistema Operativo / Plataforma:</label>
+            <select class="form-select" id="sistemaOperativo" [(ngModel)]="dispositivo.sistemaOperativo"
+              name="sistemaOperativo">
+              <option value="Linux Embedded (ZKOS / HikOS)">Linux Embedded (ZKOS / HikOS)</option>
+              <option value="Android/iOS">Android/iOS</option>
+              <option value="macOS/Linux 64-bit">macOS/Linux 64-bit</option>
+              <option value="RTOS">RTOS</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 text-end">
+          <a routerLink="/home/dispositivos" class="btn btn-secondary me-2">Cancelar</a>
+          <button type="submit" class="btn btn-success">
+            <i class="pi pi-save me-1"></i>Guardar Dispositivo
+          </button>
+        </div>
+      </form>
     </div>
-
-    <div class="form-group">
-      <label for="piso_id">Piso</label>
-      <input type="number" class="form-control" id="piso_id" required [(ngModel)]="dispositivo.piso_id" name="piso_id">
-    </div>
-
-      <div class="form-group">
-        <section class="form-control">
-          <label for="ip">Lugar</label>
-          <input name="entradaSalida" value="0" type="radio" selected [(ngModel)]="dispositivo.entradaSalida" />
-          <i>Entrada</i>
-          <input name="entradaSalida" value="1" type="radio" [(ngModel)]="dispositivo.entradaSalida" />
-          <i>Salida</i>
-        </section>
-      </div>
-
-    <button type="submit" class="btn btn-success">Guardar</button>
-    </div>
-</div>
-  </form>
-</div>
-
-<div [hidden]="!submitted">
-  <h4>You submitted successfully!</h4>
+  </div>
 </div>

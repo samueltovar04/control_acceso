@@ -1,0 +1,312 @@
+<div class="container-fluid p-4 bg-light">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-dark mb-1">Control Financiero de Sucursal & Deudores</h3>
+      <p class="text-muted small mb-0">Balance consolidado de ingresos, egresos operativos y auditoría de morosidad</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3" (click)="cargarDatos()">
+        <i class="bi bi-arrow-clockwise"></i>
+        <span>Actualizar</span>
+      </button>
+      <button class="btn btn-danger d-flex align-items-center gap-1 shadow-sm px-3" (click)="abrirModalNuevoGasto()">
+        <i class="bi bi-plus-circle-fill"></i>
+        <span>Nuevo Gasto</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TARJETAS DE BALANCE FINANCIERO -->
+  <div class="row g-3 mb-4" *ngIf="balance">
+    <!-- TOTAL INGRESOS -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-success">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Total Ingresos</span>
+            <h3 class="fw-bold text-success m-0 mt-1">${{ balance.totalIngresos | number:'1.2-2' }}</h3>
+          </div>
+          <div class="bg-success-subtle text-success p-3 rounded-circle fs-4">
+            <i class="bi bi-cash-stack"></i>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block text-truncate">
+          {{ balance.totalTransaccionesIngresos }} cobros registrados
+        </small>
+      </div>
+    </div>
+
+    <!-- TOTAL GASTOS OPERATIVOS -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-danger position-relative">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Total Gastos Operativos</span>
+            <h3 class="fw-bold text-danger m-0 mt-1">${{ balance.totalGastos | number:'1.2-2' }}</h3>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button 
+              type="button" 
+              class="btn btn-sm btn-outline-danger py-1 px-2 d-flex align-items-center gap-1 small" 
+              (click)="abrirModalListadoGastos()"
+              title="Ver gastos del mes en curso">
+              <i class="bi bi-card-list"></i>
+              <span>Ver Mes</span>
+            </button>
+            <div class="bg-danger-subtle text-danger p-3 rounded-circle fs-4">
+              <i class="bi bi-receipt"></i>
+            </div>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block text-truncate">
+          {{ balance.totalRegistrosGastos }} registros de egresos
+        </small>
+      </div>
+    </div>
+
+    <!-- BALANCE NETO -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100 border-start border-4 border-primary">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small text-uppercase fw-bold">Balance Neto</span>
+            <h3 class="fw-bold m-0 mt-1" [ngClass]="balance.balanceNeto >= 0 ? 'text-primary' : 'text-danger'">
+              ${{ balance.balanceNeto | number:'1.2-2' }}
+            </h3>
+          </div>
+          <div class="bg-primary-subtle text-primary p-3 rounded-circle fs-4">
+            <i class="bi bi-wallet2"></i>
+          </div>
+        </div>
+        <small class="text-muted mt-2 d-block text-truncate">Sucursal Principal</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION DE DEUDORES Y MOROSOS -->
+  <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h5 class="fw-bold text-secondary m-0">
+          <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Control de Deudores / Membresías Vencidas
+        </h5>
+        <span class="text-muted small">Clientes con pagos pendientes o membresía expirada</span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr class="small text-muted text-uppercase">
+            <th class="py-3 px-3">Documento</th>
+            <th class="py-3 px-3">Nombre Completo</th>
+            <th class="py-3 px-3">Email / Teléfono</th>
+            <th class="py-3 px-3">Estatus Suscripción</th>
+            <th class="py-3 px-3">Restricción Torniquete</th>
+            <th class="py-3 px-3 text-end">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of deudores">
+            <td class="fw-bold text-dark px-3">{{ d.documento }}</td>
+            <td class="fw-semibold text-dark px-3">{{ d.nombre }} {{ d.apellido }}</td>
+            <td class="small text-muted px-3">{{ d.email || 'N/A' }} / {{ d.telefono || 'N/A' }}</td>
+            <td class="px-3">
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" *ngIf="d.estadoSuscripcion === 'VENCIDA'">
+                <i class="bi bi-exclamation-circle me-1"></i>VENCIDA / MOROSO
+              </span>
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" *ngIf="d.estadoSuscripcion === 'POR_VENCER'">
+                <i class="bi bi-clock me-1"></i>POR VENCER
+              </span>
+              <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" *ngIf="!d.estadoSuscripcion || (d.estadoSuscripcion !== 'VENCIDA' && d.estadoSuscripcion !== 'POR_VENCER')">
+                {{ d.estadoSuscripcion || 'SIN MEMBRESIA' }}
+              </span>
+            </td>
+            <td class="px-3">
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                <i class="bi bi-lock-fill me-1"></i>BLOQUEADO
+              </span>
+            </td>
+            <td class="text-end px-3">
+              <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                <i class="bi bi-bell-fill"></i>
+                <span>Recordatorio</span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="deudores.length === 0">
+            <td colspan="6" class="text-center text-muted py-5">
+              <i class="bi bi-check-circle-fill text-success fs-2 d-block mb-2"></i>
+              No hay deudores registrados. Todos los clientes están al día.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REGISTRAR NUEVO GASTO OPERATIVO                          -->
+  <!-- ============================================================== -->
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);" *ngIf="mostrarModalNuevoGasto">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-3">
+        <div class="modal-header bg-white border-bottom py-3">
+          <h5 class="modal-title fw-bold text-dark">
+            <i class="bi bi-receipt me-2 text-danger"></i>Registrar Nuevo Gasto Operativo
+          </h5>
+          <button type="button" class="btn-close" (click)="cerrarModalNuevoGasto()"></button>
+        </div>
+
+        <form (ngSubmit)="guardarGasto()">
+          <div class="modal-body p-4">
+            <div *ngIf="mensajeGastoExito" class="alert alert-success d-flex align-items-center py-2 px-3 small border-0 mb-3 shadow-sm">
+              <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+              <div>{{ mensajeGastoExito }}</div>
+            </div>
+
+            <div *ngIf="errorGasto" class="alert alert-danger d-flex align-items-center py-2 px-3 small border-0 mb-3 shadow-sm">
+              <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+              <div>{{ errorGasto }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark">Descripción del Gasto *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Ej. Compra de insumos de limpieza, pago de internet..." 
+                [(ngModel)]="nuevoGasto.descripcion" 
+                name="descripcion" 
+                required>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">Categoría *</label>
+                <select class="form-select" [(ngModel)]="nuevoGasto.categoria" name="categoria">
+                  <option value="MANTENIMIENTO">Mantenimiento</option>
+                  <option value="SERVICIOS">Servicios Básicos (Luz, Agua, Net)</option>
+                  <option value="SUMINISTROS">Suministros / Limpieza</option>
+                  <option value="PERSONAL">Personal / Honorarios</option>
+                  <option value="EQUIPAMIENTO">Equipamiento / Repuestos</option>
+                  <option value="OTRO">Otro Gasto</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">Monto (USD) *</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0.01" 
+                    class="form-control" 
+                    placeholder="0.00" 
+                    [(ngModel)]="nuevoGasto.monto" 
+                    name="monto" 
+                    required>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">Fecha del Gasto</label>
+                <input 
+                  type="date" 
+                  class="form-control" 
+                  [(ngModel)]="nuevoGasto.fechaGasto" 
+                  name="fechaGasto">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark">Registrado Por</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  [(ngModel)]="nuevoGasto.registradoPor" 
+                  name="registradoPor" 
+                  placeholder="Admin Finanzas">
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer bg-light border-0 py-3">
+            <button type="button" class="btn btn-outline-secondary" (click)="cerrarModalNuevoGasto()">Cancelar</button>
+            <button type="submit" class="btn btn-danger fw-bold px-4" [disabled]="guardandoGasto || !nuevoGasto.descripcion || !nuevoGasto.monto">
+              <i class="bi bi-save me-1"></i>
+              {{ guardandoGasto ? 'Guardando...' : 'Guardar Gasto' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: LISTADO DE GASTOS DEL MES EN CURSO                       -->
+  <!-- ============================================================== -->
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);" *ngIf="mostrarModalListadoGastos">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-3">
+        <div class="modal-header bg-white border-bottom py-3">
+          <h5 class="modal-title fw-bold text-dark">
+            <i class="bi bi-calendar3 me-2 text-danger"></i>Gastos Operativos del Mes en Curso
+          </h5>
+          <button type="button" class="btn-close" (click)="cerrarModalListadoGastos()"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <div *ngIf="cargandoGastos" class="text-center py-4">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="text-muted small mt-2">Cargando listado de gastos del mes...</p>
+          </div>
+
+          <div *ngIf="!cargandoGastos && gastosMes.length === 0" class="text-center py-4">
+            <i class="bi bi-receipt fs-1 text-muted opacity-50 d-block mb-2"></i>
+            <p class="text-muted small mb-0">No se registran gastos operativos para el mes en curso.</p>
+          </div>
+
+          <div *ngIf="!cargandoGastos && gastosMes.length > 0">
+            <div class="table-responsive border rounded bg-white">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-uppercase text-muted">
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Categoría</th>
+                    <th>Registrado Por</th>
+                    <th class="text-end">Monto</th>
+                  </tr>
+                </thead>
+                <tbody class="small">
+                  <tr *ngFor="let g of gastosMes">
+                    <td class="text-muted">{{ g.fechaGasto ? (g.fechaGasto | date:'dd/MM/yyyy') : 'N/A' }}</td>
+                    <td class="fw-semibold text-dark">{{ g.descripcion }}</td>
+                    <td>
+                      <span class="badge bg-light text-dark border">{{ g.categoria }}</span>
+                    </td>
+                    <td class="text-muted">{{ g.registradoPor || 'Admin' }}</td>
+                    <td class="text-end fw-bold text-danger">${{ g.monto | number:'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TOTALIZADOR EN MODAL -->
+            <div class="d-flex justify-content-end align-items-center mt-3 p-2 bg-light rounded border">
+              <span class="text-muted small text-uppercase fw-bold me-2">Total Egresos del Mes:</span>
+              <span class="h5 fw-bold text-danger m-0">${{ balance?.totalGastos || 0 | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-0">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalListadoGastos()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

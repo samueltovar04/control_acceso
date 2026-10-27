@@ -1,31 +1,51 @@
-<h3>Registrar Piso</h3>
-<div [hidden]="submitted">
-  <form (ngSubmit)="onSubmit()">
-    <div class="row">
-
-    <div class="col-md-4 col-sm-4 col-lg-4">
-
-      <div class="form-group">
-        <label for="piso">Piso:</label>
-        <input type="text" class="form-control" id="piso" required [(ngModel)]="piso.piso" name="piso">
-      </div>
-
-      <div class="form-group">
-        <label for="descripcion">Descripción:</label>
-        <input type="text" class="form-control" id="descripcion" required [(ngModel)]="piso.descripcion" name="descripcion">
-      </div>
-
-      <div class="form-group">
-        <label for="area">Area:</label>
-        <input type="text" class="form-control" id="area" required [(ngModel)]="piso.area" name="area">
-      </div>
-
-      <button type="submit" class="btn btn-success">Guardar</button>
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a routerLink="/home/pisos" class="btn btn-outline-secondary btn-sm mb-2">
+        <i class="bi bi-arrow-left me-1"></i>Volver a Pisos
+      </a>
+      <h2 class="mb-0 text-primary"><i class="bi bi-building me-2"></i>Registrar Nuevo Piso / Nivel</h2>
+      <p class="text-muted small mb-0">Parametrizacion de numero de piso, descripcion y area</p>
     </div>
-</div>
-  </form>
-</div>
+  </div>
 
-<div [hidden]="!submitted">
-  <h4>You submitted successfully!</h4>
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label for="piso" class="form-label fw-bold">Numero de Piso *</label>
+            <input type="text" class="form-control" id="piso" required [(ngModel)]="piso.piso" name="piso" placeholder="Ej. PB, 1, 2, S1">
+          </div>
+
+          <div class="col-md-3">
+            <label for="descripcion" class="form-label fw-bold">Descripcion *</label>
+            <input type="text" class="form-control" id="descripcion" required [(ngModel)]="piso.descripcion" name="descripcion" placeholder="Ej. Planta Baja, Nivel 1">
+          </div>
+
+          <div class="col-md-3">
+            <label for="area" class="form-label fw-bold">Area / Zona</label>
+            <input type="text" class="form-control" id="area" [(ngModel)]="piso.area" name="area" placeholder="Ej. Gimnasio, Oficinas, Terraza">
+          </div>
+
+          <div class="col-md-3">
+            <label for="sede_id" class="form-label fw-bold">Sede *</label>
+            <select class="form-select" id="sede_id" [(ngModel)]="piso.sede_id" name="sede_id">
+              <option [ngValue]="null">Seleccione una Sede...</option>
+              <option *ngFor="let s of sedesList" [value]="s.id">
+                {{ s.sede || s.nombre }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-4 text-end">
+          <a routerLink="/home/pisos" class="btn btn-secondary me-2">Cancelar</a>
+          <button type="submit" class="btn btn-success fw-bold px-4" [disabled]="!piso.piso || !piso.descripcion">
+            <i class="bi bi-save me-1"></i>Guardar Piso
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

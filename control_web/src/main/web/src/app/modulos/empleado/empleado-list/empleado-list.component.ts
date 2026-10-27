@@ -1,70 +1,138 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
-import { Empleado } from "../../../shared/empleado/empleado.model";
-import { Observable,Subject } from "rxjs";
-import * as $ from 'jquery';
-import 'datatables.net';
-import 'datatables.net-bs4';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
+import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { Subscription } from 'rxjs';
+
 @Component({
   selector: 'app-empleado-list',
   templateUrl: './empleado-list.component.html',
   styleUrls: ['./empleado-list.component.css']
 })
 export class EmpleadoListComponent implements OnInit, OnDestroy {
+  empleados: any[] = [];
+  empleadosFiltrados: any[] = [];
+  itemsPaginados: any[] = [];
 
-    empleados$: Observable<Empleado>;
-    dataTable: any;
-    public rowsOnPage = 10;
-    public sortBy = "name";
-    public sortOrder = "asc";
+  filtroTexto: string = '';
+  filtroSedeId: number | null = null;
+  private sedeSub?: Subscription;
 
-    dtOptions: DataTables.Settings = {};
-    dtTrigger: Subject<any> = new Subject();
-    constructor(private empleService: EmpleadoService) { }
+  page: number = 1;
+  pageSize: number = 10;
+  totalPaginas: number = 1;
+  paginasArray: number[] = [];
 
-   /* ngOnInit() {
-      this.empleService.getAll().subscribe(data => {
-        this.empleados = data;
-      });
-    }*/
+  constructor(
+    private empleService: EmpleadoService,
+    private alertModal: AlertModalService,
+    private sedeStateService: SedeStateService
+  ) {}
 
-    ngOnInit() {
-      const table: any = $('tablaEmp');
-    this.dataTable = table.DataTable();
-      this.dtOptions = {
-      pagingType: 'full_numbers',
-      pageLength: 5,
-      processing: true
-    };
-        this.reloadData();
-    }
-
-  reloadData() {
-    this.empleService.getEmployeesList().subscribe(data => {
-        console.log(data);
-        this.empleados$ = data;
-        this.dtTrigger.next();
-      });
-  }
-  public toInt(num: string) {
-        return +num;
-    }
-
-  public sortByWordLength = (a: any) => {
-    return a.name.length;
+  ngOnInit(): void {
+    this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
+      this.filtroSedeId = id;
+      this.aplicarFiltro();
+    });
+    this.reloadData();
   }
 
   ngOnDestroy(): void {
-    this.dtTrigger.unsubscribe();
-  }
-  deleteEmployee(id: number) {
-    this.empleService.deleteEmployee(id)
-      .subscribe(
-        data => {
-          console.log(data);
-          this.reloadData();
-        },
-        error => console.log(error));
+    if (this.sedeSub) {
+      this.sedeSub.unsubscribe();
+    }
   }
 
+  reloadData(): void {
+    this.empleService.getEmployeesList().subscribe({
+      next: (data: any) => {
+        this.empleados = data || [];
+        this.aplicarFiltro();
+      },
+      error: (err) => console.log('Error empleados:', err)
+    });
+  }
+
+  aplicarFiltro(): void {
+    const q = (this.filtroTexto || '').toLowerCase().trim();
+    this.empleadosFiltrados = this.empleados.filter((e) => {
+      let matchTexto = true;
+      if (q) {
+        const nombre = (e.name || e.nombre || '').toLowerCase();
+        const apellido = (e.lastName || e.apellido || '').toLowerCase();
+        const doc = (e.document || e.documento || '').toString();
+        const badge = (e.badgeAccess || e.badge_access || '').toString();
+        const email = (e.email || '').toLowerCase();
+        const gerencia = (e.gerencia?.gerencia || '').toLowerCase();
+        const sede = (e.sede?.sede || '').toLowerCase();
+        matchTexto = (
+          nombre.includes(q) ||
+          apellido.includes(q) ||
+          doc.includes(q) ||
+          badge.includes(q) ||
+          email.includes(q) ||
+          gerencia.includes(q) ||
+          sede.includes(q)
+        );
+      }
+
+      let matchSede = true;
+      if (this.filtroSedeId !== null) {
+        const sId = e.sede ? (e.sede.id || e.sede.sede_id) : (e.sedeId || e.sede_id);
+        matchSede = sId !== null && sId !== undefined && Number(sId) === Number(this.filtroSedeId);
+      }
+
+      return matchTexto && matchSede;
+    });
+    this.totalPaginas = Math.ceil(this.empleadosFiltrados.length / this.pageSize) || 1;
+    this.page = 1;
+    this.actualizarPaginacion();
+  }
+
+  actualizarPaginacion(): void {
+    const inicio = (this.page - 1) * this.pageSize;
+    this.itemsPaginados = this.empleadosFiltrados.slice(inicio, inicio + this.pageSize);
+    
+    // Ventana deslizante para paginacion (max 7 botones)
+    const total = this.totalPaginas;
+    const actual = this.page;
+    let start = Math.max(1, actual - 3);
+    let end = Math.min(total, start + 6);
+    if (end - start < 6) {
+      start = Math.max(1, end - 6);
+    }
+    this.paginasArray = [];
+    for (let i = start; i <= end; i++) {
+      this.paginasArray.push(i);
+    }
+  }
+
+  cambiarPagina(nuevaPagina: number): void {
+    if (nuevaPagina >= 1 && nuevaPagina <= this.totalPaginas) {
+      this.page = nuevaPagina;
+      this.actualizarPaginacion();
+    }
+  }
+
+  cambiarPageSize(nuevoTamano: number): void {
+    this.pageSize = Number(nuevoTamano);
+    this.totalPaginas = Math.ceil(this.empleadosFiltrados.length / this.pageSize) || 1;
+    this.page = 1;
+    this.actualizarPaginacion();
+  }
+
+  async deleteEmployee(id: number): Promise<void> {
+    const confirmado = await this.alertModal.confirm(
+      'Desea eliminar este empleado del sistema?',
+      'Eliminar Empleado',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (confirmado) {
+      this.empleService.deleteEmployee(id).subscribe({
+        next: () => this.reloadData(),
+        error: (err) => console.log(err)
+      });
+    }
+  }
 }

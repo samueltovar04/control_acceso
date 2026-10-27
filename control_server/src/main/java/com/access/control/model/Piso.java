@@ -1,36 +1,42 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name="pisos")
-public class  Piso extends AbstractEntity implements Serializable {
+@Table(name = "pisos")
+public class Piso extends AbstractEntity {
 
-    private static final long serialVersionUID = 1L;
+    @Column(name = "piso")
     private String piso;
+
+    @Column(name = "descripcion")
     private String descripcion;
+
+    @Column(name = "area")
     private String area;
 
-   /* @JsonIgnore
-    @OneToMany(cascade = CascadeType.REMOVE,mappedBy = "pisos")
-    private List<PisoPermiso> pisoPermisos = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "sede_id")
+    private Sede sede;
 
-    public List<PisoPermiso> getPisoPermisos() {
-        return pisoPermisos;
+    @Transient
+    private Long sedeId;
+
+    public String getPiso() {
+        return piso;
     }
 
-    public void setPisoPermisos(List<PisoPermiso> pisoPermisos) {
-        this.pisoPermisos = pisoPermisos;
-    }*/
+    public void setPiso(String piso) {
+        this.piso = piso;
+    }
 
-    public Piso() {
+    public String getNumeroPiso() {
+        return piso;
+    }
+
+    public void setNumeroPiso(String numeroPiso) {
+        this.piso = numeroPiso;
     }
 
     public String getDescripcion() {
@@ -41,14 +47,6 @@ public class  Piso extends AbstractEntity implements Serializable {
         this.descripcion = descripcion;
     }
 
-    public String getPiso() {
-        return piso;
-    }
-
-    public void setPiso(String piso) {
-        this.piso = piso;
-    }
-
     public String getArea() {
         return area;
     }
@@ -57,25 +55,19 @@ public class  Piso extends AbstractEntity implements Serializable {
         this.area = area;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Piso)) return false;
-        Piso piso1 = (Piso) o;
-        return Objects.equals(getPiso(), piso1.getPiso()) &&
-                Objects.equals(getArea(), piso1.getArea());
+    public Sede getSede() {
+        return sede;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getPiso(), getArea());
+    public void setSede(Sede sede) {
+        this.sede = sede;
     }
 
-    @Override
-    public String toString() {
-        return "Piso{" +
-                "piso='" + piso + '\'' +
-                ", area='" + area + '\'' +
-                '}';
+    public Long getSedeId() {
+        return sede != null ? sede.getId() : sedeId;
+    }
+
+    public void setSedeId(Long sedeId) {
+        this.sedeId = sedeId;
     }
 }

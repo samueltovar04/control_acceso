@@ -2,149 +2,206 @@ package com.access.control.services;
 
 import com.access.control.dto.EmpleadoDto;
 import com.access.control.model.Empleado;
-import com.access.control.model.Piso;
-import com.access.control.model.PisoPermiso;
 import com.access.control.repository.EmpleadoRepository;
-import com.access.control.repository.PisoRepository;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
-@Service("empleadosServiceImpl")
-public class EmpleadosServiceImpl implements EmpleadosService{
-    @Autowired
-    private EmpleadoRepository empleadosDao;
+@ApplicationScoped
+public class EmpleadosServiceImpl implements EmpleadosService {
 
-    @Autowired
-    private PisoRepository pisoDao;
+    @Inject
+    EmpleadoRepository empleadoRepository;
+
+    @Inject
+    com.access.control.repository.GerenciaRepository gerenciaRepository;
+
+    @Inject
+    com.access.control.repository.SedeRepository sedeRepository;
+
+    @Inject
+    com.access.control.repository.TipoContratoRepository tipoContratoRepository;
+
+    @Inject
+    com.access.control.repository.PisoRepository pisoRepository;
+
+    @Inject
+    com.access.control.repository.BiometriaVectorRepository biometriaVectorRepository;
+
+    @Inject
+    com.access.control.services.UsuarioService usuarioService;
 
     @Override
-    @Transactional
-    public List<Empleado> getListEmpleados(boolean picture)
-    {   Integer i=0;
-        List<Empleado> emp = empleadosDao.findAll();
-       /* if (picture) {
-          for (i=0 ; i < emp.size(); i++){
-              byte[] b = "No disponible".getBytes();
-              emp.get(i).setPicture(b);
-              emp.get(i).setHuella1(b);
-              emp.get(i).setHuella2(b);
-          }
-        }*/
-        return emp;
+    public Empleado getEmpleadoById(Long id) {
+        return empleadoRepository.findById(id);
+    }
+
+    @Override
+    public List<Empleado> getListEmpleados(boolean activeOnly) {
+        return empleadoRepository.listAll();
     }
 
     @Override
     @Transactional
-    public Empleado getEmpleadoById(Long idEmpleado)
-    {
-        Empleado empl = empleadosDao.findById(idEmpleado).orElse(null);
-
-        if(empl!=null){
-            empl.getListPisos().forEach(
-                    p ->{
-                        if(p!=null)
-                            p.setPisoId(p.getPisos().getId());
-                    }
-            );
-            return empl;
+    public Empleado addEmpleado(EmpleadoDto dto) {
+        Empleado e = new Empleado();
+        e.setName(dto.getNombre());
+        e.setLastName(dto.getApellido());
+        e.setEmail(dto.getEmail());
+        e.setDocumento(dto.getDocumento());
+        e.setTelephone(dto.getTelefono());
+        e.setCodigoInsignia(dto.getCodigoInsignia());
+        e.setSex(dto.getSexo());
+        e.setBirthDate(dto.getFechaNacimiento());
+        if (dto.getFoto() != null) {
+            e.setFoto(dto.getFoto());
         }
-        return null;
-    }
+        if (dto.getFaceVector() != null) {
+            e.setFaceVector(dto.getFaceVector());
+        }
+        if (dto.getHuella1() != null) {
+            e.setHuella1(dto.getHuella1());
+        }
+        if (dto.getHuella2() != null) {
+            e.setHuella2(dto.getHuella2());
+        }
+        if (dto.getGerenciaId() != null) {
+            e.setGerencia(gerenciaRepository.findById(dto.getGerenciaId()));
+        }
+        if (dto.getSedeId() != null) {
+            e.setSede(sedeRepository.findById(dto.getSedeId()));
+        }
+        if (dto.getTipoContratoId() != null) {
+            e.setTipoContrato(tipoContratoRepository.findById(dto.getTipoContratoId()));
+        }
+        if (dto.getPisoIds() != null && !dto.getPisoIds().isEmpty()) {
+            List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+            e.setPisosPermitidos(pisos);
+        }
 
-    @Override
-    @Transactional
-    public Empleado addEmpleado(@NotNull EmpleadoDto emp)
-    {
-        //emp.setPicture(Base64.getDecoder().decode(emp.getPicture()));
-       // emp.setPicture(Arrays.asList(emp.getPicture().split(",")).get(1));
-        //String encodedString = Base64.getEncoder().encodeToString(emp.geticture());
-        //Empleado empleado = new DozerBeanMapper().map(emp, Empleado.class);
-        List<Piso> pisos = pisoDao.findAllState(1);
+        if (dto.getDocumento() != null && !dto.getDocumento().trim().isEmpty()) {
+            Empleado existenteDoc = empleadoRepository.findByDocumento(dto.getDocumento().trim());
+            if (existenteDoc != null) {
+                throw new IllegalArgumentException("Ya existe un empleado registrado con el documento: " + dto.getDocumento().trim());
+            }
+        }
 
-        List<PisoPermiso> listpp = new ArrayList<>();
-        pisos.forEach(
-                p->{
-                    listpp.add(new PisoPermiso(p,0));
+        if (dto.getEmail() != null && !dto.getEmail().trim().isEmpty() && usuarioService != null) {
+            String emailNorm = dto.getEmail().trim().toLowerCase();
+            Empleado existentePorEmail = empleadoRepository.find("email", emailNorm).firstResult();
+            if (existentePorEmail != null) {
+                throw new IllegalArgumentException("Ya existe un empleado registrado con el correo: " + emailNorm);
+            }
+
+            String nombreCompleto = ((dto.getNombre() != null ? dto.getNombre() : "") + " " +
+                    (dto.getApellido() != null ? dto.getApellido() : "")).trim();
+            com.access.control.model.User user = usuarioService.obtenerOCrearUsuarioAutomatico(
+                    emailNorm, nombreCompleto, e.getSede(), "ROLE_RECEPCION");
+            if (user != null) {
+                Empleado empleadoConEsteUser = empleadoRepository.find("user.id", user.getId()).firstResult();
+                if (empleadoConEsteUser != null) {
+                    throw new IllegalArgumentException("El usuario vinculado a este correo ya esta asignado al empleado: " + 
+                            empleadoConEsteUser.getName() + " " + empleadoConEsteUser.getLastName());
                 }
-        );
-        Empleado empleado = new Empleado(listpp);
-        empleado.setDocument(emp.getDocument());
-        empleado.setName(emp.getName());
-        empleado.setBadgeAccess(emp.getBadgeAccess());
-        empleado.setLastName(emp.getLastName());
-        empleado.setBirthDate(emp.getBirthDate());
-        empleado.setEmail(emp.getEmail());
-        empleado.setSex(emp.getSex());
-        empleado.setTelephone(emp.getTelephone());
-        empleado.setEnabled(true);
-        empleado.setState(1);
-        empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
-
-        final Empleado finalEmpleado = empleadosDao.save(empleado);
-        //finalEmpleado.setListPisos(pisoPermisoRepository.saveAll(listpp));
-        return getEmpleadoById(finalEmpleado.getId());
-    }
-
-    @Override
-    @Transactional
-    public Empleado updateEmpleado(EmpleadoDto emp,Long id)
-    {
-        Empleado empleado = new Empleado();
-        empleado.setId(id);
-        empleado.setDocument(emp.getDocument());
-        empleado.setName(emp.getName());
-        empleado.setBadgeAccess(emp.getBadgeAccess());
-        empleado.setLastName(emp.getLastName());
-        empleado.setBirthDate(emp.getBirthDate());
-        empleado.setEmail(emp.getEmail());
-        empleado.setSex(emp.getSex());
-        empleado.setTelephone(emp.getTelephone());
-        empleado.setEnabled(emp.getEnabled());
-        empleado.setState(emp.getState());
-        empleado.setPicture(Base64.getDecoder().decode(Arrays.asList(emp.getPicture().split(",")).get(1)));
-        Empleado empl = empleadosDao.getOne(id);
-        if(empl!=null){
-            empleado.setHuella1(empl.getHuella1());
-            empleado.setHuella2(empl.getHuella2());
-            return getEmpleadoById(empleadosDao.saveAndFlush(empleado).getId());
+                e.setUser(user);
+            }
         }
-        return null;
-    }
 
-    @Override
-    @Transactional
-    public Empleado updateEmpleadoHuella(Empleado emp,Long id)
-    {
-            empleadosDao.saveAndFlush(emp);
-            return getEmpleadoById(id);
-
-    }
-
-    @Override
-    @Transactional
-    public boolean deleteEmpleado(Empleado emp)
-    {
-         empleadosDao.delete(emp);
-         return empleadosDao.findById(emp.getId()).isPresent();
-    }
-
-    @Override
-    @Transactional
-    public Empleado updatePisos(EmpleadoDto emp,Long id){
-
-        Empleado empl = empleadosDao.getOne(id);
-        if(empl!=null){
-            empl.addListPisos(emp.getListPisos());
-            empleadosDao.saveAndFlush(empl);
-            return getEmpleadoById(id);
+        empleadoRepository.persist(e);
+        if (dto.getFaceVector() != null) {
+            biometriaVectorRepository.updateFaceEmbeddingFromString("empleados", e.getId(), dto.getFaceVector());
         }
-        return null;
+        return e;
+    }
+
+    @Override
+    @Transactional
+    public Empleado updateEmpleado(EmpleadoDto dto, Long id) {
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null) {
+            e.setName(dto.getNombre());
+            e.setLastName(dto.getApellido());
+            e.setEmail(dto.getEmail());
+            e.setTelephone(dto.getTelefono());
+            if (dto.getDocumento() != null) {
+                e.setDocumento(dto.getDocumento());
+            }
+            if (dto.getCodigoInsignia() != null) {
+                e.setCodigoInsignia(dto.getCodigoInsignia());
+            }
+            if (dto.getSexo() != null) {
+                e.setSex(dto.getSexo());
+            }
+            if (dto.getFechaNacimiento() != null) {
+                e.setBirthDate(dto.getFechaNacimiento());
+            }
+            if (dto.getFoto() != null) {
+                e.setFoto(dto.getFoto());
+            }
+            if (dto.getFaceVector() != null) {
+                e.setFaceVector(dto.getFaceVector());
+                biometriaVectorRepository.updateFaceEmbeddingFromString("empleados", e.getId(), dto.getFaceVector());
+            }
+            if (dto.getHuella1() != null) {
+                e.setHuella1(dto.getHuella1());
+            }
+            if (dto.getHuella2() != null) {
+                e.setHuella2(dto.getHuella2());
+            }
+            if (dto.getGerenciaId() != null) {
+                e.setGerencia(gerenciaRepository.findById(dto.getGerenciaId()));
+            }
+            if (dto.getSedeId() != null) {
+                e.setSede(sedeRepository.findById(dto.getSedeId()));
+            }
+            if (dto.getTipoContratoId() != null) {
+                e.setTipoContrato(tipoContratoRepository.findById(dto.getTipoContratoId()));
+            }
+            if (dto.getPisoIds() != null) {
+                if (dto.getPisoIds().isEmpty()) {
+                    e.setPisosPermitidos(new java.util.ArrayList<>());
+                } else {
+                    List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+                    e.setPisosPermitidos(pisos);
+                }
+            }
+        }
+        return e;
+    }
+
+    @Override
+    @Transactional
+    public Empleado updateEmpleadoHuella(Empleado empleado, Long id) {
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null) {
+            e.setHuella1(empleado.getHuella1());
+            e.setHuella2(empleado.getHuella2());
+        }
+        return e;
+    }
+
+    @Override
+    @Transactional
+    public Empleado updatePisos(EmpleadoDto dto, Long id) {
+        Empleado e = empleadoRepository.findById(id);
+        if (e != null && dto.getPisoIds() != null) {
+            if (dto.getPisoIds().isEmpty()) {
+                e.setPisosPermitidos(new java.util.ArrayList<>());
+            } else {
+                List<com.access.control.model.Piso> pisos = pisoRepository.list("id in ?1", dto.getPisoIds());
+                e.setPisosPermitidos(pisos);
+            }
+        }
+        return e;
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteEmpleado(Empleado empleado) {
+        if (empleado != null && empleado.getId() != null) {
+            return empleadoRepository.deleteById(empleado.getId());
+        }
+        return false;
     }
 }

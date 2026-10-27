@@ -1,0 +1,395 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold mb-1 text-dark">Planes y Promociones</h3>
+      <p class="text-muted small mb-0">Gestion de membresias, cupones de descuento, 2x1 y promociones especiales</p>
+    </div>
+    
+    <div class="d-flex align-items-center gap-2">
+      <!-- PESTANAS PLANES / PROMOCIONES -->
+      <div class="btn-group p-1 bg-white rounded-pill border shadow-sm" role="group">
+        <button type="button" class="btn btn-sm rounded-pill px-3"
+                [ngClass]="seccionActiva() === 'planes' ? 'btn-primary' : 'btn-light text-muted'"
+                (click)="seccionActiva.set('planes')">
+          <i class="bi bi-card-checklist me-1"></i> Planes
+        </button>
+        <button type="button" class="btn btn-sm rounded-pill px-3"
+                [ngClass]="seccionActiva() === 'promociones' ? 'btn-primary' : 'btn-light text-muted'"
+                (click)="seccionActiva.set('promociones')">
+          <i class="bi bi-tag-fill me-1"></i> Promociones y Cupones
+        </button>
+      </div>
+
+      <button *ngIf="seccionActiva() === 'planes'" class="btn btn-primary rounded-pill px-4" (click)="abrirCrear()">
+        <i class="bi bi-plus-circle me-1"></i> Nueva Membresia
+      </button>
+
+      <button *ngIf="seccionActiva() === 'promociones'" class="btn btn-success rounded-pill px-4" (click)="abrirCrearPromo()">
+        <i class="bi bi-plus-circle me-1"></i> Nuevo Cupon / Promo
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= SECCION 1: PLANES ================= -->
+  <div *ngIf="seccionActiva() === 'planes'">
+    <div *ngIf="cargando()" class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+
+    <div class="row g-3" *ngIf="!cargando()">
+      <div class="col-md-6 col-lg-4" *ngFor="let m of membresias()">
+        <div class="card h-100 border-0 shadow-sm plan-card bg-white position-relative overflow-hidden">
+          <div class="plan-indicator" [class.active-indicator]="m.activo !== false && m.activa !== false"></div>
+
+          <div class="card-body p-3 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="plan-title fw-bold text-dark text-truncate me-2" [title]="m.nombre">
+                  {{ m.nombre }}
+                </span>
+                <span class="badge rounded-pill px-2 py-0 d-inline-flex align-items-center gap-1"
+                      [ngClass]="(m.activo !== false && m.activa !== false) ? 'bg-success text-white' : 'bg-secondary text-white'"
+                      style="font-size: 0.65rem; height: 18px;">
+                  <i class="bi bi-circle-fill" style="font-size: 0.35rem;"></i>
+                  {{ (m.activo !== false && m.activa !== false) ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+
+              <p class="text-muted small mb-3 text-truncate" style="font-size: 0.78rem;" [title]="m.descripcion || 'Sin descripcion'">
+                {{ m.descripcion || 'Acceso general al club y areas autorizadas' }}
+              </p>
+
+              <div class="price-container p-2 rounded-3 mb-3 bg-light border border-light-subtle">
+                <div class="d-flex justify-content-between align-items-baseline mb-1">
+                  <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                    Tarifa Oficial
+                  </span>
+                  <span class="badge bg-white text-secondary border border-secondary-subtle px-2 py-0" style="font-size: 0.65rem;">
+                    <i class="bi bi-arrow-repeat me-1"></i>{{ m.duracionDias || m.duracionesDias || 30 }} dias
+                  </span>
+                </div>
+
+                <div class="d-flex align-items-baseline gap-1">
+                  <span class="fs-4 fw-bold text-dark font-monospace">${{ m.precio | number:'1.2-2' }}</span>
+                  <span class="text-muted small">/ {{ m.ciclo || m.periodicidad || 'MENSUAL' | lowercase }}</span>
+                </div>
+
+                <div class="mt-1 pt-1 border-top border-secondary-subtle border-opacity-25 d-flex justify-content-between align-items-center">
+                  <span class="text-muted" style="font-size: 0.7rem;">Equivalente BCV:</span>
+                  <span class="fw-bold text-primary font-monospace" style="font-size: 0.8rem;">
+                    {{ m.precio | bcvConvert:(m.moneda || 'USD') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <button class="btn btn-outline-primary btn-sm w-100 fw-bold py-1 rounded-2 d-flex align-items-center justify-content-center" (click)="abrirEditar(m)">
+                <i class="bi bi-pencil-square me-1"></i> Editar Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SECCION 2: PROMOCIONES Y CUPONES ================= -->
+  <div *ngIf="seccionActiva() === 'promociones'">
+    <div *ngIf="cargandoPromos()" class="text-center py-5">
+      <div class="spinner-border text-success"></div>
+    </div>
+
+    <div *ngIf="!cargandoPromos() && promociones().length === 0" class="text-center py-5 bg-white rounded-3 shadow-sm p-4">
+      <i class="bi bi-ticket-perforated fs-1 text-muted opacity-50 d-block mb-2"></i>
+      <h6 class="fw-bold text-dark">No hay promociones o cupones activos</h6>
+      <p class="text-muted small mb-3">Crea cupones como 2x1, descuentos porcentuales o de monto fijo para tus clientes.</p>
+      <button class="btn btn-success btn-sm rounded-pill px-3" (click)="abrirCrearPromo()">
+        <i class="bi bi-plus-circle me-1"></i> Crear Primera Promocion
+      </button>
+    </div>
+
+    <div class="row g-3" *ngIf="!cargandoPromos() && promociones().length > 0">
+      <div class="col-md-6 col-lg-4" *ngFor="let p of promociones()">
+        <div class="card h-100 border-0 shadow-sm plan-card bg-white position-relative overflow-hidden"
+             [ngClass]="{'opacity-75 bg-light': !p.activo}">
+          <div class="plan-indicator" [class.active-indicator]="p.activo"></div>
+
+          <div class="card-body p-3 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="plan-title fw-bold text-dark text-truncate me-2" [title]="p.nombre">
+                  {{ p.nombre }}
+                </span>
+                <span class="badge rounded-pill px-2 py-0 d-inline-flex align-items-center gap-1"
+                      [ngClass]="p.activo ? 'bg-success text-white' : 'bg-secondary text-white'"
+                      style="font-size: 0.65rem; height: 18px;">
+                  <i class="bi bi-circle-fill" style="font-size: 0.35rem;"></i>
+                  {{ p.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </div>
+
+              <!-- CODIGO DE CUPON DESTACADO -->
+              <div class="d-flex align-items-center gap-2 mb-2 mt-2">
+                <span class="badge bg-dark text-warning font-monospace px-2 py-1 fs-6 border border-warning-subtle"
+                      [ngClass]="{'text-muted': !p.activo}">
+                  <i class="bi bi-ticket-detailed me-1"></i>{{ p.codigo }}
+                </span>
+                <span class="badge" 
+                      [ngClass]="{
+                        'bg-info text-dark': p.tipoDescuento === 'PORCENTAJE',
+                        'bg-success text-white': p.tipoDescuento === 'MONTO_FIJO',
+                        'bg-danger text-white': p.tipoDescuento === 'DOS_POR_UNO' || p.tipoDescuento === '2X1',
+                        'bg-warning text-dark': p.tipoDescuento === 'DIAS_EXTRA'
+                      }"
+                      style="font-size: 0.7rem;">
+                  {{ p.tipoDescuento === 'DOS_POR_UNO' ? '2 x 1' : (p.tipoDescuento === 'PORCENTAJE' ? p.valorDescuento + '% OFF' : (p.tipoDescuento === 'MONTO_FIJO' ? '$' + p.valorDescuento + ' OFF' : '+' + p.valorDescuento + ' dias')) }}
+                </span>
+              </div>
+
+              <!-- DETALLES DE VIGENCIA Y RESTRICCION -->
+              <div class="p-2 rounded-3 mb-3 bg-light border border-light-subtle small" style="font-size: 0.75rem;">
+                <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                  <span class="text-muted">Aplica a:</span>
+                  <span class="fw-semibold text-dark text-truncate" style="max-width: 170px;">
+                    {{ p.membresiaAplica ? p.membresiaAplica.nombre : 'Todas las membresias' }}
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle" *ngIf="p.fechaFin">
+                  <span class="text-muted">Vigente hasta:</span>
+                  <span class="fw-semibold text-danger">{{ p.fechaFin | date:'mediumDate' }}</span>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Beneficio:</span>
+                  <span class="fw-bold text-success">
+                    <ng-container [ngSwitch]="p.tipoDescuento">
+                      <span *ngSwitchCase="'PORCENTAJE'">{{ p.valorDescuento }}% de descuento</span>
+                      <span *ngSwitchCase="'MONTO_FIJO'">${{ p.valorDescuento | number:'1.2-2' }} directo</span>
+                      <span *ngSwitchCase="'DOS_POR_UNO'">Pagan 1, entran 2 (50% OFF)</span>
+                      <span *ngSwitchCase="'DIAS_EXTRA'">+{{ p.valorDescuento }} dias gratis</span>
+                      <span *ngSwitchDefault>{{ p.valorDescuento }}</span>
+                    </ng-container>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 pt-1">
+              <button class="btn btn-outline-primary btn-sm flex-fill fw-bold py-1 rounded-2" (click)="abrirEditarPromo(p)">
+                <i class="bi bi-pencil-square me-1"></i> Editar
+              </button>
+              <button class="btn btn-sm px-2 py-1 rounded-2 fw-semibold"
+                      [ngClass]="p.activo ? 'btn-outline-danger' : 'btn-outline-success'"
+                      (click)="solicitarConfirmacionToggle(p)"
+                      [title]="p.activo ? 'Inactivar promocion' : 'Reactivar promocion'">
+                <i class="bi" [ngClass]="p.activo ? 'bi-toggle2-on text-danger' : 'bi-toggle2-off text-success'"></i>
+                <span class="ms-1">{{ p.activo ? 'Inactivar' : 'Reactivar' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL FORMULARIO -->
+<div *ngIf="mostrarModal()" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">{{ editandoId ? 'Editar Membresia' : 'Nueva Membresia' }}</h5>
+        <button type="button" class="btn-close" (click)="mostrarModal.set(false)"></button>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nombre del Plan *</label>
+            <input type="text" class="form-control" formControlName="nombre" placeholder="Ej: Plan Gold Full Acceso">
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold">Precio *</label>
+              <input type="number" step="0.01" class="form-control" formControlName="precio" placeholder="50.00">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Moneda *</label>
+              <select class="form-select" formControlName="moneda">
+                <option value="USD">Dolar (USD)</option>
+                <option value="EUR">Euro (EUR)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold">Ciclo *</label>
+              <select class="form-select" formControlName="ciclo" (change)="onCicloChange()">
+                <option value="SEMANAL">Semanal (7 dias)</option>
+                <option value="QUINCENAL">Quincenal (15 dias)</option>
+                <option value="MENSUAL">Mensual (30 dias)</option>
+                <option value="TRIMESTRAL">Trimestral (90 dias)</option>
+                <option value="ANUAL">Anual (365 dias)</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Duracion en Dias *</label>
+              <input type="number" class="form-control" formControlName="duracionDias">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripcion</label>
+            <textarea class="form-control" rows="2" formControlName="descripcion"></textarea>
+          </div>
+
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="activa" id="activaCheck">
+            <label class="form-check-label" for="activaCheck">Plan Activo y Visible para Clientes</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" (click)="mostrarModal.set(false)">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid">Guardar Membresia</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORMULARIO PROMOCIONES / CUPONES -->
+<div *ngIf="mostrarModalPromo()" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-tag-fill me-1 text-success"></i>
+          {{ editandoPromoId ? 'Editar Promocion / Cupon' : 'Nueva Promocion / Cupon' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="mostrarModalPromo.set(false)"></button>
+      </div>
+      <form [formGroup]="promoForm" (ngSubmit)="guardarPromo()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Nombre de la Promocion *</label>
+            <input type="text" class="form-control" formControlName="nombre" placeholder="Ej: Promo 2x1 Inauguracion">
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small">Codigo Cupon *</label>
+              <input type="text" class="form-control font-monospace text-uppercase" formControlName="codigo" placeholder="Ej: PROMO2X1">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small">Tipo de Promocion *</label>
+              <select class="form-select" formControlName="tipoDescuento">
+                <option value="PORCENTAJE">Porcentaje (% Descuento)</option>
+                <option value="MONTO_FIJO">Monto Fijo ($ USD Descuento)</option>
+                <option value="DOS_POR_UNO">2 x 1 (50% OFF o mes extra)</option>
+                <option value="DIAS_EXTRA">Dias Adicionales Gratis</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small">
+                Valor del Descuento / Dias *
+              </label>
+              <input type="number" step="0.01" class="form-control" formControlName="valorDescuento" placeholder="Ej: 20 o 50">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small">Aplica a Membresia</label>
+              <select class="form-select" formControlName="membresiaAplicaId">
+                <option [ngValue]="null">Todas las membresias</option>
+                <option *ngFor="let m of membresias()" [ngValue]="m.id">{{ m.nombre }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small">Fecha de Inicio</label>
+              <input type="date" class="form-control" formControlName="fechaInicio">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small">Fecha de Vencimiento</label>
+              <input type="date" class="form-control" formControlName="fechaFin">
+            </div>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" formControlName="activo" id="promoActivaCheck">
+            <label class="form-check-label small" for="promoActivaCheck">Promocion activa y canjeable</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" (click)="mostrarModalPromo.set(false)">Cancelar</button>
+          <button type="submit" class="btn btn-success" [disabled]="promoForm.invalid">Guardar Promocion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACION / CONFORME DE INACTIVACION O REACTIVACION -->
+<div *ngIf="mostrarModalConfirmacion()" class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); z-index: 1070;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header" [ngClass]="accionConfirmacion() === 'inactivar' ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
+        <h5 class="modal-title fw-bold d-flex align-items-center">
+          <i class="bi me-2 fs-4" [ngClass]="accionConfirmacion() === 'inactivar' ? 'bi-exclamation-triangle-fill text-danger' : 'bi-check-circle-fill text-success'"></i>
+          Confirmar {{ accionConfirmacion() === 'inactivar' ? 'Inactivacion' : 'Reactivacion' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cancelarConfirmacion()"></button>
+      </div>
+
+      <div class="modal-body py-4">
+        <div *ngIf="promoSeleccionadaConfirmacion() as p">
+          <p class="fs-6 mb-2">
+            ¿Esta seguro de <strong [ngClass]="accionConfirmacion() === 'inactivar' ? 'text-danger' : 'text-success'">{{ accionConfirmacion() === 'inactivar' ? 'inactivar' : 'reactivar' }}</strong> la siguiente promocion?
+          </p>
+
+          <div class="card bg-light border-0 p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-dark">{{ p.nombre }}</span>
+              <span class="badge bg-dark text-warning font-monospace">{{ p.codigo }}</span>
+            </div>
+            <div class="text-muted small">
+              Tipo: <span class="fw-semibold text-dark">{{ p.tipoDescuento }}</span> | 
+              Valor: <span class="fw-semibold text-dark">{{ p.valorDescuento }}</span>
+            </div>
+          </div>
+
+          <div class="alert small mb-0 d-flex align-items-start" [ngClass]="accionConfirmacion() === 'inactivar' ? 'alert-warning' : 'alert-info'">
+            <i class="bi bi-info-circle-fill me-2 fs-5 mt-1"></i>
+            <div>
+              <ng-container *ngIf="accionConfirmacion() === 'inactivar'">
+                <strong>Sin borrado fisico:</strong> La promocion no se eliminara de la base de datos ni de los cobros historicos. Solo dejara de estar disponible para nuevos pagos o cobros del scheduler.
+              </ng-container>
+              <ng-container *ngIf="accionConfirmacion() === 'activar'">
+                <strong>Disponibilidad inmediata:</strong> La promocion volvera a estar activa y visible para canjear en nuevos pagos y asignaciones.
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary px-3" (click)="cancelarConfirmacion()">
+          Cancelar
+        </button>
+        <button type="button" class="btn px-4 fw-bold"
+                [ngClass]="accionConfirmacion() === 'inactivar' ? 'btn-danger' : 'btn-success'"
+                (click)="confirmarTogglePromo()">
+          <i class="bi bi-check-lg me-1"></i>
+          Conforme, {{ accionConfirmacion() === 'inactivar' ? 'Inactivar' : 'Reactivar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+

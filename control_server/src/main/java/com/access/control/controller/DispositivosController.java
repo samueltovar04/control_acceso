@@ -2,73 +2,150 @@ package com.access.control.controller;
 
 import com.access.control.model.Dispositivo;
 import com.access.control.services.DispositivoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("api/v1/")
-@CrossOrigin(origins = "*")
+@Path("/api/v1/dispositivos")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class DispositivosController {
-    @Autowired
-    DispositivoService servicioDispositivos;
-    @Autowired
-    private SimpMessagingTemplate template;
 
-    @GetMapping("dispositivos/{id}")
-    public ResponseEntity<Dispositivo> getArticleById(@PathVariable("id") Long id) {
-        Dispositivo dispositivos = servicioDispositivos.getDispositivoById(id);
-        return new ResponseEntity<Dispositivo>(dispositivos, HttpStatus.OK);
+    @Inject
+    DispositivoService dispositivoService;
+
+    @GET
+    public List<Dispositivo> getAllDispositivos() {
+        return dispositivoService.getListDispositivos();
     }
-    @GetMapping("dispositivos")
-    public ResponseEntity<List<Dispositivo>> getAllDispositivos() {
-        List<Dispositivo> list = servicioDispositivos.getListDispositivos();
-        return new ResponseEntity<List<Dispositivo>>(list, HttpStatus.OK);
-    }
-    @PostMapping("dispositivos")
-    public ResponseEntity<Void> addDispositivos(@RequestBody Dispositivo dispositivos, UriComponentsBuilder builder) {
-        Dispositivo flag = servicioDispositivos.addDispositivo(dispositivos);
-        if (flag.getId() == null) {
-            return new ResponseEntity<Void>(HttpStatus.CONFLICT);
+
+    @GET
+    @Path("/{id}")
+    public Response getDispositivoById(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(builder.path("/dispositivos/{id}").buildAndExpand(dispositivos.getId()).toUri());
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return Response.ok(d).build();
     }
-    @PutMapping("dispositivos/{id}")
-    public ResponseEntity<Dispositivo> updateDispositivos(@RequestBody Dispositivo dispositivos,@PathVariable("id") Long id) {
-        dispositivos = servicioDispositivos.updateDispositivo(dispositivos,id);
-        return new ResponseEntity<Dispositivo>(dispositivos, HttpStatus.OK);
+
+    @POST
+    public Response addDispositivo(Dispositivo dispositivo) {
+        Dispositivo d = dispositivoService.addDispositivo(dispositivo);
+        return Response.status(Response.Status.CREATED).entity(d).build();
     }
-    @DeleteMapping("dispositivos/{id}")
-    public ResponseEntity<Void> deleteDispositivos(@PathVariable("id") Long id) {
-        if(servicioDispositivos.deleteDispositivo(servicioDispositivos.getDispositivoById(id))){
-            return new ResponseEntity<Void>(HttpStatus.OK);
+
+    @PUT
+    @Path("/{id}")
+    public Response updateDispositivo(@PathParam("id") Long id, Dispositivo dispositivo) {
+        Dispositivo d = dispositivoService.updateDispositivo(dispositivo, id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return Response.ok(d).build();
     }
 
-    @MessageMapping("/dispositivos")
-    @SendTo("/dispositivos")
-    public List<Dispositivo> returnDispositivos(List<Dispositivo> dispositivos,SimpMessageHeaderAccessor headerAccessor){
-        return dispositivos;
+    @DELETE
+    @Path("/{id}")
+    public Response deleteDispositivo(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d != null && dispositivoService.deleteDispositivo(d)) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
-    @MessageMapping("/cliente/dispositivos")
-    @SendTo("/cliente/dispositivos")
-    public void returnDispositivo(SimpMessageHeaderAccessor headerAccessor, WebSocketSession session) {
-        ResponseEntity<List<Dispositivo>> respnse = this.servicioDispositivos.getListDispositivosActivos();
-        this.template.convertAndSend("/cliente/dispositivos", respnse);
-        return;
+    @PUT
+    @Path("/{id}/toggle-state")
+    public Response toggleState(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.toggleState(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(d).build();
+    }
+
+    @POST
+    @Path("/ping-all")
+    public Response pingAllDispositivos() {
+        List<Dispositivo> list = dispositivoService.pingAllDispositivos();
+        return Response.ok(list).build();
+    }
+
+    @POST
+    @Path("/{id}/ping")
+    public Response pingDispositivo(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        boolean ok = dispositivoService.checkPing(d);
+        return Response.ok(d).build();
+    }
+
+    @POST
+    @Path("/{id}/abrir")
+    public Response accionarTorniquete(@PathParam("id") Long id) {
+        Dispositivo d = dispositivoService.getDispositivoById(id);
+        if (d == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        java.util.Map<String, Object> res = new java.util.HashMap<>();
+        res.put("id", d.getId());
+        res.put("nombre", d.getNombre());
+        res.put("ip", d.getIp());
+        res.put("accion", "PULSO_RELE_ACTIVADO");
+        res.put("estado", "ABIERTO");
+        res.put("mensaje", "Pulso de apertura concedido al torniquete " + d.getNombre());
+        return Response.ok(res).build();
+    }
+
+    @GET
+    @Path("/{id}/escanear")
+    public Response escanearDispositivo(@PathParam("id") Long id) {
+        com.access.control.dto.DispositivoEscaneoDTO info = dispositivoService.escanearDispositivo(id);
+        if (info == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(info).build();
+    }
+
+    @GET
+    @Path("/no-registrados")
+    public Response descubrirDispositivosNoRegistrados(
+            @QueryParam("subred") String subred,
+            @QueryParam("ips") String ips,
+            @HeaderParam("X-Forwarded-For") String xForwardedFor,
+            @HeaderParam("X-Real-IP") String xRealIp) {
+        
+        String subredFinal = subred;
+        if ((subredFinal == null || subredFinal.isBlank()) && xForwardedFor != null && !xForwardedFor.isBlank()) {
+            String clientIp = xForwardedFor.split(",")[0].trim();
+            if (clientIp.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$") && !clientIp.startsWith("127.") && !clientIp.startsWith("172.18.")) {
+                subredFinal = clientIp.substring(0, clientIp.lastIndexOf('.'));
+            }
+        }
+        if ((subredFinal == null || subredFinal.isBlank()) && xRealIp != null && !xRealIp.isBlank()) {
+            if (xRealIp.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$") && !xRealIp.startsWith("127.") && !xRealIp.startsWith("172.18.")) {
+                subredFinal = xRealIp.substring(0, xRealIp.lastIndexOf('.'));
+            }
+        }
+
+        List<String> listaIps = null;
+        if (ips != null && !ips.isBlank()) {
+            listaIps = java.util.Arrays.asList(ips.split(","));
+        }
+
+        List<com.access.control.dto.DispositivoDescubiertoDTO> list = dispositivoService.descubrirDispositivosNoRegistrados(subredFinal, listaIps);
+        return Response.ok(list).build();
+    }
+
+    @POST
+    @Path("/registrar-lote")
+    public Response registrarLote(List<Dispositivo> dispositivos) {
+        List<Dispositivo> creados = dispositivoService.registrarLote(dispositivos);
+        return Response.status(Response.Status.CREATED).entity(creados).build();
     }
 }

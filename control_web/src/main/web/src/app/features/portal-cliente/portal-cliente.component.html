@@ -1,0 +1,237 @@
+<div class="container p-4">
+  <div class="row g-4">
+    <!-- PERFIL Y PASE DIGITAL DE ACCESO -->
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 p-3 bg-white text-center">
+        <div class="avatar-box mb-3">
+          <img [src]="clienteData?.foto || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+        </div>
+        <h4 class="fw-bold mb-1">{{ clienteData?.nombre }} {{ clienteData?.apellido }}</h4>
+        <p class="text-muted small mb-2">{{ clienteData?.email }}</p>
+        <span class="badge bg-success p-2 fs-6 mb-3" *ngIf="suscripcionActiva?.estado === 'ACTIVA' || clienteData?.estadoSuscripcion === 'ACTIVA'">Suscripción Activa</span>
+        <span class="badge bg-warning text-dark p-2 fs-6 mb-3" *ngIf="suscripcionActiva?.estado === 'PENDIENTE_CONCILIAR' || clienteData?.estadoSuscripcion === 'PENDIENTE_CONCILIAR'">En Conciliación</span>
+        <span class="badge bg-danger p-2 fs-6 mb-3" *ngIf="suscripcionActiva?.estado === 'MOROSO' || clienteData?.estadoSuscripcion === 'MOROSO' || clienteData?.estadoSuscripcion === 'VENCIDA'">Suscripción Vencida</span>
+
+        <!-- BANNER DE ACCESO TEMPORAL POR GRACIA -->
+        <div class="alert alert-warning text-start small mb-3 p-2" *ngIf="clienteData?.estadoSuscripcion === 'PENDIENTE_CONCILIAR' || suscripcionActiva?.estado === 'PENDIENTE_CONCILIAR'">
+          <i class="bi bi-clock-history me-1 fw-bold"></i>
+          <strong>Acceso temporal activo:</strong> Su pago se encuentra en proceso de validacion bancaria. El torniquete permitira su ingreso durante las proximas 48 horas.
+        </div>
+
+        <!-- PASE DIGITAL QR DE ACCESO GENERADO POR CEDULA -->
+        <div class="qr-card border rounded p-3 bg-light mt-2">
+          <h6 class="fw-bold text-dark"><i class="bi bi-qr-code me-1"></i> Pase Digital de Acceso</h6>
+          <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + (clienteData?.documento || clienteData?.qrTokenDinamico || ('CLIENTE_' + clienteId))" 
+               class="img-fluid my-2 border p-1 bg-white rounded shadow-sm" alt="QR Access Pass">
+          <small class="text-muted d-block">Presente este codigo QR en los lectores de los torniquetes para validar su paso.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICACIONES Y AVISOS DE PAGO -->
+    <div class="col-md-8">
+      <div class="card shadow-sm border-0 p-3 bg-white mb-4">
+        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-bell-fill me-1"></i> Avisos de Pago y Confirmaciones</h5>
+        <div class="list-group">
+          <div class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let n of notificaciones">
+            <div>
+              <h6 class="fw-bold mb-1">{{ n.titulo }}</h6>
+              <p class="mb-0 text-muted small">{{ n.mensaje }}</p>
+            </div>
+            <small class="text-muted">{{ n.fechaEnvio | date:'short' }}</small>
+          </div>
+          <div *ngIf="notificaciones.length === 0" class="text-muted text-center py-2">No tiene avisos de pago pendientes.</div>
+        </div>
+      </div>
+
+      <!-- REGISTRO / PAGO DE MEMBRESÍA VÍA WEB -->
+      <div class="card shadow-sm border-0 p-3 bg-white mb-4">
+        <h5 class="fw-bold text-success mb-3"><i class="bi bi-credit-card-fill me-1"></i> Pagar / Renovar Membresía</h5>
+        <form (ngSubmit)="realizarPagoWeb()" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Monto a Pagar ($)</label>
+            <input type="number" class="form-control" [(ngModel)]="nuevoPagoCliente.monto" name="montoWeb" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Método de Pago</label>
+            <select class="form-select" [(ngModel)]="nuevoPagoCliente.metodoPago" (ngModelChange)="onMetodoPagoChange()" name="metodoWeb">
+              <option value="PAGO_MOVIL">Pago Móvil</option>
+              <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+              <option value="ZELLE">Zelle</option>
+              <option value="BINANCE">Binance Pay / USDT</option>
+              <option value="TARJETA">Tarjeta Online</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Nro Referencia / Comprobante</label>
+            <input type="text" class="form-control" [(ngModel)]="nuevoPagoCliente.numeroReferencia" name="refWeb" placeholder="Ej. 123456 o Hash" required>
+          </div>
+
+          <!-- APLICAR CUPON O PROMOCION -->
+          <div class="col-12">
+            <label class="form-label small fw-bold text-success">
+              <i class="bi bi-tag-fill me-1"></i>Cupón de Descuento o Promoción
+            </label>
+            <div class="input-group">
+              <input type="text" class="form-control text-uppercase" placeholder="Ej: PROMO2X1"
+                     [(ngModel)]="nuevoPagoCliente.codigoCupon" name="codigoCupon"
+                     [disabled]="!!cuponInfo">
+              <button *ngIf="!cuponInfo" type="button" class="btn btn-outline-success fw-bold"
+                      (click)="validarCupon()" [disabled]="validandoCupon">
+                <span *ngIf="validandoCupon" class="spinner-border spinner-border-sm me-1"></span>
+                Aplicar Cupón
+              </button>
+              <button *ngIf="cuponInfo" type="button" class="btn btn-outline-danger"
+                      (click)="removerCupon()">
+                Quitar Cupón
+              </button>
+            </div>
+            <div *ngIf="cuponInfo" class="mt-2 p-2 bg-success-subtle text-success rounded-2 small d-flex justify-content-between align-items-center">
+              <span><strong>✓ {{ cuponInfo.nombre }} ({{ cuponInfo.codigo }})</strong> - Descuento: -${{ cuponInfo.descuentoMonto }}</span>
+              <span class="badge bg-success">Nuevo Total: ${{ cuponInfo.montoFinal }}</span>
+            </div>
+          </div>
+
+          <!-- CUENTA RECEPTORA ASIGNADA -->
+          <div class="col-12" *ngIf="bancosReceptores.length > 0">
+            <label class="form-label small fw-bold text-primary">
+              <i class="bi bi-bank me-1"></i>Cuenta Receptora de Destino
+            </label>
+            <select class="form-select border-primary" [(ngModel)]="nuevoPagoCliente.bancoId" (ngModelChange)="onBancoSeleccionadoChange()" name="bancoId">
+              <option *ngFor="let b of bancosReceptores" [ngValue]="b.id">
+                [{{ b.tipo }}] {{ b.nombre }} - {{ b.moneda }} ({{ b.titular }})
+              </option>
+            </select>
+          </div>
+
+          <!-- DETALLES BANCARIOS COPIABLES -->
+          <div class="col-12" *ngIf="bancoSeleccionado">
+            <div class="p-3 bg-light rounded-3 border border-success-subtle">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-success text-uppercase">{{ bancoSeleccionado.tipo }}</span>
+                <span class="badge bg-white text-dark border">{{ bancoSeleccionado.moneda }}</span>
+              </div>
+
+              <!-- PAGO MOVIL / TRANSFERENCIA -->
+              <div *ngIf="bancoSeleccionado.tipo === 'PAGO_MOVIL' || bancoSeleccionado.tipo === 'TRANSFERENCIA'" class="small">
+                <div *ngIf="bancoSeleccionado.codigo" class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Banco / Código:</span>
+                  <strong>{{ bancoSeleccionado.nombre }} ({{ bancoSeleccionado.codigo }})</strong>
+                </div>
+                <div *ngIf="bancoSeleccionado.telefono" class="d-flex justify-content-between align-items-center py-1">
+                  <span class="text-muted">Teléfono Pago Móvil:</span>
+                  <div>
+                    <strong class="me-2">{{ bancoSeleccionado.telefono }}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="copiarDato(bancoSeleccionado.telefono)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="bancoSeleccionado.documentoTitular" class="d-flex justify-content-between align-items-center py-1">
+                  <span class="text-muted">RIF / Cédula Titular:</span>
+                  <div>
+                    <strong class="me-2">{{ bancoSeleccionado.documentoTitular }}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="copiarDato(bancoSeleccionado.documentoTitular)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="bancoSeleccionado.numeroCuenta" class="d-flex justify-content-between align-items-center py-1">
+                  <span class="text-muted">Número de Cuenta:</span>
+                  <div>
+                    <code class="me-2">{{ bancoSeleccionado.numeroCuenta }}</code>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="copiarDato(bancoSeleccionado.numeroCuenta)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Titular:</span>
+                  <strong>{{ bancoSeleccionado.titular }}</strong>
+                </div>
+              </div>
+
+              <!-- ZELLE -->
+              <div *ngIf="bancoSeleccionado.tipo === 'ZELLE'" class="small">
+                <div *ngIf="bancoSeleccionado.email" class="d-flex justify-content-between align-items-center py-1">
+                  <span class="text-muted">Correo Zelle:</span>
+                  <div>
+                    <strong class="text-success me-2">{{ bancoSeleccionado.email }}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" (click)="copiarDato(bancoSeleccionado.email)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Titular:</span>
+                  <strong>{{ bancoSeleccionado.titular }}</strong>
+                </div>
+              </div>
+
+              <!-- BINANCE / CRYPTO -->
+              <div *ngIf="bancoSeleccionado.tipo === 'BINANCE'" class="small">
+                <div *ngIf="bancoSeleccionado.memoQr" class="d-flex justify-content-between align-items-center py-1">
+                  <span class="text-muted">Binance Pay ID:</span>
+                  <div>
+                    <strong class="text-dark me-2">{{ bancoSeleccionado.memoQr }}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-warning py-0 px-2" (click)="copiarDato(bancoSeleccionado.memoQr)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+                <div *ngIf="bancoSeleccionado.red" class="d-flex justify-content-between py-1">
+                  <span class="text-muted">Red de Envío:</span>
+                  <span class="badge bg-dark">{{ bancoSeleccionado.red }}</span>
+                </div>
+                <div *ngIf="bancoSeleccionado.direccionBilletera" class="py-1">
+                  <span class="text-muted d-block">Dirección de Billetera (Wallet):</span>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <code class="text-break me-2">{{ bancoSeleccionado.direccionBilletera }}</code>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="copiarDato(bancoSeleccionado.direccionBilletera)">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="bancoSeleccionado.notasInstruccion" class="mt-2 pt-2 border-top text-muted small">
+                <i class="bi bi-info-circle me-1 text-primary"></i>{{ bancoSeleccionado.notasInstruccion }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-success w-100 fw-bold"><i class="bi bi-send-fill me-1"></i> Enviar Pago para Verificación</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MIS SIGNOS VITALES PERSONALES -->
+      <div class="card shadow-sm border-0 p-3 bg-white" *ngIf="misSignos">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-danger mb-0"><i class="bi bi-heart-pulse me-1"></i> Mis Constantes Vitales (Wearable)</h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+            <i class="bi bi-broadcast me-1"></i>En Vivo
+          </span>
+        </div>
+        <div class="row text-center">
+          <div class="col-md-4 mb-2 mb-md-0">
+            <div class="fw-bold text-muted small">Ritmo Cardíaco</div>
+            <div class="h3 fw-bold text-danger mb-0">{{ misSignos.ritmocardiacoBpm || '--' }} <span class="fs-6">BPM</span></div>
+          </div>
+          <div class="col-md-4 mb-2 mb-md-0">
+            <div class="fw-bold text-muted small">Oxígeno SpO2</div>
+            <div class="h3 fw-bold text-primary mb-0">{{ misSignos.saturacionOxigenoSpo2 || '--' }}<span class="fs-6">%</span></div>
+          </div>
+          <div class="col-md-4">
+            <div class="fw-bold text-muted small">Temperatura</div>
+            <div class="h3 fw-bold text-warning mb-0">{{ misSignos.temperaturaCorporal ? (misSignos.temperaturaCorporal | number:'1.1-2') : '--' }}<span class="fs-6">°C</span></div>
+          </div>
+        </div>
+        <div *ngIf="misSignos.timestamp" class="text-end text-muted mt-2" style="font-size: 0.72rem;">
+          Última lectura: {{ misSignos.timestamp | date:'mediumTime' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,101 @@
+<div class="metrics-panel-container">
+  <!-- WIDGET 1: GYM CAPACITY (CIRCULAR PROGRESS BAR) -->
+  <div class="metric-widget widget-capacity">
+    <div class="widget-head">
+      <span class="widget-title">Gym Capacity</span>
+      <span class="pill-badge">Live Realtime</span>
+    </div>
+
+    <div class="circular-chart-wrap">
+      <svg class="circular-svg" viewBox="0 0 100 100">
+        <!-- BACKGROUND CIRCLE -->
+        <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
+        <!-- PROGRESS CIRCLE -->
+        <circle 
+          class="circle-progress" 
+          cx="50" 
+          cy="50" 
+          r="45" 
+          [style.strokeDashoffset]="strokeDashoffset">
+        </circle>
+      </svg>
+
+      <div class="chart-content">
+        <span class="percent-val">{{ capacityPercent }}%</span>
+        <span class="capacity-ratio">{{ currentMembers }}/{{ maxCapacity }}</span>
+      </div>
+    </div>
+
+    <div class="capacity-footer-tip">
+      <span class="status-hint">Flujo Moderado • Zona de Máquinas Despejada</span>
+    </div>
+  </div>
+
+  <!-- WIDGET 2: LIVE STATS -->
+  <div class="metric-widget widget-stats">
+    <div class="widget-head">
+      <span class="widget-title">Live Stats</span>
+      <span class="counter-badge">Hoy</span>
+    </div>
+
+    <div class="stats-list">
+      <div class="stat-item">
+        <div class="stat-label">
+          <i class="bi bi-person-walking text-cyan"></i>
+          <span>Check-ins Hoy</span>
+        </div>
+        <span class="stat-value">342</span>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-label">
+          <i class="bi bi-clock-history text-cyan"></i>
+          <span>Estancia Promedio</span>
+        </div>
+        <span class="stat-value">58 min</span>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-label">
+          <i class="bi bi-lightning-charge-fill text-cyan"></i>
+          <span>Hora Pico Estimada</span>
+        </div>
+        <span class="stat-value">6:30 PM - 8:00 PM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIDGET 3: HARDWARE STATUS -->
+  <div class="metric-widget widget-hardware">
+    <div class="widget-head">
+      <span class="widget-title">Hardware Status</span>
+      <span class="firmware-tag">{{ hardwareStatus.firmwareVersion }}</span>
+    </div>
+
+    <div class="hardware-cards-grid">
+      <!-- SCANNER STATUS CARD -->
+      <div class="hw-mini-card">
+        <div class="hw-info">
+          <div class="d-flex align-items-center gap-2">
+            <span class="led-indicator" [class.led-on]="hardwareStatus.scannerLedOn"></span>
+            <span class="hw-title">Scanner Status</span>
+          </div>
+          <span class="hw-sub">Torniquete Principal</span>
+        </div>
+        <div class="hw-status-tag tag-active">READY</div>
+      </div>
+
+      <!-- BIOMETRIC CONNECTIVITY CARD -->
+      <div class="hw-mini-card">
+        <div class="hw-info">
+          <div class="d-flex align-items-center gap-2">
+            <span class="led-indicator" [class.led-on]="hardwareStatus.supremaOnline"></span>
+            <span class="hw-title">Biometric Suprema</span>
+          </div>
+          <span class="hw-sub">Latencia: {{ hardwareStatus.lastPingMs }}ms</span>
+        </div>
+        <div class="hw-status-tag tag-active">ONLINE</div>
+      </div>
+    </div>
+  </div>
+</div>

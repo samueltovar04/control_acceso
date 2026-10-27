@@ -1,0 +1,12 @@
+/* login.component.css */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.fingerprint-scan-area {
+  transition: transform 0.2s ease;
+}
+
+.fingerprint-scan-area:hover {
+  transform: scale(1.05);
+}

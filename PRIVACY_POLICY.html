@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - Control de Acceso Móvil</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
+        .card { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1E88E5; border-bottom: 2px solid #1E88E5; padding-bottom: 8px; }
+        h2 { color: #00ACC1; margin-top: 24px; }
+        ul { padding-left: 20px; }
+        .footer { margin-top: 30px; text-align: center; font-size: 0.9em; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Política de Privacidad y Seguridad de Datos</h1>
+        <p><strong>Fecha de entrada en vigor:</strong> 19 de Octubre de 2026<br>
+        <strong>Aplicación:</strong> Control de Acceso Móvil (<code>com.controlaccesomobile</code>)<br>
+        <strong>Entidad:</strong> Control de Acceso S.A. / Andes Sistemas<br>
+        <strong>Sitio Web:</strong> <a href="https://acceso.andessistemas.com" target="_blank">https://acceso.andessistemas.com</a></p>
+
+        <h2>1. Introducción</h2>
+        <p>En <strong>Control de Acceso S.A.</strong> valoramos y respetamos la privacidad de nuestros usuarios. Esta Política de Privacidad describe la forma en que recopilamos, utilizamos, almacenamos y protegemos la información personal y biométrica a través de nuestra aplicación móvil.</p>
+
+        <h2>2. Permisos y Datos Recopilados</h2>
+        <h3>2.1 Permiso de Cámara y Datos Biométricos</h3>
+        <ul>
+            <li><strong>Permiso Requerido:</strong> <code>android.permission.CAMERA</code></li>
+            <li><strong>Finalidad:</strong> La cámara frontal es utilizada exclusivamente para la función de Enrolamiento Facial Multi-Ángulo y validación biométrica en los torniquetes de acceso.</li>
+            <li><strong>Procesamiento:</strong> Se extraen vectores numéricos de características faciales (embeddings de 512 dimensiones). Las imágenes sin procesar o fotogramas no se comercializan ni se comparten con terceros.</li>
+        </ul>
+
+        <h3>2.2 Signos Vitales y Telemetría IoT</h3>
+        <ul>
+            <li><strong>Datos Recopilados:</strong> Frecuencia cardíaca (BPM), saturación de oxígeno (SpO2) y temperatura corporal (°C).</li>
+            <li><strong>Finalidad:</strong> Proporcionar al usuario un panel de monitoreo de salud personal mientras hace uso de las instalaciones deportivas.</li>
+        </ul>
+
+        <h2>3. Transmisión Segura de Datos</h2>
+        <p>Todos los datos transmitidos entre la aplicación móvil y los servidores del backend se realizan a través de conexiones cifradas <strong>HTTPS / TLS 1.3</strong> (<code>https://acceso.andessistemas.com</code>) y WebSockets Seguros (<code>wss://acceso.andessistemas.com</code>).</p>
+
+        <h2>4. Derechos de Eliminación de Datos</h2>
+        <p>Los usuarios pueden solicitar la eliminación definitiva de su cuenta y vectores biométricos en cualquier momento enviando un correo a <a href="mailto:soporte@andessistemas.com">soporte@andessistemas.com</a>.</p>
+
+        <div class="footer">
+            <p>&copy; 2026 Control de Acceso S.A. / Andes Sistemas. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

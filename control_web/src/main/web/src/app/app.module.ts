@@ -1,9 +1,14 @@
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { JwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { BrowserModule } from '@angular/platform-browser';
-import { MatButtonModule,  MatIconModule,MatSidenavModule, MatCardModule, MatInputModule, MatListModule, MatToolbarModule } from '@angular/material';
-import { CommonModule} from '@angular/common';
-//import { NgbModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-//import { NgSelectModule } from '@ng-select/ng-select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { CommonModule } from '@angular/common';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -12,15 +17,9 @@ import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app.routing.module';
 
-//import { NavbarComponent } from './components/navbar/navbar.component';
 import { LeftMenuComponent } from './components/left-menu/left-menu.component';
-//import { FiltersComponent } from './components/filters/filters.component';
-//import { DropdownNtfComponent } from './components/navbar/dropdown-ntf/dropdown-ntf.component';
-//import { DropdownAppsComponent } from './components/navbar/dropdown-apps/dropdown-apps.component';
+import { TopbarComponent } from './components/topbar/topbar.component';
 import { HomeComponent } from './components/home/home.component';
-//import { LoginComponent } from './components/login/login.component';
-//import { EstatusBoxComponent } from './components/estatus-box/estatus-box.component';
-//import { NavTabsComponent } from './components/nav-tabs/nav-tabs.component';
 
 import { EmpleadoService } from './shared/empleado/empleado.service';
 import { EmpleadoDetailsComponent } from './modulos/empleado/empleado-details/empleado-details.component';
@@ -48,22 +47,19 @@ import { VisitanteListComponent } from './modulos/visitante/visitante-list/visit
 
 import { CameraComponent } from './camera/camera.component';
 
-import { DataTablesModule } from 'angular-datatables';
+import { DataTablesModule } from './shared/datatables/datatables.module';
 import { WebcamModule } from 'ngx-webcam';
+
+import { AlertModalComponent } from './shared/components/alert-modal/alert-modal.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     CameraComponent,
-    LeftMenuComponent,
     HomeComponent,
     EmpleadoListComponent,
-    CrearEmpleadoComponent,
-    EditarEmpleadoComponent,
     EmpleadoDetailsComponent,
     VisitanteListComponent,
-    CrearVisitanteComponent,
-    EditarVisitanteComponent,
     VisitanteDetailsComponent,
     DispositivoListComponent,
     CrearDispositivoComponent,
@@ -85,6 +81,13 @@ import { WebcamModule } from 'ngx-webcam';
     DataTablesModule,
     FormsModule,
     CommonModule,
+    LeftMenuComponent,
+    TopbarComponent,
+    CrearEmpleadoComponent,
+    EditarEmpleadoComponent,
+    CrearVisitanteComponent,
+    EditarVisitanteComponent,
+    AlertModalComponent,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
@@ -93,7 +96,14 @@ import { WebcamModule } from 'ngx-webcam';
     MatListModule,
     MatToolbarModule
   ],
-  providers: [EmpleadoService,PisoService,VisitanteService,DispositivoService],
+  providers: [
+    EmpleadoService,
+    PisoService,
+    VisitanteService,
+    DispositivoService,
+    { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

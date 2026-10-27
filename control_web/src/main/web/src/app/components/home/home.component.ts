@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router, Event, NavigationStart } from '@angular/router';
 import { Location } from '@angular/common';
+import { SidebarService } from '../../shared/services/sidebar.service';
 
 @Component({
   selector: 'app-home',
@@ -8,8 +9,9 @@ import { Location } from '@angular/common';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-specialPage: boolean;
-title = 'Control de Acceso';
+  public sidebarService = inject(SidebarService);
+  specialPage: boolean = false;
+  title = 'Control de Acceso';
 private specialPages: any[] = [
 '/pages/login',
 '/pages/register',

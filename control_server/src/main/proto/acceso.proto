@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.access.control.grpc";
+option java_outer_classname = "AccesoProto";
+
+package acceso;
+
+service AccesoHardwareService {
+    rpc ValidarAcceso (AccesoRequest) returns (AccesoResponse);
+    rpc DispararPulsoTorniquete (TorniqueteAccionRequest) returns (TorniqueteAccionResponse);
+    rpc ReportarHeartbeat (DispositivoStatusRequest) returns (DispositivoStatusResponse);
+}
+
+message AccesoRequest {
+    string documento = 1;
+    string metodo = 2; // FACIAL, HUELLA, QR
+    int64 dispositivoId = 3;
+    string token = 4;
+}
+
+message AccesoResponse {
+    bool concedido = 1;
+    string motivo = 2;
+    string nombrePersona = 3;
+    string tipoPersona = 4; // CLIENTE, EMPLEADO, VISITANTE
+    bool pulsoDisparado = 5;
+}
+
+message TorniqueteAccionRequest {
+    int64 dispositivoId = 1;
+    string ip = 2;
+    int32 duracionPulsoMs = 3;
+    string operador = 4;
+}
+
+message TorniqueteAccionResponse {
+    bool exito = 1;
+    string mensaje = 2;
+    string estado = 3; // ABIERTO, ERROR
+}
+
+message DispositivoStatusRequest {
+    int64 dispositivoId = 1;
+    string ip = 2;
+    bool online = 3;
+    string firmwareVersion = 4;
+}
+
+message DispositivoStatusResponse {
+    bool sincronizado = 1;
+    int64 timestamp = 2;
+}

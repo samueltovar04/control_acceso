@@ -1,0 +1,478 @@
+<div class="container-fluid py-4">
+  <!-- ENCABEZADO -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="h3 fw-bold text-dark mb-1">
+        <i class="bi bi-shield-lock-fill text-primary me-2"></i>Seguridad y Usuarios
+      </h2>
+      <p class="text-muted small mb-0">Gestion centralizada de usuarios, roles, politicas de sede, auditoria y sesiones activas.</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-primary btn-sm px-3 shadow-sm" (click)="cambiarTab(tabActiva)">
+        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+      </button>
+      <button *ngIf="tabActiva === 'usuarios'" class="btn btn-primary btn-sm px-3 shadow-sm fw-bold" (click)="abrirCrearUsuario()">
+        <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible fade show small py-2 mb-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ mensajeExito }}
+    <button type="button" class="btn-close py-2" (click)="mensajeExito = ''"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible fade show small py-2 mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ mensajeError }}
+    <button type="button" class="btn-close py-2" (click)="mensajeError = ''"></button>
+  </div>
+
+  <!-- PESTAÑAS -->
+  <ul class="nav nav-pills mb-3 bg-white p-2 rounded-3 shadow-sm border">
+    <li class="nav-item">
+      <button class="nav-link fw-bold small py-2 px-3" [class.active]="tabActiva === 'usuarios'" (click)="cambiarTab('usuarios')">
+        <i class="bi bi-people-fill me-2"></i>Usuarios del Sistema
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold small py-2 px-3" [class.active]="tabActiva === 'auditoria'" (click)="cambiarTab('auditoria')">
+        <i class="bi bi-journal-text me-2"></i>Auditoria de Accesos
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link fw-bold small py-2 px-3" [class.active]="tabActiva === 'sesiones'" (click)="cambiarTab('sesiones')">
+        <i class="bi bi-broadcast me-2"></i>Sesiones Activas
+        <span *ngIf="sesiones.length > 0" class="badge bg-danger rounded-pill ms-2">{{ sesiones.length }}</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- TAB 1: USUARIOS -->
+  <div *ngIf="tabActiva === 'usuarios'" class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-3">
+      <!-- FILTROS -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-6 col-lg-4">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" [(ngModel)]="filtroTexto" (ngModelChange)="aplicarFiltros()"
+                   placeholder="Buscar por usuario, nombre, email o sede...">
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <select class="form-select form-select-sm" [(ngModel)]="filtroEstado" (ngModelChange)="aplicarFiltros()">
+            <option value="TODOS">Todos los estados</option>
+            <option value="ACTIVOS">Solo Activos</option>
+            <option value="INACTIVOS">Solo Inactivos</option>
+            <option value="RESETEO">Reseteo de Clave Pendiente</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TABLA USUARIOS -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light small text-uppercase text-secondary">
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre y Contacto</th>
+              <th>Sede Asignada</th>
+              <th>Roles</th>
+              <th>Estado</th>
+              <th>Clave</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                Cargando usuarios...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && usuariosFiltrados.length === 0">
+              <td colspan="7" class="text-center py-4 text-muted">
+                No se encontraron usuarios registrados con el criterio de busqueda.
+              </td>
+            </tr>
+            <tr *ngFor="let u of usuariosFiltrados">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar-circle bg-light border text-primary fw-bold rounded-circle me-2 d-flex align-items-center justify-content-center"
+                       style="width: 36px; height: 36px;">
+                    {{ (u.username || '?').substring(0, 2).toUpperCase() }}
+                  </div>
+                  <div>
+                    <span class="fw-bold text-dark d-block">{{ u.username }}</span>
+                    <small class="text-muted font-monospace" style="font-size: 0.75rem;">ID: #{{ u.id }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="d-block small text-dark fw-bold">{{ u.nombreCompleto || '---' }}</span>
+                <small class="text-muted d-block">{{ u.email || 'Sin correo' }}</small>
+              </td>
+              <td>
+                <span *ngIf="u.sedeNombre" class="badge bg-light text-dark border">
+                  <i class="bi bi-geo-alt-fill text-primary me-1"></i>{{ u.sedeNombre }}
+                </span>
+                <span *ngIf="!u.sedeNombre" class="badge bg-secondary opacity-75">
+                  Todas / Sin Sede Fija
+                </span>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1">
+                  <span *ngFor="let r of u.roles" class="badge" 
+                        [ngClass]="r.includes('ADMIN') ? 'bg-danger' : 'bg-primary'">
+                    {{ r }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="u.enabled ? 'bg-success' : 'bg-secondary'">
+                  {{ u.enabled ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <span *ngIf="u.requiresPasswordReset" class="badge bg-warning text-dark" title="Obligado a cambiar clave en proximo inicio">
+                  <i class="bi bi-key-fill me-1"></i>Requiere Reseteo
+                </span>
+                <span *ngIf="!u.requiresPasswordReset" class="badge bg-light text-muted border">
+                  Normal
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="d-inline-flex gap-1">
+                  <button class="btn btn-sm btn-primary px-2 py-1 shadow-sm fw-semibold"
+                          (click)="abrirEditarUsuario(u)"
+                          title="Editar Usuario">
+                    <i class="bi bi-pencil-square me-1"></i>Editar
+                  </button>
+                  <button class="btn btn-sm btn-outline-warning text-dark px-2 py-1 shadow-sm fw-semibold"
+                          (click)="forzarReseteo(u)"
+                          title="Forzar reseteo de clave en proximo inicio">
+                    <i class="bi bi-shield-lock-fill text-warning me-1"></i>Reset Clave
+                  </button>
+                  <button class="btn btn-sm px-2 py-1 shadow-sm fw-semibold"
+                          [ngClass]="u.enabled ? 'btn-outline-danger' : 'btn-outline-success'"
+                          (click)="toggleEstado(u)"
+                          [title]="u.enabled ? 'Inactivar acceso al sistema' : 'Activar acceso al sistema'">
+                    <i class="bi" [ngClass]="u.enabled ? 'bi-person-x-fill me-1' : 'bi-person-check-fill me-1'"></i>
+                    {{ u.enabled ? 'Inactivar' : 'Activar' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: AUDITORIA DE ACCESOS -->
+  <div *ngIf="tabActiva === 'auditoria'" class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="card-title fw-bold text-dark mb-0">Historial de Accesos y Seguridad (MongoDB)</h5>
+          <small class="text-muted">Total registrados: {{ totalAuditoria }} eventos</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-secondary" (click)="cargarAuditoria(pageAuditoria)" [disabled]="cargandoAuditoria">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light small text-uppercase text-secondary">
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Usuario</th>
+              <th>Sede</th>
+              <th>Accion</th>
+              <th>Estado</th>
+              <th>IP / Cliente</th>
+              <th>Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargandoAuditoria">
+              <td colspan="7" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                Cargando registros de auditoria desde MongoDB...
+              </td>
+            </tr>
+            <tr *ngIf="!cargandoAuditoria && auditorias.length === 0">
+              <td colspan="7" class="text-center py-4 text-muted">No hay registros de auditoria disponibles.</td>
+            </tr>
+            <tr *ngFor="let a of auditorias">
+              <td class="font-monospace small text-nowrap">{{ a.fechaHora | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+              <td class="fw-bold text-dark">{{ a.username }}</td>
+              <td>{{ a.sedeNombre || '---' }}</td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ a.accion }}</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="a.estado === 'EXITO' ? 'bg-success' : 'bg-danger'">
+                  {{ a.estado }}
+                </span>
+              </td>
+              <td class="small font-monospace text-muted">{{ a.ipAddress || '127.0.0.1' }}</td>
+              <td class="small text-muted">{{ a.detalles || '---' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINADOR AUDITORIA -->
+      <div *ngIf="totalPagesAuditoria > 1" class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <small class="text-muted">
+          Mostrando pagina {{ pageAuditoria + 1 }} de {{ totalPagesAuditoria }} ({{ totalAuditoria }} registros)
+        </small>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary" (click)="cambiarPaginaAuditoria(-1)" [disabled]="pageAuditoria === 0 || cargandoAuditoria">
+            <i class="bi bi-chevron-left me-1"></i>Anterior
+          </button>
+          <button class="btn btn-outline-secondary" (click)="cambiarPaginaAuditoria(1)" [disabled]="pageAuditoria >= totalPagesAuditoria - 1 || cargandoAuditoria">
+            Siguiente<i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: SESIONES ACTIVAS -->
+  <div *ngIf="tabActiva === 'sesiones'" class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="card-title fw-bold text-dark mb-0">Sesiones Conectadas (MongoDB)</h5>
+          <small class="text-muted">Activas concurrentes: {{ totalSesiones }}</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-secondary" (click)="cargarSesiones(pageSesiones)" [disabled]="cargandoSesiones">
+            <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light small text-uppercase text-secondary">
+            <tr>
+              <th>Usuario</th>
+              <th>Sede</th>
+              <th>IP de Conexion</th>
+              <th>Inicio de Sesion</th>
+              <th>Ultima Actividad</th>
+              <th class="text-end">Expulsar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargandoSesiones">
+              <td colspan="6" class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                Consultando sesiones activas en MongoDB...
+              </td>
+            </tr>
+            <tr *ngIf="!cargandoSesiones && sesiones.length === 0">
+              <td colspan="6" class="text-center py-4 text-muted">No existen sesiones activas concurrentes registradas.</td>
+            </tr>
+            <tr *ngFor="let s of sesiones">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-success text-white me-2 d-flex align-items-center justify-content-center"
+                       style="width: 10px; height: 10px;"></div>
+                  <span class="fw-bold text-dark">{{ s.username }}</span>
+                </div>
+              </td>
+              <td>{{ s.sedeNombre || 'Todas las Sedes' }}</td>
+              <td class="font-monospace small">{{ s.ipAddress || '127.0.0.1' }}</td>
+              <td class="small">{{ s.fechaInicio | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+              <td class="small">{{ s.ultimaActividad | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger" (click)="revocarSesion(s)" title="Cerrar sesion forzosamente">
+                  <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesion
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINADOR SESIONES -->
+      <div *ngIf="totalPagesSesiones > 1" class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+        <small class="text-muted">
+          Mostrando pagina {{ pageSesiones + 1 }} de {{ totalPagesSesiones }} ({{ totalSesiones }} activas)
+        </small>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary" (click)="cambiarPaginaSesiones(-1)" [disabled]="pageSesiones === 0 || cargandoSesiones">
+            <i class="bi bi-chevron-left me-1"></i>Anterior
+          </button>
+          <button class="btn btn-outline-secondary" (click)="cambiarPaginaSesiones(1)" [disabled]="pageSesiones >= totalPagesSesiones - 1 || cargandoSesiones">
+            Siguiente<i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR USUARIO -->
+<div *ngIf="mostrarModalUsuario" class="modal-backdrop fade show"></div>
+<div *ngIf="mostrarModalUsuario" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-light border-bottom">
+        <h5 class="modal-title fw-bold text-dark">
+          <i class="bi" [ngClass]="esEdicion ? 'bi-pencil-square text-primary' : 'bi-person-plus text-success'"></i>
+          {{ esEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModalUsuario()"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Nombre de Usuario (Login) -->
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">Nombre de Usuario (Login)</label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="usuarioForm.username"
+                 [disabled]="esEdicion" placeholder="ej: jsmith">
+        </div>
+
+        <!-- Busqueda de Empleado (Obligatorio en Creacion para usuarios no-cliente) -->
+        <div class="mb-3 position-relative" *ngIf="rolSeleccionado !== 'ROLE_CLIENTE'">
+          <label class="form-label small fw-bold text-secondary">
+            <i class="bi bi-search me-1"></i>Asociar Empleado <span *ngIf="!esEdicion" class="text-danger">* (Obligatorio)</span>
+          </label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control" [(ngModel)]="busquedaEmpleado"
+                   (input)="onBuscarEmpleado()"
+                   [placeholder]="!esEdicion ? 'Buscar empleado sin usuario por nombre, cedula...' : 'Buscar empleado por nombre, cedula...'">
+            <button *ngIf="busquedaEmpleado" class="btn btn-outline-secondary" type="button" (click)="limpiarEmpleadoSeleccionado()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <small class="text-muted" style="font-size: 0.72rem;">
+            * Solo se muestran empleados sin usuario asignado. Al seleccionarlo se vincularan sus datos y permisos.
+          </small>
+
+          <!-- Resultados dropdown de busqueda -->
+          <div *ngIf="empleadosEncontrados.length > 0" class="list-group position-absolute w-100 shadow-sm border mt-1"
+               style="z-index: 1055; max-height: 200px; overflow-y: auto;">
+            <button type="button" *ngFor="let emp of empleadosEncontrados"
+                    class="list-group-item list-group-item-action list-group-item-sm py-2"
+                    (click)="seleccionarEmpleado(emp)">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ emp.name || emp.nombre }} {{ emp.lastName || emp.apellido }}</strong>
+                  <div class="text-muted small" style="font-size: 0.75rem;">
+                    Doc: {{ emp.document || emp.documento || 'S/D' }} | Legajo: {{ emp.legajo || 'S/L' }}
+                  </div>
+                </div>
+                <span class="badge bg-light text-secondary border" *ngIf="emp.sede?.sede">{{ emp.sede?.sede }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">Nombre Completo</label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="usuarioForm.nombreCompleto"
+                 placeholder="ej: John Smith">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">Correo Electronico</label>
+          <input type="email" class="form-control form-control-sm" [(ngModel)]="usuarioForm.email"
+                 placeholder="ej: usuario@empresa.com">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">Rol del Usuario</label>
+          <select class="form-select form-select-sm" [(ngModel)]="rolSeleccionado">
+            <option value="ROLE_ADMIN">ADMIN (Acceso Total y cambio libre de Sedes)</option>
+            <option value="ROLE_SUPER_ADMIN">SUPER_ADMIN (Control General)</option>
+            <option value="ROLE_CONTABLE">CONTABLE (Solo Menu de Pagos)</option>
+            <option value="ROLE_RECEPCION">RECEPCION (Panel & Vision + Gestion de Acceso)</option>
+            <option value="ROLE_OPERACION">OPERACION (Panel & Vision + Gestion de Acceso)</option>
+            <option value="ROLE_CLIENTE">CLIENTE (Solo Datos y Pagos Personales)</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">Sede Asignada</label>
+          <select class="form-select form-select-sm" [(ngModel)]="usuarioForm.sedeId">
+            <option [ngValue]="undefined">Ninguna / Sede Global</option>
+            <option *ngFor="let s of sedes" [ngValue]="s.id">{{ s.sede }}</option>
+          </select>
+          <small class="text-muted" style="font-size: 0.75rem;">
+            * Para roles no administradores, esta sede se seleccionara automaticamente y quedara fija (readonly).
+          </small>
+        </div>
+
+        <!-- Contrasena (Inicial en creacion u Opcional en edicion) con ojito -->
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">
+            {{ esEdicion ? 'Nueva Contrasena (Dejar vacio para no modificar)' : 'Contrasena Inicial' }}
+          </label>
+          <div class="input-group input-group-sm">
+            <input [type]="mostrarPassword1 ? 'text' : 'password'"
+                   class="form-control"
+                   [(ngModel)]="usuarioForm.password"
+                   [placeholder]="esEdicion ? 'Solo si desea cambiarla (Min 8 car, mayus, minus, num, sim)' : 'Min 8 caracteres, mayuscula, minuscula, numero y simbolo'">
+            <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassword1 = !mostrarPassword1" tabindex="-1">
+              <i class="bi" [ngClass]="mostrarPassword1 ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirmar Contrasena con ojito -->
+        <div class="mb-3" *ngIf="!esEdicion || (usuarioForm.password && usuarioForm.password.length > 0)">
+          <label class="form-label small fw-bold text-secondary">Confirmar Contrasena</label>
+          <div class="input-group input-group-sm">
+            <input [type]="mostrarPassword2 ? 'text' : 'password'"
+                   class="form-control"
+                   [(ngModel)]="passwordConfirm"
+                   placeholder="Repita la contrasena">
+            <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassword2 = !mostrarPassword2" tabindex="-1">
+              <i class="bi" [ngClass]="mostrarPassword2 ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+            </button>
+          </div>
+          <div *ngIf="passwordConfirm && usuarioForm.password && passwordConfirm !== usuarioForm.password"
+               class="text-danger small mt-1" style="font-size: 0.75rem;">
+            <i class="bi bi-exclamation-circle me-1"></i>Las contrasenas no coinciden.
+          </div>
+          <div *ngIf="passwordConfirm && usuarioForm.password && passwordConfirm === usuarioForm.password"
+               class="text-success small mt-1" style="font-size: 0.75rem;">
+            <i class="bi bi-check-circle me-1"></i>Las contrasenas coinciden.
+          </div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="checkReset" [(ngModel)]="usuarioForm.requiresPasswordReset">
+          <label class="form-check-label small fw-bold text-dark" for="checkReset">
+            Exigir cambio obligatorio de contrasena en primer inicio
+          </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="checkEnabled" [(ngModel)]="usuarioForm.enabled">
+          <label class="form-check-label small fw-bold text-dark" for="checkEnabled">
+            Usuario Activo
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light border-top">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cerrarModalUsuario()">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-primary fw-bold px-3" [disabled]="cargando" (click)="guardarUsuario()">
+          <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+          Guardar Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

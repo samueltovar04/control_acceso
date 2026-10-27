@@ -1,123 +1,74 @@
 package com.access.control.model;
-import com.access.control.model.generic.AbstractEntity;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
+import com.access.control.model.generic.AbstractEntity;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
-
-import javax.persistence.*;
-import javax.validation.constraints.Past;
 
 @Entity
 @Table(name = "empleados")
-public class Empleado extends AbstractEntity implements Serializable {
- 
-    private static final long serialVersionUID = -3465813074586302847L;
- 
-    @Column(unique = true)
-    private Integer document;
+public class Empleado extends AbstractEntity {
 
-    @Column(name="badge_access",unique = true)
+    @Column(name = "badge_access")
     private Integer badgeAccess;
 
-    @Column
-    private String name;
-
-    @Column(name="last_name")
-    private String lastName;
- 
-    @Column
-    private String email;
-
-    @Column
-    private Boolean enabled;
- 
-    @Column
-    private String telephone;
-
-    @Column
-    private byte[] picture;
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    public byte[] getPicture() {
-        return picture;
-    }
-
-    public void setPicture(byte[] picture) {
-        this.picture = picture;
-    }
-    @Column
-    private String sex;
-
-    @JsonProperty("birthDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    @Past
-    @Column(name="birth_date")
+    @Column(name = "birth_date")
+    @Temporal(TemporalType.TIMESTAMP)
     private Date birthDate;
 
-    @Column
+    @Column(name = "document")
+    private Integer document;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "enabled")
+    private Boolean enabled = true;
+
+    @Column(name = "huella1", length = 1024)
     private String huella1;
 
-    @Column
+    @Column(name = "huella2", length = 1024)
     private String huella2;
 
-    @OneToMany(cascade = CascadeType.ALL,mappedBy = "empleado")
-    @JsonManagedReference
-    private List<PisoPermiso> listPisos;
+    @Column(name = "last_name")
+    private String lastName;
 
-    @OneToOne
-    @JoinColumn(name = "gerencia_id", referencedColumnName = "id")
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "picture", columnDefinition = "bytea")
+    private byte[] picture;
+
+    @Column(name = "sex")
+    private String sex;
+
+    @Column(name = "telephone")
+    private String telephone;
+
+    @ManyToOne
+    @JoinColumn(name = "gerencia_id")
     private Gerencia gerencia;
 
-    @OneToOne
-    @JoinColumn(name = "sede_id", referencedColumnName = "id")
+    @ManyToOne
+    @JoinColumn(name = "sede_id")
     private Sede sede;
 
-    @OneToOne
-    @JoinColumn(name = "tipo_contrato_id", referencedColumnName = "id")
+    @ManyToOne
+    @JoinColumn(name = "tipo_contrato_id")
     private TipoContrato tipoContrato;
 
-    public Gerencia getGerencia() {
-        return gerencia;
-    }
+    @Column(name = "legajo", length = 20)
+    private String legajo;
 
-    public void setGerencia(Gerencia gerencia) {
-        this.gerencia = gerencia;
-    }
+    @Column(name = "face_vector", columnDefinition = "TEXT")
+    private String faceVector;
 
-    public Sede getSede() {
-        return sede;
-    }
+    @OneToOne
+    private User user;
 
-    public void setSede(Sede sede) {
-        this.sede = sede;
-    }
-
-    public TipoContrato getTipoContrato() {
-        return tipoContrato;
-    }
-
-    public void setTipoContrato(TipoContrato tipoContrato) {
-        this.tipoContrato = tipoContrato;
-    }
-
-    public Empleado() {
-    }
-    public Empleado(List<PisoPermiso> pisos)
-    {
-        for(PisoPermiso listPiso : pisos) listPiso.setEmpleado(this);
-        this.listPisos = pisos;
-    }
-
-    public void addListPisos(List<PisoPermiso> listPisos) {
-        for(PisoPermiso listPiso : listPisos) listPiso.setEmpleado(this);
-        this.listPisos = listPisos;
-    }
+    @ManyToMany(fetch = FetchType.LAZY)
+    private List<Piso> pisosPermitidos;
 
     public Integer getBadgeAccess() {
         return badgeAccess;
@@ -127,12 +78,18 @@ public class Empleado extends AbstractEntity implements Serializable {
         this.badgeAccess = badgeAccess;
     }
 
-    public String getLastName() {
-        return lastName;
+    public String getCodigoInsignia() {
+        return badgeAccess != null ? String.valueOf(badgeAccess) : null;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setCodigoInsignia(String codigoInsignia) {
+        if (codigoInsignia != null && !codigoInsignia.trim().isEmpty()) {
+            try {
+                this.badgeAccess = Integer.parseInt(codigoInsignia.replaceAll("\\D", ""));
+            } catch (Exception e) {
+                this.badgeAccess = null;
+            }
+        }
     }
 
     public Date getBirthDate() {
@@ -141,6 +98,44 @@ public class Empleado extends AbstractEntity implements Serializable {
 
     public void setBirthDate(Date birthDate) {
         this.birthDate = birthDate;
+    }
+
+    public Date getFechaNacimiento() {
+        return birthDate;
+    }
+
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.birthDate = fechaNacimiento;
+    }
+
+    public Integer getDocument() {
+        return document;
+    }
+
+    public void setDocument(Integer document) {
+        this.document = document;
+    }
+
+    public String getDocumento() {
+        return document != null ? String.valueOf(document) : null;
+    }
+
+    public void setDocumento(String documento) {
+        if (documento != null && !documento.trim().isEmpty()) {
+            try {
+                this.document = Integer.parseInt(documento.replaceAll("\\D", ""));
+            } catch (Exception e) {
+                this.document = null;
+            }
+        }
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Boolean getEnabled() {
@@ -167,91 +162,141 @@ public class Empleado extends AbstractEntity implements Serializable {
         this.huella2 = huella2;
     }
 
-    public Integer getDocument() {
-		return document;
-	}
+    public String getLastName() {
+        return lastName;
+    }
 
-	public void setDocument(Integer document) {
-		this.document = document;
-	}
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 
-	public String getSex() {
-		return sex;
-	}
+    public String getApellido() {
+        return lastName;
+    }
 
-	public void setSex(String sex) {
-		this.sex = sex;
-	}
- 
+    public void setApellido(String apellido) {
+        this.lastName = apellido;
+    }
+
     public String getName() {
         return name;
     }
- 
+
     public void setName(String name) {
         this.name = name;
     }
- 
-    public String getEmail() {
-        return email;
+
+    public String getNombre() {
+        return name;
     }
- 
-    public void setEmail(String email) {
-        this.email = email;
+
+    public void setNombre(String nombre) {
+        this.name = nombre;
     }
- 
+
+    public byte[] getPicture() {
+        return picture;
+    }
+
+    public void setPicture(byte[] picture) {
+        this.picture = picture;
+    }
+
+    public String getFoto() {
+        return picture != null ? new String(picture) : null;
+    }
+
+    public void setFoto(String foto) {
+        if (foto != null) {
+            this.picture = foto.getBytes();
+        }
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    public String getSexo() {
+        return sex;
+    }
+
+    public void setSexo(String sexo) {
+        this.sex = sexo;
+    }
+
     public String getTelephone() {
         return telephone;
     }
- 
+
     public void setTelephone(String telephone) {
         this.telephone = telephone;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Empleado)) return false;
-        Empleado empleado = (Empleado) o;
-        return getDocument().equals(empleado.getDocument()) &&
-                getBadgeAccess().equals(empleado.getBadgeAccess()) &&
-                getName().equals(empleado.getName()) &&
-                getEmail().equals(empleado.getEmail()) &&
-                getEnabled().equals(empleado.getEnabled()) &&
-                getTelephone().equals(empleado.getTelephone()) &&
-                getPicture().equals(empleado.getPicture()) &&
-                getSex().equals(empleado.getSex()) &&
-                Objects.equals(getHuella1(), empleado.getHuella1()) &&
-                Objects.equals(getHuella2(), empleado.getHuella2());
+    public String getTelefono() {
+        return telephone;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getDocument(), getBadgeAccess(), getName(), getEmail(), getEnabled(), getTelephone(), getPicture(), getSex(), getHuella1(), getHuella2());
+    public void setTelefono(String telefono) {
+        this.telephone = telefono;
     }
 
-    @Override
-    public String toString() {
-        return "Empleado{" +
-                "document=" + document +
-                ", badgeAccess=" + badgeAccess +
-                ", name='" + name + '\'' +
-                ", lastname='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", enabled=" + enabled +
-                ", telephone='" + telephone + '\'' +
-                ", picture='" + picture + '\'' +
-                ", sex='" + sex + '\'' +
-                ", birthdate=" + birthDate +
-                ", huella1='" + huella1 + '\'' +
-                ", huella2='" + huella2 + '\'' +
-                '}';
+    public Gerencia getGerencia() {
+        return gerencia;
     }
 
-    public List<PisoPermiso> getListPisos() {
-        return listPisos;
+    public void setGerencia(Gerencia gerencia) {
+        this.gerencia = gerencia;
     }
 
-    public void setListPisos(List<PisoPermiso> listPisos) {
-        this.listPisos = listPisos;
+    public Sede getSede() {
+        return sede;
+    }
+
+    public void setSede(Sede sede) {
+        this.sede = sede;
+    }
+
+    public TipoContrato getTipoContrato() {
+        return tipoContrato;
+    }
+
+    public void setTipoContrato(TipoContrato tipoContrato) {
+        this.tipoContrato = tipoContrato;
+    }
+
+    public String getLegajo() {
+        return legajo;
+    }
+
+    public void setLegajo(String legajo) {
+        this.legajo = legajo;
+    }
+
+    public String getFaceVector() {
+        return faceVector;
+    }
+
+    public void setFaceVector(String faceVector) {
+        this.faceVector = faceVector;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public List<Piso> getPisosPermitidos() {
+        return pisosPermitidos;
+    }
+
+    public void setPisosPermitidos(List<Piso> pisosPermitidos) {
+        this.pisosPermitidos = pisosPermitidos;
     }
 }

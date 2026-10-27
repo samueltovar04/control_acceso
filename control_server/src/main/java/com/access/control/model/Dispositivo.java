@@ -1,44 +1,54 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
-
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name="dispositivos")
-public class Dispositivo  extends AbstractEntity implements Serializable {
+@Table(name = "dispositivos")
+public class Dispositivo extends AbstractEntity {
 
-    private static final long serialVersionUID = 1L;
-    private String ip;
-    private Integer port;
+    @Column(name = "descripcion")
     private String descripcion;
-    private Boolean ping;
-    @Column(name="entrada_salida")
-    private Integer  entradaSalida;
 
-    @OneToOne
-    @JoinColumn(name = "piso_id", referencedColumnName = "id")
+    @Column(name = "entrada_salida")
+    private Integer entradaSalida;
+
+    @Column(name = "ip")
+    private String ip;
+
+    @Column(name = "ping")
+    private Boolean ping = true;
+
+    @Column(name = "port")
+    private Integer port = 80;
+
+    @Column(name = "tipo_dispositivo")
+    private String tipoDispositivo;
+
+    @Column(name = "sistema_operativo")
+    private String sistemaOperativo;
+
+    @Column(name = "ruta")
+    private String ruta;
+
+    @ManyToOne
+    @JoinColumn(name = "piso_id")
     private Piso piso;
 
-    public Dispositivo() {
+    @Transient
+    @JsonAlias({"piso_id", "pisoId"})
+    private Long pisoId;
+
+    public Long getPisoId() {
+        if (pisoId != null) return pisoId;
+        return (piso != null) ? piso.getId() : null;
     }
 
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public Integer getPort() {
-        return port;
-    }
-
-    public void setPort(Integer port) {
-        this.port = port;
+    @JsonAlias({"piso_id", "pisoId"})
+    public void setPisoId(Long pisoId) {
+        this.pisoId = pisoId;
     }
 
     public String getDescripcion() {
@@ -49,6 +59,22 @@ public class Dispositivo  extends AbstractEntity implements Serializable {
         this.descripcion = descripcion;
     }
 
+    public Integer getEntradaSalida() {
+        return entradaSalida;
+    }
+
+    public void setEntradaSalida(Integer entradaSalida) {
+        this.entradaSalida = entradaSalida;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
     public Boolean getPing() {
         return ping;
     }
@@ -57,12 +83,12 @@ public class Dispositivo  extends AbstractEntity implements Serializable {
         this.ping = ping;
     }
 
-    public Integer getEntradaSalida() {
-        return entradaSalida;
+    public Integer getPort() {
+        return port;
     }
 
-    public void setEntradaSalida(Integer entradaSalida) {
-        this.entradaSalida = entradaSalida;
+    public void setPort(Integer port) {
+        this.port = port;
     }
 
     public Piso getPiso() {
@@ -73,44 +99,70 @@ public class Dispositivo  extends AbstractEntity implements Serializable {
         this.piso = piso;
     }
 
-    public String getColor(){
-        if(getState()==1 && getPing()) {
-            return "green";
-        }else if(getState()==0){
-            return "yellow";
-        }else{
-            return "red";
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getNombre() {
+        return descripcion;
+    }
+
+    public void setNombre(String nombre) {
+        if (this.descripcion == null || this.descripcion.trim().isEmpty()) {
+            this.descripcion = nombre;
         }
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Dispositivo)) return false;
-        Dispositivo that = (Dispositivo) o;
-        return Objects.equals(getIp(), that.getIp()) &&
-                Objects.equals(getPort(), that.getPort()) &&
-                Objects.equals(getDescripcion(), that.getDescripcion()) &&
-                Objects.equals(getPing(), that.getPing()) &&
-                Objects.equals(getEntradaSalida(), that.getEntradaSalida()) &&
-                Objects.equals(getPiso(), that.getPiso());
+    public Boolean getEstadoConexion() {
+        return ping;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getIp(), getPort(), getDescripcion(), getPing(), getEntradaSalida(), getPiso());
+    public void setEstadoConexion(Boolean estadoConexion) {
+        this.ping = estadoConexion;
     }
 
-    @Override
-    public String toString() {
-        return "Dispositivo{" +
-                "ip='" + ip + '\'' +
-                ", port=" + port +
-                ", descripcion='" + descripcion + '\'' +
-                ", ping=" + ping +
-                ", entradaSalida=" + entradaSalida +
-                ", piso=" + piso +
-                '}';
+    public String getTipoDispositivo() {
+        return tipoDispositivo;
+    }
+
+    public void setTipoDispositivo(String tipoDispositivo) {
+        this.tipoDispositivo = tipoDispositivo;
+    }
+
+    public String getSistemaOperativo() {
+        return sistemaOperativo;
+    }
+
+    public void setSistemaOperativo(String sistemaOperativo) {
+        this.sistemaOperativo = sistemaOperativo;
+    }
+
+    public String getRuta() {
+        return ruta;
+    }
+
+    public void setRuta(String ruta) {
+        this.ruta = ruta;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getTipo() {
+        return tipoDispositivo != null ? tipoDispositivo : "TORNIQUETE";
+    }
+
+    public void setTipo(String tipo) {
+        if (this.tipoDispositivo == null || this.tipoDispositivo.trim().isEmpty()) {
+            this.tipoDispositivo = tipo;
+        }
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getUbicacion() {
+        return piso != null ? piso.getPiso() : "General";
+    }
+
+    public void setUbicacion(String ubicacion) {
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getColor() {
+        return (ping != null && ping) ? "verde" : "rojo";
     }
 }
