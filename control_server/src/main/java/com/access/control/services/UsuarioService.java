@@ -1,5 +1,6 @@
 package com.access.control.services;
 
+import com.access.control.dto.PageResponseDTO;
 import com.access.control.dto.UserDTO;
 import com.access.control.model.AuditoriaAcceso;
 import com.access.control.model.SesionActiva;
@@ -23,7 +24,9 @@ public interface UsuarioService {
                             String ip, String userAgent, String accion, String estado, String detalles);
     void registrarSesionActiva(Long userId, String username, String ip, String userAgent, Long sedeId, String sedeNombre);
     List<AuditoriaAcceso> listarAuditoria(int limit);
+    PageResponseDTO<AuditoriaAcceso> listarAuditoriaPaginada(int page, int size);
     List<SesionActiva> listarSesionesActivas();
-    boolean revocarSesion(Long sesionId);
+    PageResponseDTO<SesionActiva> listarSesionesActivasPaginadas(int page, int size);
+    boolean revocarSesion(String sesionId);
     void revocarSesionPorUsername(String username, String ip, String userAgent);
 }

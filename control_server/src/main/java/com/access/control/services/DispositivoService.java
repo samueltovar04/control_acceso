@@ -15,5 +15,6 @@ public interface DispositivoService {
     List<Dispositivo> pingAllDispositivos();
     com.access.control.dto.DispositivoEscaneoDTO escanearDispositivo(Long id);
     List<com.access.control.dto.DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados();
+    List<com.access.control.dto.DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados(String subredBase, List<String> ipsEspecificas);
     List<Dispositivo> registrarLote(List<Dispositivo> dispositivos);
 }

@@ -1,5 +1,83 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Persistencia en MongoDB y Paginacion de Auditoria, Sesiones y Bitacora (27-Oct-2026)**:
+  - **Migracion a MongoDB (biotrack_mongo:27017 / biotrack_db)**:
+    - `AuditoriaAcceso`: Convertido a `@MongoEntity(collection = "auditoria_accesos")` extendiendo `PanacheMongoEntity`.
+    - `SesionActiva`: Convertido a `@MongoEntity(collection = "sesiones_activas")` extendiendo `PanacheMongoEntity`.
+    - `BitacoraEventoPaso`: Creado como `@MongoEntity(collection = "bitacora_eventos_paso")` con repositorio `BitacoraEventoPasoRepository`.
+    - `AuditoriaAccesoRepository` y `SesionActivaRepository`: Migrados a `PanacheMongoRepository`, desacoplados del transaction manager relacional JTA (`TxType.NOT_SUPPORTED`) para compatibilidad con MongoDB standalone.
+  - **Paginacion Backend y DTOs**:
+    - Creado `PageResponseDTO<T>` (`data`, `total`, `page`, `size`, `totalPages`).
+    - En `UsuariosController.java`: Métodos `/api/v1/usuarios/auditoria` y `/api/v1/usuarios/sesiones-activas` soportan `page` y `size`.
+    - En `AccesoResource.java`: Creados `/api/v1/acceso/bitacora` (GET paginado y POST para registro en vivo).
+  - **Frontend (Angular)**:
+    - En `usuario.service.ts`: Modelados `getAuditoriaPaginada(page, size)` y `getSesionesActivasPaginadas(page, size)`.
+    - En `usuario-list.component.ts` y `.html`: Agregadas barras de paginacion completas (Anterior / Siguiente, contador de páginas y total de eventos/sesiones).
+    - En `biometria-facial.component.ts`: Los eventos de paso de la bitacora se guardan automáticamente en MongoDB vía `POST /api/v1/acceso/bitacora` y se cargan al iniciar.
+  - **Validacion**: Imágenes Docker compiladas y desplegadas con `docker compose build` y `docker compose up -d`. Inserción y paginación verificadas en caliente en `biotrack_mongo`.
+
+- **Validacion Integral de Flujos, CRUD y Tests Unitarios (27-Oct-2026)**:
+  - **Pruebas de Backend**:
+    - En [ModuleBatteriesTest.java](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_server/src/test/java/com/access/control/ModuleBatteriesTest.java): Integradas pruebas automáticas `testGymDashboardEndpoints()` y `testTasasBcvEndpoints()`, cubriendo la consulta de `/api/v1/acceso/gimnasio/en-sala`, `/api/v1/acceso/gimnasio/top-asistencia` y `POST /api/admin/tasa-bcv/sincronizar`. Compilación y empaquetado validado con `./mvnw test-compile`.
+  - **Pruebas de Frontend**:
+    - En [tasa-cambio.service.spec.ts](file:///Users/samueltovar/Documents/GitHub/control_acceso/control_web/src/main/web/src/app/core/services/tasa-cambio.service.spec.ts): Actualizadas las suites Jasmine/Karma validando la sincronización resiliente vía servidor y la preservación incondicional del estado `SINCRONIZADO` cuando existen cotizaciones en la base de datos.
+  - **Doble Check de Producción Docker**:
+    - Confirmada la disponibilidad en vivo en Nginx (puerto 80) y Quarkus (puerto 8080):
+      - `GET /api/tasas/actual?moneda=USD` -> HTTP 200 OK (`887.3020 VES`).
+      - `POST /api/admin/tasa-bcv/sincronizar` -> HTTP 200 OK.
+      - `GET /api/v1/acceso/gimnasio/top-asistencia` -> HTTP 200 OK.
+      - `GET /api/v1/acceso/gimnasio/en-sala` -> HTTP 200 OK.
+    - Menú lateral y vistas responsivas verificadas con cierre reactivo en móviles.
+  - **Validacion**: Despliegue completado con `make docker-build` y `make docker-up`.
+
+- **Ejecucion de Plan de Refactorizacion Integral (27-Oct-2026)**:
+  - **Sincronizacion de Tasas**:
+    - Reutilizado el endpoint existente de backend `POST /api/admin/tasa-bcv/sincronizar`.
+    - Eliminado el falso estado de `ERROR`: si la base de datos ya cuenta con tasas vigentes de `USD` o `EUR`, el servicio marca el estado directamente en `SINCRONIZADO` y actualiza los badges visuales sin arrojar advertencias innecesarias.
+  - **Navegacion Responsiva y Usabilidad**:
+    - En `left-menu.component.ts`: Integrado listener reactivo de `NavigationEnd` sobre el `Router`. Al hacer clic en cualquier enlace interno en dispositivos moviles (<768px), el menu se cierra automaticamente sin requerir eventos manuales dispersos.
+  - **Gestion de Memoria y Sede en Componentes**:
+    - En `highlight-badge.component.ts`: Inyectado `SedeStateService` y suscripcion limpia con cancelacion en `ngOnDestroy` para actualizar el cliente con mayor racha de asistencia al alternar de sede.
+  - **Validacion**: Despliegue en caliente exitoso mediante `make docker-build` y `make docker-up`.
+
+- **Reversion de Paleta Oscura Global a Paleta Estandar (27-Oct-2026)**:
+  - **Styles Globales**: Se restauro `styles.css` a su estado base original (`#f8f9fa`, cards e inputs blancos de Bootstrap, tipografia estandar).
+  - **Formularios y Grillas**: Recuperan su legibilidad clara original en los modulos de Clientes, Usuarios, Empleados y Formularios de Enrolamiento biometrico.
+  - **Validacion**: Desplegado en Docker con `make docker-build` y `make docker-up`.
+
+- **Refactorizacion Dashboard Gimnasio: Pestanias Funcionales y Racha Dinamica (27-Oct-2026)**:
+  - **Eliminacion de Layout/Topbar Duplicado**: Se removio `<header class="gym-topbar">` dentro de `gym-access-dashboard.component.html`, conservando el topbar principal global del sistema en el nivel superior y convirtiendo las acciones del dashboard en una barra de pestañas (`dashboard-tabs-bar`).
+  - **Pestanias con Funcionalidad Activa**:
+    1. *Active Access Control*: Muestra el grid de 3 columnas (Live Log, Badge Central, Metricas en Vivo).
+    2. *Members*: Tabla de busqueda y exploracion rapida de clientes registrados y estado de membresia (`/api/v1/clientes`).
+    3. *History*: Historial filtrado de accesos concedidos a clientes con fecha, documento y estado (`/api/v1/acceso/registros`).
+    4. *Settings*: Ajustes interactivos de capacidad maxima (aforo), pulso de rele (ms) y frecuencia de actualizacion con persistencia en memoria local.
+  - **Filtrado Estricto de Clientes en Live Access Log**: En `live-access-log.component.ts`, se filtraron las aperturas genericas de rele o sin cliente (`r.cliente == null`), mostrando unicamente a los usuarios/clientes que efectivamente ingresaron al gimnasio.
+  - **Racha de Asistencia Consecutiva Dinamica**:
+    - Backend: Creado endpoint `@GET /api/v1/acceso/gimnasio/top-asistencia` en `AccesoResource.java` que agrupa por fechas unicas (`DATE(fechaHora)`) de accesos concedidos de cada cliente, calculando la racha maxima de dias consecutivos y total de check-ins.
+    - Frontend: En `highlight-badge.component.ts` y `.html`, se reemplazo el texto estatico "45 DIAS CONSECUTIVOS" por el enlace reactivo `memberOfMonth.streakDays`, mostrando los dias consecutivos reales del cliente mas constante.
+  - **Validacion**: Compilacion limpia con `make docker-build` y despliegue en contenedores con `make docker-up`.
+
+- **Gym Access Control Dashboard Integrado con APIs Reales y Despliegue Docker (27-Oct-2026)**:
+  - **Backend**:
+    - En `AccesoResource.java`: Creado endpoint `@GET /api/v1/acceso/gimnasio/en-sala` que filtra accesos concedidos de las últimas 4 horas agrupados por cliente único (`totalEnSala`, `capacidadMaxima`, `porcentajeOcupacion` y detalle de clientes en sala), respetando el filtro opcional de `sedeId`.
+  - **Frontend**:
+    - `LiveAccessLogComponent`: Integrado reactivamente con `/api/v1/acceso/registros`, `WebSocketService.getAccesoEvents()` (`/ws/acceso`) y filtrado en vivo por `SedeStateService.sedeSeleccionadaId$`.
+    - `LiveMetricsStatusComponent`: Conectado a `/api/v1/acceso/gimnasio/en-sala` para porcentaje y capacidad circular real, `/api/admin/dashboard/metricas` y status del hardware Suprema.
+    - `HighlightBadgeComponent`: Conectado a `/api/v1/clientes` para proyectar al miembro destacado real.
+    - `styles.css` & `topbar.component.*`: Refactorizados a la paleta Dark Mode Pro (`#080c14` / `#0f172a` / `#1e293b`) con soporte uniforme de inputs, selects, cards elevadas y tablas oscuras.
+  - **Validación**: Compilación limpia de backend y frontend con `make docker-build` y despliegue exitoso con `make docker-up`.
+
+
+- **Modernización Integral de UI/UX en Menús y Grillas CRUD (26-Oct-2026)**:
+  - **Alcance**: Mejoras estéticas y de feedback visual en `control_web` sin alterar la lógica de negocio ni dependencias subyacentes.
+  - **Componentes Actualizados**:
+    1. `styles.css`: Incorporación de tokens CSS modernos (paleta Andes Slate/Teal/Blue, variables `--primary-gradient`, `--glass-bg`, `--card-shadow`), estandarización de cards con elevación suave, estilizado de tablas con padding balanceado y definición de skeletons de carga.
+    2. `left-menu.component.css`: Transición a fondo dark radial `#111827` a `#090d16`, bordes perimetrales sutiles (`rgba(255,255,255,0.08)`), microinteracción hover con desplazamiento y estado activo con iluminación perimetral (`--sidebar-active-glow`). Scrollbar estilizado ultra-delgado.
+    3. `topbar.component.css` y `topbar.component.html`: Efecto Glassmorphism con `backdrop-filter: blur(12px)`, chip flotante para la tasa BCV (DolarAPI), avatar con inicial del usuario activo e indicador animado de presencia "En línea" (`status-online-dot`), botón pill estilizado para "Terminal Visión" y "Salir".
+    4. `empleado-list.component.css` y `empleado-list.component.html`: Rediseño de grilla CRUD con avatares de identidad con inicial, badges semi-translúcidos (`badge-gerencia`, `badge-contrato`), botones de acción con elevación hover y estado vacío (*empty state*) ilustrado.
+  - **Validación**: Preservación total de enlaces, eventos click, directivas de seguridad (`canView*`, `isAdminOrSuperAdmin`) y suscripciones reactivas (`sedeStateService`, `tasaService`).
+
 - **Filtrado de Historial de Pagos y Aislamiento por Cliente (20-Oct-2026)**:
   - **Problema**: El endpoint `/api/v1/finanzas/pagos` retornaba siempre todos los pagos registrados en el sistema, exponiendo transacciones de otros clientes a la app movil.
   - **Solucion**:
@@ -430,6 +508,16 @@
   - UI Web Standalone en Quarkus: `control_server/src/main/resources/META-INF/resources/dashboard-dinamico.html`.
   - Simulador de Gateway: Controlado exclusivamente a demanda mediante el boton *Iniciar Gateway Dinamico* / *Detener Gateway Dinamico*. Al activarse, mantiene **PULSERA_001** y **PULSERA_002** de forma fija y permanente transmitiendo continuamente valores dinamicos sin desconectarse jamas, mientras incorpora altas y bajas dinamicas de pulseras secundarias adicionales.
   - Documentacion Gateway Real ESP32 Wi-Fi + ESP-NOW: Generada en `docs/guia_gateway_esp32_telemetria.md` con arquitectura bidireccional, estructura binaria compartida en C (`struct_telemetria`), firmware emisor ESP-NOW para pulseras (`PULSERA_001`, `PULSERA_002`) y firmware concentrador dual (ESP-NOW + Wi-Fi HTTP POST al backend Quarkus `/api/v1/telemetria/gateway-ingest`).
+  - Gateway ESP32 por Sede y Piso:
+    - Entidad `TelemetriaLectura` y DTOs actualizados con `gateway_id`, `gateway_ip`, `piso_id`, `piso_numero`, `sede_id`, `sede_nombre` persistidos en MongoDB y despachados en tiempo real por WebSocket.
+    - Endpoints de ingesta (`/api/v1/telemetria/gateway-ingest` y `/api/v1/telemetria/gateway`) enriquecen automaticamente datos de Sede y Piso a partir del Dispositivo registrado por IP o del payload recibido.
+    - Tipo de dispositivo `Gateway ESP32 VNPPB` registrado y soportado en el catalogo de red/dispositivos (PostgreSQL).
+    - `dashboard-dinamico.html`: incorpora selectores reactivos por Sede, Piso y Gateway (`#gateway-selector`), badges en tarjetas vivas indicando piso y gateway emisor (`GW: ...`), y emulador que lee los gateways de red reales (`/api/v1/dispositivos`) para asociar gateway_id, IP, piso y sede correspondientes.
+    - `monitor-salud.component`: filtros reactivos de Sede, Piso y Gateway ESP32 integrados en la barra de filtros, insignias de Piso y Gateway en cada tarjeta de pulsera, y columnas dedicadas de Gateway Emisor y Ubicacion en la tabla de historial MongoDB.
+  - Escaneo de Red por Computadora Cliente (Navegador):
+    - Deteccion automatica de subred de la computadora que abre el navegador mediante WebRTC local candidate y hostname de conexion en `DispositivoListComponent`.
+    - Modal de Descubrimiento de Red incluye badge de Red Cliente (`{subred}.0/24`) y campo interactivo para re-escanear cualquier subred ingresada por el usuario.
+    - Endpoint `/api/v1/dispositivos/no-registrados` recibe `?subred=` e `ips=` o headers `X-Forwarded-For`/`X-Real-IP`, ejecutando sondeo paralelo multihilo (40 threads) sobre la subred del cliente evitando escanear solo el contenedor Docker.
   - `192.168.1.212`: Torniquete VIP Gimnasio
   - `192.168.1.214`: Torniquete Secundario Acceso Salida
   - `192.168.1.220`: Puerta Biometrica Facial P2
@@ -519,7 +607,7 @@
 ### 11. Registro de Dispositivos Wi-Fi y Campos Estandarizados (Tipo y Sistema Operativo)
 
 - **Campos en Base de Datos y Entidad (`dispositivos`)**:
-  - `tipo_dispositivo` (VARCHAR 255): *Torniquete con Relay TCP*, *Terminal Biometrica Facial*, *Lector ZKTeco*, *Terminal Movil*, *Servidor de Control*.
+  - `tipo_dispositivo` (VARCHAR 255): *Torniquete con Relay TCP*, *Terminal Biometrica Facial*, *Gateway ESP32 VNPPB*, *Lector ZKTeco*, *Terminal Movil*, *Servidor de Control*.
   - `sistema_operativo` (VARCHAR 255): *Linux Embedded (ZKOS / HikOS)*, *Android/iOS*, *macOS/Linux 64-bit*, *RTOS*.
   - Mapeo en entidad Quarkus `Dispositivo.java`, DDL en `controlaccesos.sql`, y migracion en vivo sobre PostgreSQL.
 - **Script de Registro y Actualizacion Dinamica (`scripts/register_wifi_devices.sh`)**:

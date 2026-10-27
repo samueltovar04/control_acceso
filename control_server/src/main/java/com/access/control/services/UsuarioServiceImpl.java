@@ -18,6 +18,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.access.control.dto.PageResponseDTO;
+import org.bson.types.ObjectId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -227,7 +229,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    @Transactional
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
     public void registrarAuditoria(String username, Long userId, Long sedeId, String sedeNombre,
                                    String ip, String userAgent, String accion, String estado, String detalles) {
         try {
@@ -249,7 +251,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    @Transactional
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
     public void registrarSesionActiva(Long userId, String username, String ip, String userAgent, Long sedeId, String sedeNombre) {
         try {
             if (userId != null) {
@@ -290,17 +292,36 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
+    public PageResponseDTO<AuditoriaAcceso> listarAuditoriaPaginada(int page, int size) {
+        return auditoriaRepository.findPaginado(page, size);
+    }
+
+    @Override
     public List<SesionActiva> listarSesionesActivas() {
         return sesionActivaRepository.findActivas();
     }
 
     @Override
-    @Transactional
-    public boolean revocarSesion(Long sesionId) {
-        SesionActiva s = sesionActivaRepository.findById(sesionId);
+    public PageResponseDTO<SesionActiva> listarSesionesActivasPaginadas(int page, int size) {
+        return sesionActivaRepository.findActivasPaginado(page, size);
+    }
+
+    @Override
+    public boolean revocarSesion(String sesionId) {
+        if (sesionId == null || sesionId.trim().isEmpty()) {
+            return false;
+        }
+        SesionActiva s = null;
+        try {
+            if (ObjectId.isValid(sesionId)) {
+                s = sesionActivaRepository.findById(new ObjectId(sesionId));
+            }
+        } catch (Exception e) {
+            // Ignorar y continuar
+        }
         if (s == null) return false;
         s.setActiva(false);
-        sesionActivaRepository.persist(s);
+        sesionActivaRepository.update(s);
 
         registrarAuditoria(s.getUsername(), s.getUserId(), s.getSedeId(), s.getSedeNombre(),
                 s.getIpAddress(), "BACKEND", "REVOCACION_SESION", "EXITO", "Sesion activa revocada por administrador");
@@ -308,7 +329,6 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
 
     @Override
-    @Transactional
     public void revocarSesionPorUsername(String username, String ip, String userAgent) {
         if (username == null || username.trim().isEmpty()) return;
         sesionActivaRepository.invalidarPorUsername(username.trim().toLowerCase());

@@ -42,6 +42,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   tiposDispositivoDisponibles: string[] = [
     'Torniquete con Relay TCP',
     'Terminal Biometrica Facial',
+    'Gateway ESP32 WIFI',
     'Camara Web',
     'Camara IP',
     'Captahuellas USB Suprema',
@@ -66,7 +67,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
     private sedeService: SedeService,
     private sedeStateService: SedeStateService,
     private alertModal: AlertModalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.iniciarGestionSedes();
@@ -115,7 +116,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
     if (this.ws) {
       try {
         this.ws.close();
-      } catch (e) {}
+      } catch (e) { }
     }
     this.subs.forEach(s => s.unsubscribe());
   }
@@ -362,12 +363,12 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
             this.dispositivos = data;
             this.aplicarFiltro();
           }
-        } catch (e) {}
+        } catch (e) { }
       };
 
       this.ws.onerror = (err) => {
         console.warn('WebSocket de dispositivos no disponible:', err);
       };
-    } catch (e) {}
+    } catch (e) { }
   }
 }

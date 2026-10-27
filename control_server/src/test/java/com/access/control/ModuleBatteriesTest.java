@@ -130,4 +130,39 @@ public class ModuleBatteriesTest {
             .statusCode(200)
             .body("concedido", equalTo(true));
     }
+
+    @Test
+    @DisplayName("Backend: Gym Dashboard Metrics and Top Attendance Endpoints")
+    public void testGymDashboardEndpoints() {
+        given()
+            .when().get("/api/v1/acceso/gimnasio/en-sala")
+            .then()
+            .statusCode(200)
+            .body("totalEnSala", notNullValue())
+            .body("capacidadMaxima", equalTo(150));
+
+        given()
+            .when().get("/api/v1/acceso/gimnasio/top-asistencia")
+            .then()
+            .statusCode(200)
+            .body("diasConsecutivos", notNullValue());
+    }
+
+    @Test
+    @DisplayName("Backend: Tasas BCV Sincronizacion y Consulta Actual")
+    public void testTasasBcvEndpoints() {
+        given()
+            .when().get("/api/tasas/actual?moneda=USD")
+            .then()
+            .statusCode(200)
+            .body("moneda", equalTo("USD"))
+            .body("tasa", notNullValue());
+
+        given()
+            .contentType(ContentType.JSON)
+            .when().post("/api/admin/tasa-bcv/sincronizar")
+            .then()
+            .statusCode(200)
+            .body("fuente", notNullValue());
+    }
 }

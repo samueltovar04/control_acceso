@@ -42,6 +42,13 @@
     <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
       <li class="nav-item">
         <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+          routerLink="/home/gym-dashboard" routerLinkActive="active bg-primary text-white"
+          (click)="onNavClick()">
+          <i class="bi bi-speedometer me-3 fs-5 text-info"></i> Gym Dashboard Pro
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
           routerLink="/home/acceso-torniquetes" routerLinkActive="active bg-primary text-white"
           (click)="onNavClick()">
           <i class="bi bi-door-open-fill me-3 fs-5 text-warning"></i> Control de Torniquetes

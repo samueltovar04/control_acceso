@@ -209,22 +209,42 @@ public class UsuariosController {
 
     @GET
     @Path("/auditoria")
-    public Response listarAuditoria(@QueryParam("limit") @DefaultValue("100") int limit, @Context SecurityContext sec) {
+    public Response listarAuditoria(@QueryParam("page") @DefaultValue("0") int page,
+                                   @QueryParam("size") @DefaultValue("15") int size,
+                                   @QueryParam("limit") Integer limit,
+                                   @Context SecurityContext sec) {
         User caller = getCallerUser(sec);
         if (caller != null && !isCallerAdmin(caller)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of("error", "Solo administradores pueden auditar el sistema.")).build();
         }
-        return Response.ok(usuarioService.listarAuditoria(limit)).build();
+        if (limit != null && limit > 0) {
+            return Response.ok(usuarioService.listarAuditoria(limit)).build();
+        }
+        return Response.ok(usuarioService.listarAuditoriaPaginada(page, size)).build();
     }
 
     @GET
     @Path("/sesiones-activas")
-    public Response listarSesionesActivas(@Context SecurityContext sec) {
+    public Response listarSesionesActivas(@QueryParam("page") @DefaultValue("0") int page,
+                                         @QueryParam("size") @DefaultValue("10") int size,
+                                         @QueryParam("paginado") @DefaultValue("false") boolean paginado,
+                                         @Context SecurityContext sec) {
         User caller = getCallerUser(sec);
         if (caller == null || !isCallerAdmin(caller)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(Map.of("error", "Solo administradores pueden ver sesiones activas.")).build();
+        }
+
+        if (paginado) {
+            com.access.control.dto.PageResponseDTO<SesionActiva> pag = usuarioService.listarSesionesActivasPaginadas(page, size);
+            if (pag != null && pag.getData() != null && !caller.isSuperAdmin()) {
+                List<SesionActiva> filtradas = pag.getData().stream()
+                        .filter(s -> s != null && (s.getUsername() == null || !s.getUsername().equalsIgnoreCase("superadmin")))
+                        .collect(Collectors.toList());
+                pag.setData(filtradas);
+            }
+            return Response.ok(pag).build();
         }
 
         List<SesionActiva> sesiones = usuarioService.listarSesionesActivas();
@@ -247,7 +267,7 @@ public class UsuariosController {
 
     @POST
     @Path("/sesiones-activas/{id}/revocar")
-    public Response revocarSesion(@PathParam("id") Long id, @Context SecurityContext sec) {
+    public Response revocarSesion(@PathParam("id") String id, @Context SecurityContext sec) {
         User caller = getCallerUser(sec);
         if (caller == null || !isCallerAdmin(caller)) {
             return Response.status(Response.Status.FORBIDDEN)
@@ -258,7 +278,7 @@ public class UsuariosController {
             List<SesionActiva> activas = usuarioService.listarSesionesActivas();
             if (activas != null) {
                 for (SesionActiva s : activas) {
-                    if (s != null && s.getId() != null && s.getId().equals(id)) {
+                    if (s != null && s.getIdString() != null && s.getIdString().equals(id)) {
                         if (s.getUserId() != null) {
                             User targetUser = userRepository.findById(s.getUserId());
                             if (targetUser != null && targetUser.isSuperAdmin()) {

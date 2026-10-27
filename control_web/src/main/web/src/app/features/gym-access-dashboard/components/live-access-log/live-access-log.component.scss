@@ -1,0 +1,225 @@
+/* ==========================================================================
+   LIVE ACCESS LOG - CARDS & NEON STATUS BADGES
+   ========================================================================== */
+
+$bg-slate-900: #0f172a;
+$bg-slate-800: #1e293b;
+$border-color: rgba(255, 255, 255, 0.08);
+
+.access-log-card {
+  background: $bg-slate-900;
+  border: 1px solid $border-color;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+
+  .log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $border-color;
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .icon-pulse {
+        width: 36px;
+        height: 36px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #38bdf8;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #f8fafc;
+      }
+
+      .card-subtitle {
+        font-size: 0.72rem;
+        color: #94a3b8;
+      }
+    }
+
+    .counter-badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid $border-color;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+  }
+
+  .log-scroll-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    overflow-y: auto;
+    max-height: 680px;
+    padding-right: 0.35rem;
+
+    /* Custom thin scrollbar */
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+  }
+
+  .user-scan-card {
+    background: $bg-slate-800;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.85rem;
+    padding: 0.95rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -2px rgba(0, 0, 0, 0.35);
+    }
+
+    &.card-granted {
+      border-left: 3px solid #10b981;
+    }
+
+    &.card-expired {
+      border-left: 3px solid #ef4444;
+    }
+
+    .user-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+
+      .avatar-wrapper {
+        position: relative;
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+
+        .user-avatar {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-dot {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 2px solid $bg-slate-800;
+
+          &.dot-green {
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+          }
+
+          &.dot-red {
+            background-color: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+          }
+        }
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        .user-name {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #f8fafc;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .time-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.72rem;
+          color: #94a3b8;
+          margin-top: 0.15rem;
+
+          .timestamp {
+            color: #cbd5e1;
+            font-family: monospace;
+          }
+        }
+      }
+    }
+
+    .badge-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* NEON STATUS BADGES */
+    .neon-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: all 0.25s ease;
+
+      /* GRANTED: NEON GREEN */
+      &.badge-granted {
+        color: #00ff88;
+        background: rgba(0, 255, 136, 0.08);
+        border: 1px solid #00ff88;
+        box-shadow: 0 0 14px rgba(0, 255, 136, 0.25), inset 0 0 8px rgba(0, 255, 136, 0.15);
+
+        &:hover {
+          box-shadow: 0 0 20px rgba(0, 255, 136, 0.45), inset 0 0 12px rgba(0, 255, 136, 0.25);
+        }
+      }
+
+      /* EXPIRED: NEON RED */
+      &.badge-expired {
+        color: #ff3366;
+        background: rgba(255, 51, 102, 0.08);
+        border: 1px solid #ff3366;
+        box-shadow: 0 0 14px rgba(255, 51, 102, 0.25), inset 0 0 8px rgba(255, 51, 102, 0.15);
+
+        &:hover {
+          box-shadow: 0 0 20px rgba(255, 51, 102, 0.45), inset 0 0 12px rgba(255, 51, 102, 0.25);
+        }
+      }
+    }
+  }
+}

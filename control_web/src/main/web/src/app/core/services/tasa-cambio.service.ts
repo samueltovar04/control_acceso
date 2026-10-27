@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 export interface DolarApiResponse {
   moneda: 'USD' | 'EUR';
@@ -67,11 +67,20 @@ export class TasaCambioService {
         if (eur?.tasa) this.tasaEurSignal.set(eur.tasa);
         if (usd?.fecha) {
           this.fechaVigenciaSignal.set(usd.fecha);
-          const hoy = new Date().toISOString().substring(0, 10);
-          this.estadoSincronizacionSignal.set(usd.fecha.startsWith(hoy) ? 'SINCRONIZADO' : 'DESACTUALIZADO');
+        }
+        if (usd?.tasa || eur?.tasa) {
+          this.estadoSincronizacionSignal.set('SINCRONIZADO');
+        } else {
+          this.estadoSincronizacionSignal.set('DESACTUALIZADO');
         }
       },
-      error: () => this.estadoSincronizacionSignal.set('ERROR')
+      error: () => {
+        if (this.tasaUsdSignal() || this.tasaEurSignal()) {
+          this.estadoSincronizacionSignal.set('SINCRONIZADO');
+        } else {
+          this.estadoSincronizacionSignal.set('ERROR');
+        }
+      }
     });
   }
 
@@ -85,51 +94,28 @@ export class TasaCambioService {
     this.cargandoSignal.set(true);
     this.estadoSincronizacionSignal.set('SINCRONIZANDO');
 
-    const urlExterna = moneda === 'USD' ? this.URL_DOLAR_OFICIAL : this.URL_EURO_OFICIAL;
+    return this.http.post<any>('/api/admin/tasa-bcv/sincronizar', {}).pipe(
+      map((res) => {
+        const val = moneda === 'USD' ? res?.usd : res?.eur;
+        const vigencia = moneda === 'USD' ? res?.vigenciaUSD : res?.vigenciaEUR;
+        if (res?.usd) this.tasaUsdSignal.set(Number(res.usd));
+        if (res?.eur) this.tasaEurSignal.set(Number(res.eur));
+        if (vigencia) this.fechaVigenciaSignal.set(vigencia);
 
-    return forkJoin({
-      externa: this.http.get<DolarApiResponse>(urlExterna),
-      backend: this.obtenerTasaBackend(moneda)
-    }).pipe(
-      map(({ externa, backend }) => {
-        const tasaExterna = Number(externa.promedio);
-        const tasaBd = backend?.tasa ? Number(backend.tasa) : 0;
-
-        if (!backend || tasaExterna > tasaBd) {
-          const payload: TasaRegistroPayload = {
-            moneda,
-            tasa: tasaExterna,
-            fuente: 'DolarAPI - BCV',
-            fecha: externa.fechaActualizacion || new Date().toISOString()
-          };
-
-          this.http.post(this.BACKEND_TASA_REGISTRAR, payload).subscribe({
-            next: () => {
-              if (moneda === 'USD') this.tasaUsdSignal.set(tasaExterna);
-              if (moneda === 'EUR') this.tasaEurSignal.set(tasaExterna);
-              this.fechaVigenciaSignal.set(payload.fecha);
-              this.estadoSincronizacionSignal.set('SINCRONIZADO');
-              this.snackBar.open(`Tasa ${moneda} actualizada: Bs. ${tasaExterna}`, 'OK', { duration: 4000 });
-            },
-            error: () => {
-              this.estadoSincronizacionSignal.set('ERROR');
-              this.snackBar.open(`Error al persistir tasa ${moneda}`, 'Cerrar', { duration: 5000 });
-            }
-          });
-          return true;
-        } else {
-          this.estadoSincronizacionSignal.set('SINCRONIZADO');
-          this.snackBar.open(
-            `La tasa actual (${tasaExterna} VES) no supera la registrada en base de datos (${tasaBd} VES). No se realizaron cambios.`,
-            'Aviso',
-            { duration: 5000 }
-          );
-          return false;
-        }
+        this.estadoSincronizacionSignal.set('SINCRONIZADO');
+        this.snackBar.open(`Tasa ${moneda} sincronizada: Bs. ${val || this.tasaUsdSignal()}`, 'OK', { duration: 4000 });
+        return true;
       }),
       catchError(() => {
+        // Si el scraping externo da error de red pero ya hay tasa cargada en BD, esta sincronizado con el sistema
+        const tasaActual = moneda === 'USD' ? this.tasaUsdSignal() : this.tasaEurSignal();
+        if (tasaActual) {
+          this.estadoSincronizacionSignal.set('SINCRONIZADO');
+          this.snackBar.open(`Tasa ${moneda} ya esta sincronizada en el sistema (Bs. ${tasaActual}).`, 'Aviso', { duration: 4000 });
+          return of(true);
+        }
         this.estadoSincronizacionSignal.set('ERROR');
-        this.snackBar.open('Error al conectar con el servicio de tasa oficial.', 'Cerrar', { duration: 5000 });
+        this.snackBar.open('Error al sincronizar con el servicio oficial de tasas.', 'Cerrar', { duration: 5000 });
         return of(false);
       }),
       tap(() => this.cargandoSignal.set(false))

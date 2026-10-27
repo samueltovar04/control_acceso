@@ -72,6 +72,14 @@
                         class="text-xs px-2.5 py-1 rounded-full font-mono bg-slate-900 border border-slate-700 text-slate-300 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer">
                         <option value="">Todas las Sedes</option>
                     </select>
+                    <select id="piso-selector" onchange="onPisoChange(this.value)"
+                        class="text-xs px-2.5 py-1 rounded-full font-mono bg-slate-900 border border-slate-700 text-slate-300 focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer">
+                        <option value="">Todos los Pisos</option>
+                    </select>
+                    <select id="gateway-selector" onchange="onGatewayChange(this.value)"
+                        class="text-xs px-2.5 py-1 rounded-full font-mono bg-slate-900 border border-slate-700 text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer">
+                        <option value="">Todos los Gateways</option>
+                    </select>
                 </h1>
                 <p class="text-xs text-slate-400">Conexión y desconexión autónoma de brazaletes con expiración por
                     inactividad</p>
@@ -128,7 +136,10 @@
         let ws;
 
         let selectedSedeId = null;
-        let pulseraSedeMap = new Map(); // id_pulsera.toUpperCase() -> { sedeId, sedeNombre, clienteNombre }
+        let selectedPisoId = null;
+        let selectedGatewayId = null;
+        let gatewaysRegistrados = [];
+        let pulseraSedeMap = new Map(); // id_pulsera.toUpperCase() -> { sedeId, sedeNombre, pisoId, pisoNumero, gatewayId, clienteNombre }
 
         async function cargarSedes() {
             try {
@@ -145,9 +156,68 @@
                     });
 
                     aplicarReglasSesion(sedes);
+                    cargarPisos();
+                    cargarGateways();
                 }
             } catch (err) {
                 console.warn('Error cargando sedes:', err);
+            }
+        }
+
+        async function cargarPisos() {
+            const selPiso = document.getElementById('piso-selector');
+            if (!selPiso) return;
+            try {
+                const url = selectedSedeId ? `/api/v1/pisos?sedeId=${selectedSedeId}` : '/api/v1/pisos';
+                const res = await fetch(url);
+                if (res.ok) {
+                    const pisos = await res.json();
+                    selPiso.innerHTML = '<option value="">Todos los Pisos</option>';
+                    pisos.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.piso + (p.descripcion ? ` (${p.descripcion})` : '');
+                        selPiso.appendChild(opt);
+                    });
+                    if (selectedPisoId) {
+                        selPiso.value = String(selectedPisoId);
+                    }
+                }
+            } catch (err) {
+                console.warn('Error cargando pisos:', err);
+            }
+        }
+
+        async function cargarGateways() {
+            const selGw = document.getElementById('gateway-selector');
+            if (!selGw) return;
+            try {
+                const res = await fetch('/api/v1/dispositivos');
+                if (res.ok) {
+                    const dispositivos = await res.json();
+                    gatewaysRegistrados = dispositivos.filter(d => {
+                        const tipo = (d.tipoDispositivo || d.tipo || '').toLowerCase();
+                        const desc = (d.descripcion || d.nombre || '').toLowerCase();
+                        return tipo.includes('gateway') || tipo.includes('esp32') || desc.includes('gateway') || desc.includes('esp32') || desc.includes('vnppb');
+                    });
+
+                    // Si no hubiese ninguno registrado, mantener el fallback
+                    if (gatewaysRegistrados.length === 0) {
+                        gatewaysRegistrados = [
+                            { id: 1, descripcion: 'Gateway ESP32 VNPPB', ip: '192.168.1.141', piso: { id: 1, piso: 'planta baja', sede: { id: 1, sede: 'Valencia Norte' } } }
+                        ];
+                    }
+
+                    selGw.innerHTML = '<option value="">Todos los Gateways</option>';
+                    gatewaysRegistrados.forEach(gw => {
+                        const opt = document.createElement('option');
+                        opt.value = gw.descripcion || `GW-${gw.id}`;
+                        opt.textContent = `${gw.descripcion} (${gw.ip || 'ESP32'})`;
+                        selGw.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.warn('Error cargando gateways registrados:', err);
             }
         }
 
@@ -160,10 +230,12 @@
                         const pulsera = c.codigoInsignia ? c.codigoInsignia.trim().toUpperCase() : null;
                         const sId = c.sede?.id || c.sede_id || c.sedeId;
                         const sNombre = c.sede?.sede || 'Sede';
-                        if (pulsera && sId) {
+                        if (pulsera) {
+                            const prev = pulseraSedeMap.get(pulsera) || {};
                             pulseraSedeMap.set(pulsera, {
-                                sedeId: Number(sId),
-                                sedeNombre: sNombre,
+                                ...prev,
+                                sedeId: sId ? Number(sId) : prev.sedeId,
+                                sedeNombre: sNombre || prev.sedeNombre,
                                 clienteNombre: `${c.nombre || ''} ${c.apellido || ''}`.trim()
                             });
                         }
@@ -190,6 +262,8 @@
                         sel.value = String(userSedeId);
                         sel.disabled = true;
                         sel.title = 'Sede predeterminada por rol de usuario';
+                        cargarPisos();
+                        cargarGateways();
                         updateUIState();
                         return;
                     }
@@ -204,24 +278,63 @@
                 selectedSedeId = null;
                 sel.value = '';
             }
+            cargarPisos();
+            cargarGateways();
             updateUIState();
         }
 
         function onSedeChange(val) {
             selectedSedeId = val ? Number(val) : null;
+            selectedPisoId = null;
+            selectedGatewayId = null;
             if (selectedSedeId) {
                 localStorage.setItem('control_acceso_sede_seleccionada', String(selectedSedeId));
             } else {
                 localStorage.removeItem('control_acceso_sede_seleccionada');
             }
+            cargarPisos();
+            cargarGateways();
             updateUIState();
         }
 
-        function coincideSede(idPulsera) {
-            if (selectedSedeId === null) return true;
-            const info = pulseraSedeMap.get(idPulsera.toUpperCase());
-            if (!info) return true;
-            return Number(info.sedeId) === Number(selectedSedeId);
+        function onPisoChange(val) {
+            selectedPisoId = val ? Number(val) : null;
+            updateUIState();
+        }
+
+        function onGatewayChange(val) {
+            selectedGatewayId = val ? String(val).trim().toLowerCase() : null;
+            updateUIState();
+        }
+
+        function coincideFiltros(dev) {
+            const idPulsera = dev.id_pulsera.toUpperCase();
+            const info = pulseraSedeMap.get(idPulsera);
+
+            const devSedeId = dev.sede_id || (info ? info.sedeId : null);
+            const devPisoId = dev.piso_id || (info ? info.pisoId : null);
+            const devGwId = (dev.gateway_id || '').toLowerCase();
+            const devGwIp = (dev.gateway_ip || '').toLowerCase();
+
+            if (selectedSedeId !== null) {
+                if (devSedeId && Number(devSedeId) !== Number(selectedSedeId)) {
+                    return false;
+                }
+            }
+
+            if (selectedPisoId !== null) {
+                if (devPisoId && Number(devPisoId) !== Number(selectedPisoId)) {
+                    return false;
+                }
+            }
+
+            if (selectedGatewayId !== null) {
+                if (!devGwId.includes(selectedGatewayId) && !devGwIp.includes(selectedGatewayId)) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // Limpieza periodica de pulseras inactivas / desconectadas
@@ -253,7 +366,7 @@
 
             for (const [id, dev] of activeDevices.entries()) {
                 const elem = document.getElementById(`card-${id}`);
-                const match = coincideSede(id);
+                const match = coincideFiltros(dev);
                 if (elem) {
                     if (match) {
                         elem.classList.remove('hidden');
@@ -290,6 +403,13 @@
             const tempVal = item.temp !== undefined ? item.temp : (item.temperatura || item.temperaturaCorporal || 36.5);
             const alertaVal = item.alerta !== undefined ? item.alerta : (item.estado_alerta !== undefined ? item.estado_alerta : 0);
 
+            const gwId = item.gateway_id || null;
+            const gwIp = item.gateway_ip || null;
+            const pisoId = item.piso_id || null;
+            const pisoNum = item.piso_numero || null;
+            const sId = item.sede_id || null;
+            const sNom = item.sede_nombre || null;
+
             const now = Date.now();
             const timeStr = new Date().toTimeString().split(' ')[0];
 
@@ -301,6 +421,12 @@
                     spo2: spo2Val,
                     temp: tempVal,
                     alerta: alertaVal,
+                    gateway_id: gwId,
+                    gateway_ip: gwIp,
+                    piso_id: pisoId,
+                    piso_numero: pisoNum,
+                    sede_id: sId,
+                    sede_nombre: sNom,
                     historial: [bpmVal],
                     lastSeen: now
                 };
@@ -311,6 +437,12 @@
                 dev.spo2 = spo2Val;
                 dev.temp = tempVal;
                 dev.alerta = alertaVal;
+                if (gwId) dev.gateway_id = gwId;
+                if (gwIp) dev.gateway_ip = gwIp;
+                if (pisoId) dev.piso_id = pisoId;
+                if (pisoNum) dev.piso_numero = pisoNum;
+                if (sId) dev.sede_id = sId;
+                if (sNom) dev.sede_nombre = sNom;
                 dev.historial.push(bpmVal);
                 if (dev.historial.length > 15) dev.historial.shift();
                 dev.lastSeen = now;
@@ -327,11 +459,20 @@
             card.className = `rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between bg-slate-900/80 border card-enter ${dev.alerta === 1 ? 'border-rose-500 card-alerta' : 'border-slate-800'
                 }`;
 
+            const info = pulseraSedeMap.get(dev.id_pulsera.toUpperCase());
+            const pisoTxt = dev.piso_numero || (info && info.pisoNumero ? info.pisoNumero : 'Piso 1');
+            const gwTxt = dev.gateway_id ? `GW: ${dev.gateway_id}` : 'ESP32 GW';
+
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                        ${dev.id_pulsera}
-                    </span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            ${dev.id_pulsera}
+                        </span>
+                        <span id="piso-badge-${dev.id_pulsera}" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/70 border border-cyan-800/60 text-cyan-300" title="${gwTxt}">
+                            ${pisoTxt}
+                        </span>
+                    </div>
                     <span id="badge-${dev.id_pulsera}" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${dev.alerta === 1 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                 }">
                         ${dev.alerta === 1 ? 'ALERTA' : 'NORMAL'}
@@ -355,7 +496,7 @@
 
                 <div class="mt-2 pt-2 border-t border-slate-800/60 flex justify-between items-center text-[10px] text-slate-500 font-mono">
                     <span id="sync-${dev.id_pulsera}">Sync: ${timeStr}</span>
-                    <span class="text-emerald-400 font-semibold">● Conectado</span>
+                    <span id="gw-label-${dev.id_pulsera}" class="text-emerald-400 font-semibold" title="${gwTxt}">● ${gwTxt}</span>
                 </div>
             `;
 
@@ -388,6 +529,20 @@
             document.getElementById(`spo2-${dev.id_pulsera}`).innerHTML = `${dev.spo2}% <span class="text-slate-500 font-normal">SpO2</span>`;
             document.getElementById(`temp-${dev.id_pulsera}`).textContent = `${Number(dev.temp).toFixed(1)}°C`;
             document.getElementById(`sync-${dev.id_pulsera}`).textContent = `Sync: ${timeStr}`;
+
+            const info = pulseraSedeMap.get(dev.id_pulsera.toUpperCase());
+            const pisoTxt = dev.piso_numero || (info && info.pisoNumero ? info.pisoNumero : 'Piso 1');
+            const gwTxt = dev.gateway_id ? `GW: ${dev.gateway_id}` : 'ESP32 GW';
+            const pisoBadge = document.getElementById(`piso-badge-${dev.id_pulsera}`);
+            if (pisoBadge) {
+                pisoBadge.textContent = pisoTxt;
+                pisoBadge.title = gwTxt;
+            }
+            const gwLabel = document.getElementById(`gw-label-${dev.id_pulsera}`);
+            if (gwLabel) {
+                gwLabel.textContent = `● ${gwTxt}`;
+                gwLabel.title = gwTxt;
+            }
 
             const card = document.getElementById(`card-${dev.id_pulsera}`);
             const badge = document.getElementById(`badge-${dev.id_pulsera}`);
@@ -527,7 +682,42 @@
                         alerta = 1;
                     }
 
-                    const payload = { id_pulsera: id, bpm, spo2, temp, estado_alerta: alerta };
+                    // Asignar Gateway segun dispositivos de red registrados o fallback
+                    let gwCode = 'Gateway ESP32 VNPPB';
+                    let gwIp = '192.168.1.141';
+                    let pisoId = 1;
+                    let pisoNumero = 'planta baja';
+                    let sedeId = selectedSedeId || 1;
+                    let sedeNombre = 'Valencia Norte';
+
+                    if (gatewaysRegistrados && gatewaysRegistrados.length > 0) {
+                        const pulseraNum = parseInt(id.replace(/\D/g, ''), 10) || 1;
+                        const gwElegido = gatewaysRegistrados[pulseraNum % gatewaysRegistrados.length];
+                        gwCode = gwElegido.descripcion || gwElegido.nombre || 'Gateway ESP32 VNPPB';
+                        gwIp = gwElegido.ip || '192.168.1.141';
+                        if (gwElegido.piso) {
+                            pisoId = gwElegido.piso.id || 1;
+                            pisoNumero = gwElegido.piso.piso || 'planta baja';
+                            if (gwElegido.piso.sede) {
+                                sedeId = gwElegido.piso.sede.id || 1;
+                                sedeNombre = gwElegido.piso.sede.sede || 'Valencia Norte';
+                            }
+                        }
+                    }
+
+                    const payload = {
+                        id_pulsera: id,
+                        bpm,
+                        spo2,
+                        temp,
+                        estado_alerta: alerta,
+                        gateway_id: gwCode,
+                        gateway_ip: gwIp,
+                        piso_id: pisoId,
+                        piso_numero: pisoNumero,
+                        sede_id: sedeId,
+                        sede_nombre: sedeNombre
+                    };
 
                     try {
                         await fetch('/api/v1/telemetria/gateway-ingest', {

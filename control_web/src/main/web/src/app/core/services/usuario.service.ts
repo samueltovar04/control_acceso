@@ -2,23 +2,30 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface PageResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+}
+
 export interface UserDTO {
   id?: number;
   username: string;
-  email?: string;
   nombreCompleto?: string;
+  email?: string;
   enabled?: boolean;
-  requiresPasswordReset?: boolean;
-  lastLogin?: string;
   sedeId?: number;
   sedeNombre?: string;
   roles?: string[];
   password?: string;
   empleadoId?: number;
+  requiresPasswordReset?: boolean;
 }
 
 export interface AuditoriaAcceso {
-  id?: number;
+  id?: string | number;
   userId?: number;
   username: string;
   sedeId?: number;
@@ -32,7 +39,8 @@ export interface AuditoriaAcceso {
 }
 
 export interface SesionActiva {
-  id: number;
+  id?: string | number;
+  idString?: string;
   userId?: number;
   username: string;
   tokenId?: string;
@@ -81,11 +89,19 @@ export class UsuarioService {
     return this.http.get<AuditoriaAcceso[]>(`${this.apiUrl}/auditoria?limit=${limit}`);
   }
 
+  getAuditoriaPaginada(page: number = 0, size: number = 15): Observable<PageResponse<AuditoriaAcceso>> {
+    return this.http.get<PageResponse<AuditoriaAcceso>>(`${this.apiUrl}/auditoria?page=${page}&size=${size}`);
+  }
+
   getSesionesActivas(): Observable<SesionActiva[]> {
     return this.http.get<SesionActiva[]>(`${this.apiUrl}/sesiones-activas`);
   }
 
-  revocarSesion(sesionId: number): Observable<any> {
+  getSesionesActivasPaginadas(page: number = 0, size: number = 10): Observable<PageResponse<SesionActiva>> {
+    return this.http.get<PageResponse<SesionActiva>>(`${this.apiUrl}/sesiones-activas?paginado=true&page=${page}&size=${size}`);
+  }
+
+  revocarSesion(sesionId: string | number): Observable<any> {
     return this.http.post(`${this.apiUrl}/sesiones-activas/${sesionId}/revocar`, {});
   }
 }

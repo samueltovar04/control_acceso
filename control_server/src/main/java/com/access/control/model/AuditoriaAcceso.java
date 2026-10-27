@@ -1,43 +1,29 @@
 package com.access.control.model;
 
-import com.access.control.model.generic.AbstractEntity;
-import jakarta.persistence.*;
+import io.quarkus.mongodb.panache.PanacheMongoEntity;
+import io.quarkus.mongodb.panache.common.MongoEntity;
 import java.util.Date;
 
-@Entity
-@Table(name = "auditoria_accesos")
-public class AuditoriaAcceso extends AbstractEntity {
+@MongoEntity(collection = "auditoria_accesos")
+public class AuditoriaAcceso extends PanacheMongoEntity {
 
-    @Column(name = "user_id")
     private Long userId;
-
-    @Column(name = "username", nullable = false)
     private String username;
-
-    @Column(name = "sede_id")
     private Long sedeId;
-
-    @Column(name = "sede_nombre")
     private String sedeNombre;
-
-    @Column(name = "ip_address")
     private String ipAddress;
-
-    @Column(name = "user_agent")
     private String userAgent;
-
-    @Column(name = "fecha_hora", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private Date fechaHora = new Date();
-
-    @Column(name = "accion", nullable = false)
     private String accion;
-
-    @Column(name = "estado", nullable = false)
     private String estado;
-
-    @Column(name = "detalles")
     private String detalles;
+
+    public AuditoriaAcceso() {
+    }
+
+    public String getIdString() {
+        return id != null ? id.toString() : null;
+    }
 
     public Long getUserId() {
         return userId;

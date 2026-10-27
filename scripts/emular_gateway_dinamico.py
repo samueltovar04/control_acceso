@@ -64,12 +64,23 @@ try:
             if st["bpm"] > 140 or st["bpm"] < 52 or st["spo2"] < 90 or st["temp"] > 38.3:
                 alerta = 1
 
+            num = int(''.join(filter(str.isdigit, id_p)) or '1')
+            piso_num = 2 if num % 2 == 0 else 1
+            gw_id = f"GW-ESP32-P{piso_num}"
+            gw_ip = f"192.168.1.1{piso_num}0"
+
             payload = {
                 "id_pulsera": id_p,
                 "bpm": st["bpm"],
                 "spo2": st["spo2"],
                 "temp": st["temp"],
-                "estado_alerta": alerta
+                "estado_alerta": alerta,
+                "gateway_id": gw_id,
+                "gateway_ip": gw_ip,
+                "piso_id": piso_num,
+                "piso_numero": f"Piso {piso_num}",
+                "sede_id": 1,
+                "sede_nombre": "Sede Principal"
             }
 
             try:
@@ -79,7 +90,7 @@ try:
                 status = f"ERR: {e}"
 
             alerta_str = "ALERTA" if alerta == 1 else "NORMAL"
-            print(f"[GATEWAY ESP-NOW] {id_p} -> BPM:{st['bpm']} | SpO2:{st['spo2']}% | Temp:{st['temp']}C | {alerta_str} -> {status}")
+            print(f"[{gw_id} Piso {piso_num}] {id_p} -> BPM:{st['bpm']} | SpO2:{st['spo2']}% | Temp:{st['temp']}C | {alerta_str} -> {status}")
 
         time.sleep(0.9)
 

@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { SidebarService } from '../../shared/services/sidebar.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -11,11 +13,26 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './left-menu.component.html',
   styleUrls: ['./left-menu.component.css']
 })
-export class LeftMenuComponent {
+export class LeftMenuComponent implements OnInit, OnDestroy {
   public sidebarService = inject(SidebarService);
   public authService = inject(AuthService);
   public router = inject(Router);
   menuPagosAbierto: boolean = true;
+  private navSub?: Subscription;
+
+  ngOnInit(): void {
+    this.navSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      if (window.innerWidth < 768) {
+        this.sidebarService.close();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.navSub?.unsubscribe();
+  }
 
   onNavClick(): void {
     if (window.innerWidth < 768) {

@@ -114,8 +114,31 @@ public class DispositivosController {
 
     @GET
     @Path("/no-registrados")
-    public Response descubrirDispositivosNoRegistrados() {
-        List<com.access.control.dto.DispositivoDescubiertoDTO> list = dispositivoService.descubrirDispositivosNoRegistrados();
+    public Response descubrirDispositivosNoRegistrados(
+            @QueryParam("subred") String subred,
+            @QueryParam("ips") String ips,
+            @HeaderParam("X-Forwarded-For") String xForwardedFor,
+            @HeaderParam("X-Real-IP") String xRealIp) {
+        
+        String subredFinal = subred;
+        if ((subredFinal == null || subredFinal.isBlank()) && xForwardedFor != null && !xForwardedFor.isBlank()) {
+            String clientIp = xForwardedFor.split(",")[0].trim();
+            if (clientIp.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$") && !clientIp.startsWith("127.") && !clientIp.startsWith("172.18.")) {
+                subredFinal = clientIp.substring(0, clientIp.lastIndexOf('.'));
+            }
+        }
+        if ((subredFinal == null || subredFinal.isBlank()) && xRealIp != null && !xRealIp.isBlank()) {
+            if (xRealIp.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$") && !xRealIp.startsWith("127.") && !xRealIp.startsWith("172.18.")) {
+                subredFinal = xRealIp.substring(0, xRealIp.lastIndexOf('.'));
+            }
+        }
+
+        List<String> listaIps = null;
+        if (ips != null && !ips.isBlank()) {
+            listaIps = java.util.Arrays.asList(ips.split(","));
+        }
+
+        List<com.access.control.dto.DispositivoDescubiertoDTO> list = dispositivoService.descubrirDispositivosNoRegistrados(subredFinal, listaIps);
         return Response.ok(list).build();
     }
 

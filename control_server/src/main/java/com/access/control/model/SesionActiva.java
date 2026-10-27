@@ -1,44 +1,29 @@
 package com.access.control.model;
 
-import com.access.control.model.generic.AbstractEntity;
-import jakarta.persistence.*;
+import io.quarkus.mongodb.panache.PanacheMongoEntity;
+import io.quarkus.mongodb.panache.common.MongoEntity;
 import java.util.Date;
 
-@Entity
-@Table(name = "sesiones_activas")
-public class SesionActiva extends AbstractEntity {
+@MongoEntity(collection = "sesiones_activas")
+public class SesionActiva extends PanacheMongoEntity {
 
-    @Column(name = "user_id")
     private Long userId;
-
-    @Column(name = "username", nullable = false)
     private String username;
-
-    @Column(name = "token_id", length = 512)
     private String tokenId;
-
-    @Column(name = "ip_address")
     private String ipAddress;
-
-    @Column(name = "user_agent")
     private String userAgent;
-
-    @Column(name = "sede_id")
     private Long sedeId;
-
-    @Column(name = "sede_nombre")
     private String sedeNombre;
-
-    @Column(name = "fecha_inicio", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private Date fechaInicio = new Date();
-
-    @Column(name = "ultima_actividad", nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     private Date ultimaActividad = new Date();
-
-    @Column(name = "activa", nullable = false)
     private Boolean activa = true;
+
+    public SesionActiva() {
+    }
+
+    public String getIdString() {
+        return id != null ? id.toString() : null;
+    }
 
     public Long getUserId() {
         return userId;

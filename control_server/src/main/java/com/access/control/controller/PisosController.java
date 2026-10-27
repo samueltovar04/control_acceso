@@ -17,7 +17,10 @@ public class PisosController {
     PisoService pisoService;
 
     @GET
-    public List<Piso> getAllPisos() {
+    public List<Piso> getAllPisos(@QueryParam("sedeId") Long sedeId) {
+        if (sedeId != null) {
+            return Piso.find("sede.id = ?1 and state = 1", sedeId).list();
+        }
         return pisoService.getListPisos();
     }
 

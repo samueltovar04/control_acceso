@@ -1,0 +1,226 @@
+/* ==========================================================================
+   LIVE METRICS & HARDWARE STATUS - WIDGETS
+   ========================================================================== */
+
+$bg-slate-900: #0f172a;
+$bg-slate-800: #1e293b;
+$border-color: rgba(255, 255, 255, 0.08);
+$cyan-neon: #06b6d4;
+
+.metrics-panel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  height: 100%;
+
+  .metric-widget {
+    background: $bg-slate-900;
+    border: 1px solid $border-color;
+    border-radius: 1.15rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.35);
+
+    .widget-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+
+      .widget-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #f8fafc;
+      }
+
+      .pill-badge {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        color: $cyan-neon;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+      }
+
+      .counter-badge, .firmware-tag {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid $border-color;
+        color: #94a3b8;
+        font-size: 0.68rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 9999px;
+      }
+    }
+  }
+
+  /* WIDGET 1: CAPACITY CIRCULAR PROGRESS */
+  .widget-capacity {
+    align-items: center;
+
+    .circular-chart-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin: 0.5rem 0;
+
+      .circular-svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+
+        .circle-bg {
+          fill: none;
+          stroke: rgba(255, 255, 255, 0.07);
+          stroke-width: 8;
+        }
+
+        .circle-progress {
+          fill: none;
+          stroke: $cyan-neon;
+          stroke-width: 8;
+          stroke-linecap: round;
+          stroke-dasharray: 283;
+          transition: stroke-dashoffset 1s ease-in-out;
+          filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6));
+        }
+      }
+
+      .chart-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        .percent-val {
+          font-size: 1.8rem;
+          font-weight: 900;
+          color: #ffffff;
+          line-height: 1;
+        }
+
+        .capacity-ratio {
+          font-size: 0.72rem;
+          color: #94a3b8;
+          font-family: monospace;
+          margin-top: 0.25rem;
+        }
+      }
+    }
+
+    .capacity-footer-tip {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+  }
+
+  /* WIDGET 2: STATS LIST */
+  .widget-stats {
+    .stats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: $bg-slate-800;
+        padding: 0.65rem 0.85rem;
+        border-radius: 0.65rem;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+
+        .stat-label {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          font-size: 0.8rem;
+          color: #94a3b8;
+
+          .text-cyan {
+            color: $cyan-neon;
+          }
+        }
+
+        .stat-value {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #f8fafc;
+          font-family: monospace;
+        }
+      }
+    }
+  }
+
+  /* WIDGET 3: HARDWARE CARDS */
+  .widget-hardware {
+    .hardware-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+
+      .hw-mini-card {
+        background: $bg-slate-800;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 0.65rem;
+        padding: 0.65rem 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .hw-info {
+          display: flex;
+          flex-direction: column;
+
+          .hw-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #f8fafc;
+          }
+
+          .hw-sub {
+            font-size: 0.68rem;
+            color: #64748b;
+          }
+        }
+
+        .led-indicator {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #475569;
+
+          &.led-on {
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: ledBlink 2.5s infinite;
+          }
+        }
+
+        .hw-status-tag {
+          font-size: 0.65rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          padding: 0.2rem 0.55rem;
+          border-radius: 4px;
+
+          &.tag-active {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes ledBlink {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px #10b981); }
+  50% { opacity: 0.5; filter: drop-shadow(0 0 1px #10b981); }
+}

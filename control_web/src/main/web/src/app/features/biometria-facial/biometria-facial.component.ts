@@ -86,10 +86,12 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarDispositivos();
     this.iniciarEscaneoContinuoQr();
+    this.cargarBitacoraReciente();
 
     this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
       this.filtroSedeId = id;
       this.filtrarDispositivosPorSede();
+      this.cargarBitacoraReciente();
     });
 
     this.bioDevSubs.push(
@@ -637,6 +639,40 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
     if (this.logEventos.length > 8) {
       this.logEventos.pop();
     }
+
+    // Persistir evento de paso en MongoDB
+    try {
+      this.http.post('/api/v1/acceso/bitacora', {
+        hora,
+        mensaje,
+        tipo,
+        concedido: tipo === 'success',
+        metodo: tipo === 'info' ? 'RELE_MANUAL' : 'BIOMETRICO',
+        sedeId: this.filtroSedeId || null,
+        dispositivoId: this.dispositivoSeleccionadoId ? Number(this.dispositivoSeleccionadoId) : null
+      }).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    } catch (e) {
+      // Ignorar fallas de red no criticas
+    }
+  }
+
+  private cargarBitacoraReciente(): void {
+    const sedeParam = this.filtroSedeId ? `&sedeId=${this.filtroSedeId}` : '';
+    this.http.get<any>(`/api/v1/acceso/bitacora?page=0&size=8${sedeParam}`).subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.length > 0) {
+          this.logEventos = res.data.map((b: any) => ({
+            hora: b.hora || new Date(b.fechaHora).toLocaleTimeString(),
+            mensaje: b.mensaje,
+            tipo: b.tipo || (b.concedido ? 'success' : 'danger')
+          }));
+        }
+      },
+      error: () => {}
+    });
   }
 
   public get triggerObservable(): Observable<void> {

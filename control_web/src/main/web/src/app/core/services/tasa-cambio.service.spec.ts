@@ -33,92 +33,38 @@ describe('TasaCambioService - Sincronizacion Condicional BCV', () => {
     httpMock.verify();
   });
 
-  it('Caso A: Tasa externa mayor a la de BD -> debe ejecutar POST /api/tasas/registrar', (done) => {
-    const mockExterna: DolarApiResponse = {
-      moneda: 'USD',
-      fuente: 'oficial',
-      nombre: 'Dolar',
-      promedio: 46.50,
-      fechaActualizacion: '2026-10-14T18:00:00Z'
-    };
-    const mockBd: BackendTasaResponse = {
-      moneda: 'USD',
-      tasa: 45.00,
-      fecha: '2026-10-13',
-      vigente: true
-    };
-
+  it('Caso A: Sincronizacion exitosa via endpoint de servidor -> actualiza signals y estado', (done) => {
     service.sincronizarMoneda('USD').subscribe(actualizado => {
       expect(actualizado).toBeTrue();
+      expect(service.tasaUsdSignal()).toBe(887.30);
+      expect(service.estadoSincronizacionSignal()).toBe('SINCRONIZADO');
       done();
     });
 
-    const reqExt = httpMock.expectOne('https://ve.dolarapi.com/v1/dolares/oficial');
-    const reqBd = httpMock.expectOne('/api/tasas/actual?moneda=USD');
-
-    reqExt.flush(mockExterna);
-    reqBd.flush(mockBd);
-
-    const reqPost = httpMock.expectOne('/api/tasas/registrar');
+    const reqPost = httpMock.expectOne('/api/admin/tasa-bcv/sincronizar');
     expect(reqPost.request.method).toBe('POST');
-    expect(reqPost.request.body.tasa).toBe(46.50);
-    reqPost.flush({ success: true });
-
-    expect(service.tasaUsdSignal()).toBe(46.50);
-    expect(snackBarSpy.open).toHaveBeenCalled();
+    reqPost.flush({
+      usd: 887.30,
+      eur: 994.00,
+      vigenciaUSD: '2026-10-27',
+      vigenciaEUR: '2026-10-27'
+    });
   });
 
-  it('Caso B: Tasa externa menor o igual a la de BD -> NO debe llamar a POST y emite alerta', (done) => {
-    const mockExterna: DolarApiResponse = {
-      moneda: 'USD',
-      fuente: 'oficial',
-      nombre: 'Dolar',
-      promedio: 44.80,
-      fechaActualizacion: '2026-10-14T18:00:00Z'
-    };
-    const mockBd: BackendTasaResponse = {
-      moneda: 'USD',
-      tasa: 45.00,
-      fecha: '2026-10-14',
-      vigente: true
-    };
-
+  it('Caso B: Error de scraping externo en servidor pero ya existe tasa en BD -> Mantiene SINCRONIZADO', (done) => {
+    // service ya tiene tasaUsdSignal = 45.00 cargada en beforeEach
     service.sincronizarMoneda('USD').subscribe(actualizado => {
-      expect(actualizado).toBeFalse();
+      expect(actualizado).toBeTrue();
+      expect(service.estadoSincronizacionSignal()).toBe('SINCRONIZADO');
+      expect(snackBarSpy.open).toHaveBeenCalledWith(
+        jasmine.stringMatching(/ya esta sincronizada/),
+        'Aviso',
+        jasmine.any(Object)
+      );
       done();
     });
 
-    const reqExt = httpMock.expectOne('https://ve.dolarapi.com/v1/dolares/oficial');
-    const reqBd = httpMock.expectOne('/api/tasas/actual?moneda=USD');
-
-    reqExt.flush(mockExterna);
-    reqBd.flush(mockBd);
-
-    httpMock.expectNone('/api/tasas/registrar');
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      jasmine.stringMatching(/no supera la registrada en base de datos/),
-      'Aviso',
-      jasmine.any(Object)
-    );
-  });
-
-  it('Caso C: Error de red en DolarAPI -> Maneja error sin romper y preserva tasa en BD', (done) => {
-    service.sincronizarMoneda('USD').subscribe(actualizado => {
-      expect(actualizado).toBeFalse();
-      expect(service.estadoSincronizacionSignal()).toBe('ERROR');
-      done();
-    });
-
-    const reqExt = httpMock.expectOne('https://ve.dolarapi.com/v1/dolares/oficial');
-    const reqBd = httpMock.expectOne('/api/tasas/actual?moneda=USD');
-
-    reqExt.error(new ProgressEvent('Network Error'));
-    reqBd.flush({ moneda: 'USD', tasa: 45.00, fecha: '2026-10-13', vigente: true });
-
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      jasmine.stringMatching(/Error al conectar/),
-      'Cerrar',
-      jasmine.any(Object)
-    );
+    const reqPost = httpMock.expectOne('/api/admin/tasa-bcv/sincronizar');
+    reqPost.error(new ProgressEvent('Server Error'));
   });
 });

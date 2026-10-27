@@ -49,10 +49,18 @@ export class UsuarioListComponent implements OnInit {
   public auditorias: AuditoriaAcceso[] = [];
   public cargandoAuditoria: boolean = false;
   public filtroAuditoria: string = '';
+  public pageAuditoria: number = 0;
+  public sizeAuditoria: number = 15;
+  public totalAuditoria: number = 0;
+  public totalPagesAuditoria: number = 0;
 
   // Sesiones Activas
   public sesiones: SesionActiva[] = [];
   public cargandoSesiones: boolean = false;
+  public pageSesiones: number = 0;
+  public sizeSesiones: number = 10;
+  public totalSesiones: number = 0;
+  public totalPagesSesiones: number = 0;
 
   constructor(
     private usuarioService: UsuarioService,
@@ -131,11 +139,20 @@ export class UsuarioListComponent implements OnInit {
     }
   }
 
-  cargarAuditoria(): void {
+  cargarAuditoria(page: number = 0): void {
+    this.pageAuditoria = page;
     this.cargandoAuditoria = true;
-    this.usuarioService.getAuditoria(150).subscribe({
+    this.usuarioService.getAuditoriaPaginada(this.pageAuditoria, this.sizeAuditoria).subscribe({
       next: (res) => {
-        this.auditorias = res || [];
+        if (res && res.data) {
+          this.auditorias = res.data;
+          this.totalAuditoria = res.total;
+          this.totalPagesAuditoria = res.totalPages;
+        } else {
+          this.auditorias = [];
+          this.totalAuditoria = 0;
+          this.totalPagesAuditoria = 0;
+        }
         this.cargandoAuditoria = false;
       },
       error: () => {
@@ -145,9 +162,17 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  cargarSesiones(): void {
+  cambiarPaginaAuditoria(delta: number): void {
+    const nuevaPag = this.pageAuditoria + delta;
+    if (nuevaPag >= 0 && nuevaPag < this.totalPagesAuditoria) {
+      this.cargarAuditoria(nuevaPag);
+    }
+  }
+
+  cargarSesiones(page: number = 0): void {
+    this.pageSesiones = page;
     this.cargandoSesiones = true;
-    this.usuarioService.getSesionesActivas().subscribe({
+    this.usuarioService.getSesionesActivasPaginadas(this.pageSesiones, this.sizeSesiones).subscribe({
       next: (res) => {
         const current = this.authService.currentUserValue;
         const esSuperAdmin = current && (
@@ -156,11 +181,13 @@ export class UsuarioListComponent implements OnInit {
           (current.roles && (current.roles.includes('ROLE_SUPER_ADMIN') || current.roles.includes('SUPER_ADMIN')))
         );
 
-        let list = res || [];
+        let list = (res && res.data) ? res.data : [];
         if (!esSuperAdmin) {
           list = list.filter(s => s && s.username && s.username.toLowerCase() !== 'superadmin');
         }
         this.sesiones = list;
+        this.totalSesiones = res ? res.total : 0;
+        this.totalPagesSesiones = res ? res.totalPages : 0;
         this.cargandoSesiones = false;
       },
       error: () => {
@@ -168,6 +195,13 @@ export class UsuarioListComponent implements OnInit {
         this.mensajeError = 'Error al cargar sesiones activas.';
       }
     });
+  }
+
+  cambiarPaginaSesiones(delta: number): void {
+    const nuevaPag = this.pageSesiones + delta;
+    if (nuevaPag >= 0 && nuevaPag < this.totalPagesSesiones) {
+      this.cargarSesiones(nuevaPag);
+    }
   }
 
   abrirCrearUsuario(): void {
@@ -428,10 +462,13 @@ export class UsuarioListComponent implements OnInit {
   }
 
   revocarSesion(s: SesionActiva): void {
-    this.usuarioService.revocarSesion(s.id).subscribe({
+    const sesionId = s.idString || s.id;
+    if (!sesionId) return;
+    this.usuarioService.revocarSesion(sesionId).subscribe({
       next: () => {
         s.activa = false;
-        this.sesiones = this.sesiones.filter(item => item.id !== s.id);
+        this.sesiones = this.sesiones.filter(item => (item.idString || item.id) !== sesionId);
+        this.totalSesiones = Math.max(0, this.totalSesiones - 1);
         this.mensajeExito = `Sesion de ${s.username} revocada y cerrada con exito.`;
       },
       error: () => {

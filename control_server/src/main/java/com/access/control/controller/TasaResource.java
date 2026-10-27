@@ -23,6 +23,16 @@ public class TasaResource {
     @Inject
     TasaCambioRepository tasaRepo;
 
+    @Inject
+    com.access.control.schedule.BcvRateScraperWorker bcvWorker;
+
+    @POST
+    @Path("/sincronizar")
+    public Response sincronizarTasas() {
+        Map<String, Object> res = bcvWorker.sincronizarTasasOficiales();
+        return Response.ok(res).build();
+    }
+
     @GET
     @Path("/actual")
     public Response getTasaActual(@QueryParam("moneda") @DefaultValue("USD") String moneda) {

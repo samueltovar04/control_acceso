@@ -27,6 +27,9 @@ public class GatewayTelemetriaResource {
     @Inject
     com.access.control.component.VitalSignsWebSocketEndpoint accessVitalWs;
 
+    @Inject
+    com.access.control.repository.DispositivoRepository dispositivoRepository;
+
     @POST
     @NonBlocking
     public Uni<Response> recibirLecturaGateway(TelemetriaLectura lectura) {
@@ -35,6 +38,24 @@ public class GatewayTelemetriaResource {
         }
 
         lectura.timestamp = Instant.now();
+
+        // Enriquecer datos de Gateway, Piso y Sede si estan presentes o via lookup de Dispositivo
+        if (lectura.gateway_id == null && lectura.gateway_ip != null) {
+            try {
+                com.access.control.model.Dispositivo d = dispositivoRepository.findByIp(lectura.gateway_ip);
+                if (d != null) {
+                    lectura.gateway_id = String.valueOf(d.getId());
+                    if (d.getPiso() != null) {
+                        lectura.piso_id = d.getPiso().getId();
+                        lectura.piso_numero = d.getPiso().getPiso();
+                        if (d.getPiso().getSede() != null) {
+                            lectura.sede_id = d.getPiso().getSede().getId();
+                            lectura.sede_nombre = d.getPiso().getSede().getSede();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
 
         // Pipeline asincrono no bloqueante: persistir en MongoDB -> tras confirmacion, despachar a WebSocket
         return Uni.createFrom().item(() -> {
@@ -45,13 +66,20 @@ public class GatewayTelemetriaResource {
             webSocketEndpoint.broadcast(inserted);
             try {
                 String legacyJson = String.format(
-                    "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"timestamp\":\"%s\"}",
+                    java.util.Locale.US,
+                    "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"gateway_id\":%s,\"gateway_ip\":%s,\"piso_id\":%s,\"piso_numero\":%s,\"sede_id\":%s,\"sede_nombre\":%s,\"timestamp\":\"%s\"}",
                     inserted.id_pulsera,
                     inserted.bpm,
                     inserted.spo2,
                     inserted.temp,
                     inserted.estado_alerta == 1,
                     inserted.estado_alerta,
+                    inserted.gateway_id != null ? ("\"" + inserted.gateway_id + "\"") : "null",
+                    inserted.gateway_ip != null ? ("\"" + inserted.gateway_ip + "\"") : "null",
+                    inserted.piso_id != null ? String.valueOf(inserted.piso_id) : "null",
+                    inserted.piso_numero != null ? ("\"" + inserted.piso_numero + "\"") : "null",
+                    inserted.sede_id != null ? String.valueOf(inserted.sede_id) : "null",
+                    inserted.sede_nombre != null ? ("\"" + inserted.sede_nombre + "\"") : "null",
                     inserted.timestamp.toString()
                 );
                 accessVitalWs.broadcast(legacyJson);

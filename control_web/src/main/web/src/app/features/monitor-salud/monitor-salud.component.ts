@@ -9,6 +9,8 @@ import { Subscription } from 'rxjs';
 
 import { SedeService, Sede } from '../../shared/sede/sede.service';
 import { SedeStateService } from '../../shared/sede/sede-state.service';
+import { PisoService } from '../../shared/piso/piso.service';
+import { DispositivoService } from '../../shared/dispositivo/dispositivo.service';
 
 export interface PulseraCard {
   idPulsera: string;
@@ -22,6 +24,12 @@ export interface PulseraCard {
   ultimoTimestamp: string;
   online: boolean;
   historialLocal: number[];
+  gatewayId?: string;
+  gatewayIp?: string;
+  pisoId?: number;
+  pisoNumero?: string;
+  sedeId?: number;
+  sedeNombre?: string;
 }
 
 export interface TelemetriaMongoRow {
@@ -34,12 +42,19 @@ export interface TelemetriaMongoRow {
   temp: number;
   estado_alerta: number;
   timestamp: string;
+  gateway_id?: string;
+  gateway_ip?: string;
+  piso_id?: number;
+  piso_numero?: string;
+  sede_id?: number;
+  sede_nombre?: string;
 }
 
 @Component({
   selector: 'app-monitor-salud',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  providers: [PisoService, DispositivoService],
   templateUrl: './monitor-salud.component.html',
   styleUrls: ['./monitor-salud.component.css']
 })
@@ -49,10 +64,14 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   clientesMap: Map<string, Cliente> = new Map(); // Pulsera (upper) -> Cliente
   clientesIdMap: Map<number, Cliente> = new Map(); // ClienteId -> Cliente
 
-  // Gestion de Sedes
+  // Gestion de Sedes, Pisos y Gateways
   sedes: Sede[] = [];
   filtroSedeId: number | null = null;
   sedeBloqueada: boolean = false;
+  pisos: any[] = [];
+  filtroPisoId: number | null = null;
+  gateways: any[] = [];
+  filtroGateway: string = '';
 
   // Tarjetas vivas por pulsera (Unica vez por cada id_pulsera, actualizadas dinamicamente)
   pulserasMap: Map<string, PulseraCard> = new Map();
@@ -96,23 +115,30 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     private wsService: WebSocketService,
     private clienteService: ClienteService,
     private sedeService: SedeService,
-    private sedeStateService: SedeStateService
+    private sedeStateService: SedeStateService,
+    private pisoService: PisoService,
+    private dispositivoService: DispositivoService
   ) {}
 
   ngOnInit(): void {
     this.iniciarGestionSedes();
+    this.cargarGateways();
     this.cargarClientes();
     this.iniciarWebSocket();
   }
 
   iniciarGestionSedes(): void {
     this.sedeService.getListSedes().subscribe({
-      next: (data) => (this.sedes = data || []),
+      next: (data) => {
+        this.sedes = data || [];
+        this.cargarPisos();
+      },
       error: (err) => console.warn('Error cargando sedes en monitor-salud:', err)
     });
 
     this.sedeSub = this.sedeStateService.sedeSeleccionadaId$.subscribe(id => {
       this.filtroSedeId = id;
+      this.cargarPisos();
       this.aplicarFiltros();
     });
 
@@ -121,10 +147,49 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     });
   }
 
+  cargarGateways(): void {
+    this.dispositivoService.getDispositivosList().subscribe({
+      next: (data: any[]) => {
+        const todos = data || [];
+        this.gateways = todos.filter(d => {
+          const t = (d.tipoDispositivo || d.tipo || '').toLowerCase();
+          const desc = (d.descripcion || d.nombre || '').toLowerCase();
+          return t.includes('gateway') || t.includes('esp32') || desc.includes('gateway') || desc.includes('esp32') || desc.includes('vnppb');
+        });
+      },
+      error: (err) => console.warn('Error cargando gateways en monitor-salud:', err)
+    });
+  }
+
+  cargarPisos(): void {
+    this.pisoService.getPisosList().subscribe({
+      next: (data: any[]) => {
+        const todos = data || [];
+        if (this.filtroSedeId !== null) {
+          this.pisos = todos.filter(p => {
+            const sId = p.sede?.id || p.sede_id || p.sedeId;
+            return sId !== undefined && sId !== null && Number(sId) === Number(this.filtroSedeId);
+          });
+        } else {
+          this.pisos = todos;
+        }
+      },
+      error: (err) => console.warn('Error cargando pisos en monitor-salud:', err)
+    });
+  }
+
   onSedeChange(val: any): void {
     const id = val !== null && val !== undefined && val !== '' ? Number(val) : null;
     this.filtroSedeId = id;
+    this.filtroPisoId = null;
     this.sedeStateService.seleccionarSede(id);
+    this.cargarPisos();
+    this.aplicarFiltros();
+  }
+
+  onPisoChange(val: any): void {
+    const id = val !== null && val !== undefined && val !== '' ? Number(val) : null;
+    this.filtroPisoId = id;
     this.aplicarFiltros();
   }
 
@@ -217,7 +282,13 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       spo2: Number(item.spo2 || 0),
       temp: Number(item.temp || item.temperatura || 0),
       estado_alerta: Number(item.estado_alerta || item.alerta || 0),
-      timestamp: item.timestamp || new Date().toISOString()
+      timestamp: item.timestamp || new Date().toISOString(),
+      gateway_id: item.gateway_id,
+      gateway_ip: item.gateway_ip,
+      piso_id: item.piso_id,
+      piso_numero: item.piso_numero,
+      sede_id: item.sede_id,
+      sede_nombre: item.sede_nombre
     };
   }
 
@@ -241,6 +312,13 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     const temp = Number(data.temp !== undefined ? data.temp : (data.temperatura !== undefined ? data.temperatura : (data.temperaturaCorporal || 0)));
     const alerta = Number(data.estado_alerta !== undefined ? data.estado_alerta : (data.alerta ? 1 : 0));
     const timestamp = data.timestamp || new Date().toISOString();
+
+    const gwId = data.gateway_id;
+    const gwIp = data.gateway_ip;
+    const pisoId = data.piso_id;
+    const pisoNum = data.piso_numero;
+    const sId = data.sede_id;
+    const sNom = data.sede_nombre;
 
     // Asociar cliente (por codigoInsignia o por cliente_id enviado en telemetria)
     let clienteAsoc = this.clientesMap.get(idPulsera);
@@ -267,7 +345,13 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
         alerta,
         ultimoTimestamp: timestamp,
         online: true,
-        historialLocal: [bpm]
+        historialLocal: [bpm],
+        gatewayId: gwId,
+        gatewayIp: gwIp,
+        pisoId: pisoId ? Number(pisoId) : undefined,
+        pisoNumero: pisoNum,
+        sedeId: sId ? Number(sId) : undefined,
+        sedeNombre: sNom
       };
       this.pulserasMap.set(idPulsera, card);
     } else {
@@ -280,6 +364,12 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       card.vinculada = vinculada;
       card.ultimoTimestamp = timestamp;
       card.online = true;
+      if (gwId) card.gatewayId = gwId;
+      if (gwIp) card.gatewayIp = gwIp;
+      if (pisoId) card.pisoId = Number(pisoId);
+      if (pisoNum) card.pisoNumero = pisoNum;
+      if (sId) card.sedeId = Number(sId);
+      if (sNom) card.sedeNombre = sNom;
       card.historialLocal.push(bpm);
       if (card.historialLocal.length > 10) {
         card.historialLocal.shift();
@@ -298,7 +388,13 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       spo2,
       temp,
       estado_alerta: alerta,
-      timestamp
+      timestamp,
+      gateway_id: gwId,
+      gateway_ip: gwIp,
+      piso_id: pisoId ? Number(pisoId) : undefined,
+      piso_numero: pisoNum,
+      sede_id: sId ? Number(sId) : undefined,
+      sede_nombre: sNom
     };
 
     this.historialMongo.unshift(filaNueva);
@@ -307,7 +403,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
 
   private actualizarListaTarjetas(): void {
     const list = Array.from(this.pulserasMap.values());
-    // Filtrar tarjetas segun filtros activos y sede
+    // Filtrar tarjetas segun filtros activos, sede, piso y gateway
     this.pulserasList = list.filter(card => {
       const matchP = !this.filtroPulsera || card.idPulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
       const matchC = !this.filtroCliente || card.clienteNombre.toLowerCase().includes(this.filtroCliente.toLowerCase());
@@ -315,11 +411,24 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       let matchSede = true;
       if (this.filtroSedeId !== null) {
         const cliente = card.clienteId ? this.clientesIdMap.get(card.clienteId) : this.clientesMap.get(card.idPulsera.toUpperCase());
-        const sId = cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null;
+        const sId = card.sedeId || (cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null);
         matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
       }
 
-      return matchP && matchC && matchSede;
+      let matchPiso = true;
+      if (this.filtroPisoId !== null) {
+        matchPiso = card.pisoId !== undefined && card.pisoId !== null && Number(card.pisoId) === Number(this.filtroPisoId);
+      }
+
+      let matchGw = true;
+      if (this.filtroGateway) {
+        const gwTerm = this.filtroGateway.toLowerCase();
+        const cGwId = (card.gatewayId || '').toLowerCase();
+        const cGwIp = (card.gatewayIp || '').toLowerCase();
+        matchGw = cGwId.includes(gwTerm) || cGwIp.includes(gwTerm);
+      }
+
+      return matchP && matchC && matchSede && matchPiso && matchGw;
     });
 
     this.recalcularMetricasGlobales();
@@ -384,11 +493,24 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       let matchSede = true;
       if (this.filtroSedeId !== null) {
         const cliente = h.cliente_id ? this.clientesIdMap.get(h.cliente_id) : this.clientesMap.get(h.id_pulsera.toUpperCase());
-        const sId = cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null;
+        const sId = h.sede_id || (cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null);
         matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
       }
 
-      return matchPulsera && matchCliente && matchFecha && matchSede;
+      let matchPiso = true;
+      if (this.filtroPisoId !== null) {
+        matchPiso = h.piso_id !== undefined && h.piso_id !== null && Number(h.piso_id) === Number(this.filtroPisoId);
+      }
+
+      let matchGw = true;
+      if (this.filtroGateway) {
+        const gwTerm = this.filtroGateway.toLowerCase();
+        const hGwId = (h.gateway_id || '').toLowerCase();
+        const hGwIp = (h.gateway_ip || '').toLowerCase();
+        matchGw = hGwId.includes(gwTerm) || hGwIp.includes(gwTerm);
+      }
+
+      return matchPulsera && matchCliente && matchFecha && matchSede && matchPiso && matchGw;
     });
 
     this.paginaHistorial = 1;
@@ -398,6 +520,8 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     this.filtroPulsera = '';
     this.filtroCliente = '';
     this.filtroFecha = '';
+    this.filtroPisoId = null;
+    this.filtroGateway = '';
     this.aplicarFiltros();
   }
 

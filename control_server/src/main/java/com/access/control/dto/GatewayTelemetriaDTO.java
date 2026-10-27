@@ -8,6 +8,12 @@ public class GatewayTelemetriaDTO {
     private Float spo2;
     private Float temperatura;
     private Integer estado_alerta;
+    private String gateway_id;
+    private String gateway_ip;
+    private Long piso_id;
+    private String piso_numero;
+    private Long sede_id;
+    private String sede_nombre;
 
     public GatewayTelemetriaDTO() {
     }
@@ -58,5 +64,53 @@ public class GatewayTelemetriaDTO {
 
     public void setEstado_alerta(Integer estado_alerta) {
         this.estado_alerta = estado_alerta;
+    }
+
+    public String getGateway_id() {
+        return gateway_id;
+    }
+
+    public void setGateway_id(String gateway_id) {
+        this.gateway_id = gateway_id;
+    }
+
+    public String getGateway_ip() {
+        return gateway_ip;
+    }
+
+    public void setGateway_ip(String gateway_ip) {
+        this.gateway_ip = gateway_ip;
+    }
+
+    public Long getPiso_id() {
+        return piso_id;
+    }
+
+    public void setPiso_id(Long piso_id) {
+        this.piso_id = piso_id;
+    }
+
+    public String getPiso_numero() {
+        return piso_numero;
+    }
+
+    public void setPiso_numero(String piso_numero) {
+        this.piso_numero = piso_numero;
+    }
+
+    public Long getSede_id() {
+        return sede_id;
+    }
+
+    public void setSede_id(Long sede_id) {
+        this.sede_id = sede_id;
+    }
+
+    public String getSede_nombre() {
+        return sede_nombre;
+    }
+
+    public void setSede_nombre(String sede_nombre) {
+        this.sede_nombre = sede_nombre;
     }
 }

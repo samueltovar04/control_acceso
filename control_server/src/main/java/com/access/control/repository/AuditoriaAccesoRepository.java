@@ -1,23 +1,35 @@
 package com.access.control.repository;
 
+import com.access.control.dto.PageResponseDTO;
 import com.access.control.model.AuditoriaAcceso;
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.mongodb.panache.PanacheMongoRepository;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
 @ApplicationScoped
-public class AuditoriaAccesoRepository implements PanacheRepository<AuditoriaAcceso> {
+public class AuditoriaAccesoRepository implements PanacheMongoRepository<AuditoriaAcceso> {
 
     public List<AuditoriaAcceso> findRecientes(int limit) {
-        return find("order by fechaHora desc").page(0, limit).list();
+        int max = limit > 0 ? limit : 100;
+        return findAll(Sort.descending("fechaHora")).page(0, max).list();
+    }
+
+    public PageResponseDTO<AuditoriaAcceso> findPaginado(int page, int size) {
+        int pageIndex = Math.max(page, 0);
+        int pageSize = size > 0 ? size : 15;
+        long total = count();
+        List<AuditoriaAcceso> list = findAll(Sort.descending("fechaHora"))
+                .page(pageIndex, pageSize)
+                .list();
+        return new PageResponseDTO<>(list, total, pageIndex, pageSize);
     }
 
     public List<AuditoriaAcceso> findByUsername(String username) {
-        return list("username = ?1 order by fechaHora desc", username);
+        return find("username", Sort.descending("fechaHora"), username).list();
     }
 
     public List<AuditoriaAcceso> findBySede(Long sedeId) {
-        return list("sedeId = ?1 order by fechaHora desc", sedeId);
+        return find("sedeId", Sort.descending("fechaHora"), sedeId).list();
     }
 }

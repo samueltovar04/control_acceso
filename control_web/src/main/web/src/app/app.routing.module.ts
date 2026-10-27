@@ -102,6 +102,10 @@ const routes: Routes = [
         path: 'bancos', 
         loadComponent: () => import('./features/bancos/bancos-admin.component').then(m => m.BancosAdminComponent) 
       },
+      { 
+        path: 'gym-dashboard', 
+        loadComponent: () => import('./features/gym-access-dashboard/gym-access-dashboard.component').then(m => m.GymAccessDashboardComponent) 
+      },
       {
         path: 'usuarios',
         loadComponent: () => import('./modulos/usuarios/usuario-list/usuario-list.component').then(m => m.UsuarioListComponent),

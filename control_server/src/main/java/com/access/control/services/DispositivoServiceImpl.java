@@ -544,6 +544,7 @@ public class DispositivoServiceImpl implements DispositivoService {
 
     private String inferirTipoPorDefecto(Dispositivo d) {
         String desc = d.getDescripcion() != null ? d.getDescripcion().toLowerCase() : "";
+        if (desc.contains("gateway") || desc.contains("esp32") || desc.contains("vnppb")) return "Gateway ESP32 VNPPB";
         if (desc.contains("facial") || desc.contains("puerta")) return "Terminal Biometrica Facial";
         if (desc.contains("lector") || desc.contains("huella") || desc.contains("zkteco")) return "Lector ZKTeco";
         if (desc.contains("celular") || desc.contains("movil")) return "Terminal Movil";
@@ -586,6 +587,11 @@ public class DispositivoServiceImpl implements DispositivoService {
 
     @Override
     public List<DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados() {
+        return descubrirDispositivosNoRegistrados(null, null);
+    }
+
+    @Override
+    public List<DispositivoDescubiertoDTO> descubrirDispositivosNoRegistrados(String subredBase, List<String> ipsEspecificas) {
         List<Dispositivo> existentes = dispositivoRepository.listAll();
         java.util.Set<String> ipsRegistradas = new java.util.HashSet<>();
         for (Dispositivo d : existentes) {
@@ -595,11 +601,41 @@ public class DispositivoServiceImpl implements DispositivoService {
         }
 
         java.util.Set<String> candidatosIps = new java.util.LinkedHashSet<>();
+
+        // Si el cliente especifico IPs detectadas desde el navegador
+        if (ipsEspecificas != null) {
+            for (String ip : ipsEspecificas) {
+                if (ip != null && ip.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")) {
+                    candidatosIps.add(ip.trim());
+                }
+            }
+        }
+
+        // Si se paso una subred base del navegador (ej. "192.168.1")
+        if (subredBase != null && subredBase.matches("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")) {
+            for (int i = 1; i <= 254; i++) {
+                candidatosIps.add(subredBase + "." + i);
+            }
+        }
+
+        // Agregar tambien cache ARP si existe
         extraerIpsDeArchivo(new File("/host_tmp/host_arp.txt"), candidatosIps);
         extraerIpsDeArchivo(new File("/tmp/host_arp.txt"), candidatosIps);
         extraerIpsDeArchivo(new File("/proc/net/arp"), candidatosIps);
 
-        List<DispositivoDescubiertoDTO> descubiertos = new ArrayList<>();
+        // Si no habia nada especificado y ARP estaba vacio, usar 192.168.1.X por defecto
+        if (candidatosIps.isEmpty()) {
+            for (int i = 1; i <= 254; i++) {
+                candidatosIps.add("192.168.1." + i);
+            }
+        }
+
+        List<DispositivoDescubiertoDTO> descubiertos = java.util.Collections.synchronizedList(new ArrayList<>());
+        int[] testPorts = { 80, 443, 22, 4370, 8000, 3001, 8080, 554, 8085 };
+
+        // Escaneo multihilo rapido (50 hilos en paralelo)
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(40);
+        java.util.List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
 
         for (String ip : candidatosIps) {
             if (ip.endsWith(".255") || ip.endsWith(".0") || ip.startsWith("127.") || ip.startsWith("224.") || ip.startsWith("172.18.") || ip.equals("255.255.255.255")) {
@@ -609,106 +645,124 @@ public class DispositivoServiceImpl implements DispositivoService {
                 continue;
             }
 
-            long start = System.currentTimeMillis();
-            String mac = resolverMac(ip);
-            boolean online = (mac != null && !mac.isEmpty() && !mac.equals("00:00:00:00:00:00"));
+            futures.add(pool.submit(() -> {
+                long start = System.currentTimeMillis();
+                String mac = resolverMac(ip);
+                boolean online = (mac != null && !mac.isEmpty() && !mac.equals("00:00:00:00:00:00"));
 
-            int[] testPorts = { 80, 443, 22, 4370, 8000, 3001, 8080 };
-            for (int p : testPorts) {
-                if (testPuerto(ip, p, 200)) {
-                    online = true;
-                    break;
+                List<Integer> puertosEncontrados = new ArrayList<>();
+                for (int p : testPorts) {
+                    if (testPuerto(ip, p, 150)) {
+                        online = true;
+                        puertosEncontrados.add(p);
+                    }
                 }
-            }
-            if (!online) {
+
+                if (!online) {
+                    try {
+                        InetAddress addr = InetAddress.getByName(ip);
+                        online = addr.isReachable(250);
+                    } catch (Exception ignored) {}
+                }
+
+                if (!online) {
+                    return;
+                }
+
+                long latencia = System.currentTimeMillis() - start;
+                DispositivoDescubiertoDTO dto = new DispositivoDescubiertoDTO();
+                dto.setIp(ip);
+                dto.setOnline(true);
+                dto.setLatenciaMs(latencia > 0 ? latencia : 5);
+                dto.setMac(mac != null ? mac : "00:00:00:00:00:00");
+                dto.setFabricante(resolverFabricante(dto.getMac()));
+
+                String hostname = ip;
                 try {
                     InetAddress addr = InetAddress.getByName(ip);
-                    online = addr.isReachable(350);
-                } catch (Exception ignored) {
-                }
-            }
+                    String h = addr.getCanonicalHostName();
+                    if (h != null && !h.isEmpty() && !h.equals(ip)) {
+                        hostname = h;
+                    }
+                } catch (Exception ignored) {}
+                dto.setHostname(hostname);
+                dto.setPuertosAbiertos(puertosEncontrados);
 
-            if (!online) {
-                continue;
-            }
+                int puertoSugerido = 3001;
+                String tipo = "Torniquete con Relay TCP";
+                String so = "RTOS";
 
-            long latencia = System.currentTimeMillis() - start;
-            DispositivoDescubiertoDTO dto = new DispositivoDescubiertoDTO();
-            dto.setIp(ip);
-            dto.setOnline(true);
-            dto.setLatenciaMs(latencia > 0 ? latencia : 5);
-            dto.setMac(mac != null ? mac : "00:00:00:00:00:00");
-            dto.setFabricante(resolverFabricante(dto.getMac()));
-
-            String hostname = ip;
-            try {
-                InetAddress addr = InetAddress.getByName(ip);
-                String h = addr.getCanonicalHostName();
-                if (h != null && !h.isEmpty() && !h.equals(ip)) {
-                    hostname = h;
-                }
-            } catch (Exception ignored) {
-            }
-            dto.setHostname(hostname);
-
-            List<Integer> puertos = new ArrayList<>();
-            for (int p : testPorts) {
-                if (testPuerto(ip, p, 200)) {
-                    puertos.add(p);
-                }
-            }
-            dto.setPuertosAbiertos(puertos);
-
-            int puertoSugerido = 3001;
-            String tipo = "Torniquete con Relay TCP";
-            String so = "RTOS";
-
-            if (puertos.contains(4370)) {
-                tipo = "Lector ZKTeco";
-                so = "Linux Embedded (ZKOS)";
-                puertoSugerido = 4370;
-            } else if (puertos.contains(8000) || puertos.contains(554)) {
-                tipo = "Terminal Biometrica Facial";
-                so = "Linux Embedded (HikOS)";
-                puertoSugerido = 8000;
-            } else if (puertos.contains(3001)) {
-                tipo = "Torniquete con Relay TCP";
-                so = "RTOS";
-                puertoSugerido = 3001;
-            } else if (puertos.contains(8080) || puertos.contains(80) || puertos.contains(22)) {
-                tipo = "Servidor de Control";
-                so = "macOS/Linux 64-bit";
-                puertoSugerido = puertos.contains(8080) ? 8080 : (puertos.contains(80) ? 80 : 22);
-            } else {
-                String fab = dto.getFabricante().toLowerCase();
-                if (fab.contains("apple") || fab.contains("aleatoria")) {
-                    tipo = "Terminal Movil";
-                    so = "Android/iOS";
+                if (puertosEncontrados.contains(4370)) {
+                    tipo = "Lector ZKTeco";
+                    so = "Linux Embedded (ZKOS)";
+                    puertoSugerido = 4370;
+                } else if (puertosEncontrados.contains(8000) || puertosEncontrados.contains(554)) {
+                    tipo = "Terminal Biometrica Facial";
+                    so = "Linux Embedded (HikOS)";
+                    puertoSugerido = 8000;
+                } else if (puertosEncontrados.contains(3001)) {
+                    tipo = "Torniquete con Relay TCP";
+                    so = "RTOS";
                     puertoSugerido = 3001;
-                } else if (fab.contains("tp-link")) {
-                    tipo = "Dispositivo de Red / Router";
-                    so = "Linux Embedded";
-                    puertoSugerido = 80;
+                } else if (puertosEncontrados.contains(8080) || puertosEncontrados.contains(80) || puertosEncontrados.contains(22)) {
+                    tipo = "Servidor de Control";
+                    so = "macOS/Linux 64-bit";
+                    puertoSugerido = puertosEncontrados.contains(8080) ? 8080 : (puertosEncontrados.contains(80) ? 80 : 22);
                 } else {
-                    tipo = "Dispositivo de Red Local";
-                    so = "Linux Embedded";
-                    puertoSugerido = 3001;
+                    String fab = dto.getFabricante().toLowerCase();
+                    if (fab.contains("apple") || fab.contains("aleatoria")) {
+                        tipo = "Terminal Movil";
+                        so = "Android/iOS";
+                        puertoSugerido = 3001;
+                    } else if (fab.contains("tp-link")) {
+                        tipo = "Dispositivo de Red / Router";
+                        so = "Linux Embedded";
+                        puertoSugerido = 80;
+                    } else if (fab.contains("espressif")) {
+                        tipo = "Gateway ESP32 VNPPB";
+                        so = "FreeRTOS";
+                        puertoSugerido = 80;
+                    } else {
+                        tipo = "Dispositivo de Red Local";
+                        so = "Linux Embedded";
+                        puertoSugerido = 3001;
+                    }
                 }
-            }
 
-            dto.setTipoDispositivo(tipo);
-            dto.setSistemaOperativo(so);
-            dto.setPort(puertoSugerido);
-            dto.setDescripcion(tipo + " - " + ip);
-            dto.setPisoId(1L);
-            dto.setEntradaSalida(0);
-            dto.setSeleccionado(true);
+                dto.setTipoDispositivo(tipo);
+                dto.setSistemaOperativo(so);
+                dto.setPort(puertoSugerido);
+                dto.setDescripcion(tipo + " - " + ip);
+                dto.setPisoId(1L);
+                dto.setEntradaSalida(0);
+                dto.setSeleccionado(true);
 
-            descubiertos.add(dto);
+                descubiertos.add(dto);
+            }));
         }
+
+        for (java.util.concurrent.Future<?> f : futures) {
+            try {
+                f.get(3, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (Exception ignored) {}
+        }
+        pool.shutdown();
+
+        // Ordenar por IP ascendente
+        descubiertos.sort((a, b) -> {
+            try {
+                int lastA = Integer.parseInt(a.getIp().substring(a.getIp().lastIndexOf('.') + 1));
+                int lastB = Integer.parseInt(b.getIp().substring(b.getIp().lastIndexOf('.') + 1));
+                return Integer.compare(lastA, lastB);
+            } catch (Exception e) {
+                return a.getIp().compareTo(b.getIp());
+            }
+        });
 
         return descubiertos;
     }
+
+
 
     private void extraerIpsDeArchivo(File f, java.util.Set<String> set) {
         if (!f.exists() || !f.canRead()) return;

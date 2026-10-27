@@ -46,8 +46,19 @@ constructor(private http: HttpClient) { }
     return this.http.get(`${this.baseUrl}/${id}/escanear`);
   }
 
-  descubrirNoRegistrados(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/no-registrados`);
+  descubrirNoRegistrados(subred?: string, ips?: string[]): Observable<any> {
+    let url = `${this.baseUrl}/no-registrados`;
+    const params: string[] = [];
+    if (subred && subred.trim()) {
+      params.push(`subred=${encodeURIComponent(subred.trim())}`);
+    }
+    if (ips && ips.length > 0) {
+      params.push(`ips=${encodeURIComponent(ips.join(','))}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get(url);
   }
 
   registrarLote(dispositivos: any[]): Observable<any> {

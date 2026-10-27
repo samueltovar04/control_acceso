@@ -82,6 +82,9 @@ public class SignosVitalesResource {
         return telemetriaMongoRepo.findAlertasActivas();
     }
 
+    @Inject
+    com.access.control.repository.DispositivoRepository dispositivoRepository;
+
     @POST
     @Path("/gateway")
     public io.smallrye.mutiny.Uni<Response> registrarGatewayTelemetria(com.access.control.dto.GatewayTelemetriaDTO dto) {
@@ -99,8 +102,34 @@ public class SignosVitalesResource {
             alerta = 1;
         }
 
+        String gwId = dto.getGateway_id();
+        String gwIp = dto.getGateway_ip();
+        Long pisoId = dto.getPiso_id();
+        String pisoNum = dto.getPiso_numero();
+        Long sedeId = dto.getSede_id();
+        String sedeNom = dto.getSede_nombre();
+
+        if (gwIp != null && (gwId == null || pisoId == null || sedeId == null)) {
+            try {
+                com.access.control.model.Dispositivo d = dispositivoRepository.findByIp(gwIp);
+                if (d != null) {
+                    if (gwId == null) gwId = String.valueOf(d.getId());
+                    if (d.getPiso() != null) {
+                        if (pisoId == null) pisoId = d.getPiso().getId();
+                        if (pisoNum == null) pisoNum = d.getPiso().getPiso();
+                        if (d.getPiso().getSede() != null) {
+                            if (sedeId == null) sedeId = d.getPiso().getSede().getId();
+                            if (sedeNom == null) sedeNom = d.getPiso().getSede().getSede();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
         final int alertaFinal = alerta;
-        final com.biotrack.entity.TelemetriaLectura lectura = new com.biotrack.entity.TelemetriaLectura(mac, bpm, spo2, temp, alertaFinal);
+        final com.biotrack.entity.TelemetriaLectura lectura = new com.biotrack.entity.TelemetriaLectura(
+            mac, bpm, spo2, temp, alertaFinal, gwId, gwIp, pisoId, pisoNum, sedeId, sedeNom
+        );
 
         return io.smallrye.mutiny.Uni.createFrom().item(() -> {
             telemetriaMongoRepo.persist(lectura);
@@ -116,7 +145,8 @@ public class SignosVitalesResource {
             String nombreCliente = (cliente != null) ? (cliente.getNombre() + " " + (cliente.getApellido() != null ? cliente.getApellido() : "")).trim() : "Cliente Dinamico";
 
             String jsonWs = String.format(
-                "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"cliente_id\":%s,\"cliente_nombre\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"timestamp\":\"%s\"}",
+                java.util.Locale.US,
+                "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"cliente_id\":%s,\"cliente_nombre\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"gateway_id\":%s,\"gateway_ip\":%s,\"piso_id\":%s,\"piso_numero\":%s,\"sede_id\":%s,\"sede_nombre\":%s,\"timestamp\":\"%s\"}",
                 mac,
                 (cliente != null ? cliente.getId() : "null"),
                 nombreCliente,
@@ -125,6 +155,12 @@ public class SignosVitalesResource {
                 inserted.temp,
                 inserted.estado_alerta == 1,
                 inserted.estado_alerta,
+                inserted.gateway_id != null ? ("\"" + inserted.gateway_id + "\"") : "null",
+                inserted.gateway_ip != null ? ("\"" + inserted.gateway_ip + "\"") : "null",
+                inserted.piso_id != null ? String.valueOf(inserted.piso_id) : "null",
+                inserted.piso_numero != null ? ("\"" + inserted.piso_numero + "\"") : "null",
+                inserted.sede_id != null ? String.valueOf(inserted.sede_id) : "null",
+                inserted.sede_nombre != null ? ("\"" + inserted.sede_nombre + "\"") : "null",
                 inserted.timestamp.toString()
             );
             vitalWs.broadcast(jsonWs);
