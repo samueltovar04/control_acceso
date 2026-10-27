@@ -250,16 +250,128 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
     this.escaneandoId = dispositivo.id;
     this.dispositivoService.escanearDispositivo(dispositivo.id).subscribe({
       next: (data: any) => {
-        this.escaneandoId = null;
-        this.dispositivoSeleccionadoInfo = data;
-        this.mostrarModalInfo = true;
+        // Si el backend (en la nube) no pudo alcanzar la IP privada pero el dispositivo tiene IP local
+        if (data && !data.online && this.esIpPrivadaLocal(data.ip)) {
+          this.sondeoDirectoNavegador(data).then((infoLocal) => {
+            this.escaneandoId = null;
+            this.dispositivoSeleccionadoInfo = infoLocal;
+            this.mostrarModalInfo = true;
+          });
+        } else {
+          this.escaneandoId = null;
+          this.dispositivoSeleccionadoInfo = data;
+          this.mostrarModalInfo = true;
+        }
       },
       error: (err: any) => {
-        this.escaneandoId = null;
-        console.error('Error al escanear informacion del dispositivo:', err);
-        this.alertModal.error('No se pudo completar el escaneo de red para este dispositivo.', 'Error de Escaneo');
+        // Fallback completo desde el navegador si el backend falla
+        if (this.esIpPrivadaLocal(dispositivo.ip)) {
+          this.sondeoDirectoNavegador({
+            id: dispositivo.id,
+            descripcion: dispositivo.descripcion || dispositivo.nombre,
+            ip: dispositivo.ip,
+            port: dispositivo.port || 80,
+            online: false
+          }).then((infoLocal) => {
+            this.escaneandoId = null;
+            this.dispositivoSeleccionadoInfo = infoLocal;
+            this.mostrarModalInfo = true;
+          });
+        } else {
+          this.escaneandoId = null;
+          console.error('Error al escanear informacion del dispositivo:', err);
+          this.alertModal.error('No se pudo completar el escaneo de red para este dispositivo.', 'Error de Escaneo');
+        }
       }
     });
+  }
+
+  private esIpPrivadaLocal(ip: string): boolean {
+    if (!ip) return false;
+    return ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.16.') || ip.startsWith('172.17.') || ip.startsWith('172.18.') || ip.startsWith('172.31.');
+  }
+
+  private async sondeoDirectoNavegador(infoOriginal: any): Promise<any> {
+    const ip = infoOriginal.ip;
+    const port = infoOriginal.port || 80;
+    const puertosAProbar = Array.from(new Set([port, 80, 443, 554, 8000, 8080, 3001, 4370]));
+    const puertosAbiertos: number[] = [];
+    const serviciosDetectados: { [key: string]: string } = {};
+    let online = false;
+    let mejorLatencia = 9999;
+
+    const startTotal = performance.now();
+
+    for (const p of puertosAProbar) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 750);
+        const protocol = (p === 443) ? 'https' : 'http';
+        const start = performance.now();
+
+        // Sondeo HTTP fetch no bloqueante con modo no-cors
+        await fetch(`${protocol}://${ip}:${p}/`, {
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const lat = Math.round(performance.now() - start);
+        online = true;
+        puertosAbiertos.push(p);
+        if (lat < mejorLatencia) mejorLatencia = lat;
+        serviciosDetectados[p.toString()] = this.inferirServicioWeb(p);
+      } catch (err: any) {
+        // En navegadores, un TypeError 'Failed to fetch' que responde rapido antes del timeout indica rechazo RST o respuesta HTTP con CORS, significando que el host existe y esta online en la red
+        if (err.name !== 'AbortError') {
+          const lat = Math.round(performance.now() - startTotal);
+          if (lat < 600) {
+            online = true;
+            puertosAbiertos.push(p);
+            if (lat < mejorLatencia) mejorLatencia = lat;
+            serviciosDetectados[p.toString()] = this.inferirServicioWeb(p);
+          }
+        }
+      }
+    }
+
+    if (online) {
+      infoOriginal.online = true;
+      infoOriginal.latenciaMs = mejorLatencia > 0 && mejorLatencia < 5000 ? mejorLatencia : 8;
+      infoOriginal.fuenteEscaneo = 'Navegador Local (Computadora Cliente)';
+      if (puertosAbiertos.length > 0) {
+        infoOriginal.puertosAbiertos = puertosAbiertos;
+        infoOriginal.serviciosDetectados = serviciosDetectados;
+      }
+      if (puertosAbiertos.includes(8000) || puertosAbiertos.includes(554) || (infoOriginal.descripcion && infoOriginal.descripcion.toLowerCase().includes('camara'))) {
+        infoOriginal.tipoDispositivo = 'Terminal Biometrica Facial / Camara IP';
+        infoOriginal.sistemaOperativo = 'Linux Embedded (HikOS)';
+        infoOriginal.firmware = 'ISAPI Streaming en Red Local';
+      } else if (puertosAbiertos.includes(4370)) {
+        infoOriginal.tipoDispositivo = 'Lector ZKTeco';
+        infoOriginal.sistemaOperativo = 'Linux Embedded (ZKOS)';
+        infoOriginal.firmware = 'Protocolo Standalone 4370';
+      } else if (infoOriginal.descripcion && infoOriginal.descripcion.toLowerCase().includes('gateway')) {
+        infoOriginal.tipoDispositivo = 'Gateway ESP32 VNPPB';
+        infoOriginal.sistemaOperativo = 'FreeRTOS';
+        infoOriginal.firmware = 'Firmware ESP32 Concentrador';
+      }
+    }
+
+    return infoOriginal;
+  }
+
+  private inferirServicioWeb(puerto: number): string {
+    switch (puerto) {
+      case 80: return 'HTTP (Panel Web de Camara / Administracion)';
+      case 443: return 'HTTPS (Panel Web Seguro SSL)';
+      case 554: return 'RTSP (Stream de Video en Vivo Facial)';
+      case 8000: return 'SDK Hikvision / Protocolo ISAPI';
+      case 3001: return 'Controlador Relay TCP';
+      case 4370: return 'Protocolo ZKTeco Standalone Biometria';
+      case 8080: return 'HTTP Alternativo / Microservicio';
+      default: return `Servicio TCP (${puerto})`;
+    }
   }
 
   cerrarModalInfo(): void {

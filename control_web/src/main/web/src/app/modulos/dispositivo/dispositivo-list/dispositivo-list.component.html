@@ -273,11 +273,16 @@
         </div>
         <div class="modal-body p-4">
           <!-- Notificacion de fuente de telemetria de red -->
-          <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center small">
-            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-            <div>
-              <strong>Telemetria en tiempo real:</strong> Los datos de este diagnostico provienen exclusivamente del escaneo de red en vivo (ping ICMP, puertos TCP, tabla ARP y banners) hacia la IP <code>{{ dispositivoSeleccionadoInfo.ip }}</code>, no de los valores guardados en base de datos.
+          <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center small flex-wrap gap-2">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+              <div>
+                <strong>Telemetria en tiempo real:</strong> Diagnostico de puertos TCP y presencia activa hacia <code>{{ dispositivoSeleccionadoInfo.ip }}</code>.
+              </div>
             </div>
+            <span class="badge bg-dark font-monospace px-2 py-1" *ngIf="dispositivoSeleccionadoInfo.fuenteEscaneo">
+              <i class="bi bi-laptop me-1"></i>{{ dispositivoSeleccionadoInfo.fuenteEscaneo }}
+            </span>
           </div>
 
           <!-- Conectividad y Latencia -->

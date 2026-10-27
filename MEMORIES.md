@@ -518,6 +518,10 @@
     - Deteccion automatica de subred de la computadora que abre el navegador mediante WebRTC local candidate y hostname de conexion en `DispositivoListComponent`.
     - Modal de Descubrimiento de Red incluye badge de Red Cliente (`{subred}.0/24`) y campo interactivo para re-escanear cualquier subred ingresada por el usuario.
     - Endpoint `/api/v1/dispositivos/no-registrados` recibe `?subred=` e `ips=` o headers `X-Forwarded-For`/`X-Real-IP`, ejecutando sondeo paralelo multihilo (40 threads) sobre la subred del cliente evitando escanear solo el contenedor Docker.
+  - Despliegue en Servidor Remoto (13.140.162.113):
+    - Se resolvio el bloqueo de `access_control_db` en estado `Stopping` reiniciando `containerd` y `docker` para limpiar shims huerfanos.
+    - Se incorporo `stop_grace_period: 10s` para prevenir bloqueos en paradas no limpias de PostgreSQL.
+    - Todos los contenedores (`access_control_db`, `access_control_backend`, `access_control_frontend`, `biotrack_mongo`) operando y saludables (`healthy`) en puertos 5432, 8080 y 82.
   - `192.168.1.212`: Torniquete VIP Gimnasio
   - `192.168.1.214`: Torniquete Secundario Acceso Salida
   - `192.168.1.220`: Puerta Biometrica Facial P2
