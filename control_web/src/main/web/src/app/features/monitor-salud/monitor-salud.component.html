@@ -122,7 +122,9 @@
               (ngModelChange)="onPisoChange($event)"
             >
               <option [ngValue]="null">Todos los Pisos</option>
-              <option *ngFor="let p of pisos" [ngValue]="p.id">{{ p.piso }}</option>
+              <option *ngFor="let p of pisos" [ngValue]="p.id">
+                {{ p.numeroPiso || p.descripcion || p.piso || ('Piso ' + p.id) }}
+              </option>
             </select>
           </div>
         </div>
