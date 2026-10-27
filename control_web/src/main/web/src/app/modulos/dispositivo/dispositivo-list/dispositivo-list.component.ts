@@ -128,6 +128,7 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
         this.cargando = false;
         this.dispositivos = data || [];
         this.aplicarFiltro();
+        this.verificarDispositivosLocalesEnLote();
       },
       error: (err) => {
         this.cargando = false;
@@ -139,21 +140,60 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
   escanearRedPing(): void {
     this.escaneandoPing = true;
     this.dispositivoService.pingAll().subscribe({
-      next: (data: any) => {
-        this.escaneandoPing = false;
+      next: async (data: any) => {
         if (data && Array.isArray(data)) {
           this.dispositivos = data;
-          this.aplicarFiltro();
-        } else {
-          this.reloadData();
         }
-      },
-      error: (err) => {
+        await this.verificarDispositivosLocalesEnLote();
         this.escaneandoPing = false;
-        console.error('Error al escanear ping:', err);
-        this.reloadData();
+        this.aplicarFiltro();
+      },
+      error: async (err) => {
+        console.warn('Ping de backend no alcanzo subred local, verificando desde navegador:', err);
+        await this.verificarDispositivosLocalesEnLote();
+        this.escaneandoPing = false;
+        this.aplicarFiltro();
       }
     });
+  }
+
+  async verificarDispositivosLocalesEnLote(): Promise<void> {
+    if (!this.dispositivos || this.dispositivos.length === 0) return;
+    const tareas = this.dispositivos.map(async (d) => {
+      if (this.esIpPrivadaLocal(d.ip)) {
+        const estaOnline = await this.probarPresenciaRapidaIp(d.ip, d.port || 80);
+        if (estaOnline) {
+          d.ping = true;
+          d.estadoConexion = true;
+        }
+      }
+    });
+    await Promise.all(tareas);
+    this.aplicarFiltro();
+  }
+
+  private async probarPresenciaRapidaIp(ip: string, port: number): Promise<boolean> {
+    const puertos = Array.from(new Set([port, 80, 554, 443, 8000, 3001]));
+    for (const p of puertos) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 650);
+        const protocol = (p === 443) ? 'https' : 'http';
+        const start = performance.now();
+        await fetch(`${protocol}://${ip}:${p}/`, {
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return true;
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   toggleEstado(dispositivo: any): void {
@@ -468,11 +508,12 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
       const url = `${protocolo}//${host}/ws/dispositivos`;
       this.ws = new WebSocket(url);
 
-      this.ws.onmessage = (event) => {
+      this.ws.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
           if (Array.isArray(data)) {
             this.dispositivos = data;
+            await this.verificarDispositivosLocalesEnLote();
             this.aplicarFiltro();
           }
         } catch (e) { }
