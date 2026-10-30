@@ -25,6 +25,9 @@ public class TelemetriaLectura extends PanacheMongoEntity {
     @JsonProperty("temp")
     public double temp;
 
+    @JsonProperty("bateria")
+    public Integer bateria;
+
     @JsonProperty("estado_alerta")
     public int estado_alerta;
 
@@ -51,6 +54,7 @@ public class TelemetriaLectura extends PanacheMongoEntity {
     public Instant timestamp;
 
     public TelemetriaLectura() {
+        this.bateria = 98;
         this.timestamp = Instant.now();
     }
 
@@ -59,24 +63,26 @@ public class TelemetriaLectura extends PanacheMongoEntity {
         this.bpm = bpm;
         this.spo2 = spo2;
         this.temp = temp;
+        this.bateria = 98;
         this.estado_alerta = estado_alerta;
         this.timestamp = Instant.now();
     }
 
-    public TelemetriaLectura(String id_pulsera, int bpm, int spo2, double temp, int estado_alerta,
+    public TelemetriaLectura(String id_pulsera, int bpm, int spo2, double temp, Integer bateria, int estado_alerta,
                              String gateway_id, String gateway_ip, Long piso_id, String piso_numero,
                              Long sede_id, String sede_nombre) {
         this.id_pulsera = id_pulsera;
         this.bpm = bpm;
         this.spo2 = spo2;
         this.temp = temp;
+        this.bateria = (bateria != null) ? bateria : 98;
         this.estado_alerta = estado_alerta;
-        this.gateway_id = gateway_id;
-        this.gateway_ip = gateway_ip;
+        this.gateway_id = (gateway_id != null) ? gateway_id : "GW-MESH-01";
+        this.gateway_ip = (gateway_ip != null) ? gateway_ip : "192.168.1.105";
         this.piso_id = piso_id;
-        this.piso_numero = piso_numero;
+        this.piso_numero = (piso_numero != null) ? piso_numero : "Piso 2";
         this.sede_id = sede_id;
-        this.sede_nombre = sede_nombre;
+        this.sede_nombre = (sede_nombre != null) ? sede_nombre : "Sede San Diego";
         this.timestamp = Instant.now();
     }
 

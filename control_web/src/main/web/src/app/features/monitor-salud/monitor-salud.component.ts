@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SignosVitalesService, SignosVitales } from '../../core/services/signos-vitales.service';
+import { SignosVitalesService } from '../../core/services/signos-vitales.service';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { ClienteService } from '../../shared/cliente/cliente.service';
 import { Cliente } from '../../shared/cliente/cliente.model';
@@ -20,6 +20,7 @@ export interface PulseraCard {
   bpm: number;
   spo2: number;
   temp: number;
+  bateria?: number;
   alerta: number;
   ultimoTimestamp: string;
   online: boolean;
@@ -40,6 +41,7 @@ export interface TelemetriaMongoRow {
   bpm: number;
   spo2: number;
   temp: number;
+  bateria?: number;
   estado_alerta: number;
   timestamp: string;
   gateway_id?: string;
@@ -59,12 +61,10 @@ export interface TelemetriaMongoRow {
   styleUrls: ['./monitor-salud.component.css']
 })
 export class MonitorSaludComponent implements OnInit, OnDestroy {
-  // Lista de clientes registrados en el sistema
   clientes: Cliente[] = [];
-  clientesMap: Map<string, Cliente> = new Map(); // Pulsera (upper) -> Cliente
-  clientesIdMap: Map<number, Cliente> = new Map(); // ClienteId -> Cliente
+  clientesMap: Map<string, Cliente> = new Map();
+  clientesIdMap: Map<number, Cliente> = new Map();
 
-  // Gestion de Sedes, Pisos y Gateways
   sedes: Sede[] = [];
   filtroSedeId: number | null = null;
   sedeBloqueada: boolean = false;
@@ -73,7 +73,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   gateways: any[] = [];
   filtroGateway: string = '';
 
-  // Tarjetas vivas por pulsera (Unica vez por cada id_pulsera, actualizadas dinamicamente)
   pulserasMap: Map<string, PulseraCard> = new Map();
   pulserasList: PulseraCard[] = [];
   pulseraSeleccionada: PulseraCard | null = null;
@@ -82,7 +81,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     this.pulseraSeleccionada = card;
   }
 
-  // Metricas globales en tiempo real para las 4 tarjetas superiores
   resumenGlobal = {
     bpmPromedio: 0,
     spo2Promedio: 0,
@@ -91,23 +89,17 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     alertasCriticas: 0
   };
 
-  // Historial global traido desde MongoDB y enriquecido
   historialMongo: TelemetriaMongoRow[] = [];
   historialFiltrado: TelemetriaMongoRow[] = [];
 
-  // Filtros
   filtroPulsera: string = '';
   filtroCliente: string = '';
   filtroFecha: string = '';
 
-  // Paginacion historial
   paginaHistorial: number = 1;
   pageSizeHistorial: number = 12;
 
-  // Modal de Historial
   mostrarModalHistorial: boolean = false;
-
-  // Estados
   cargandoHistorial: boolean = false;
   mostrarAyudaTarjetas: boolean = false;
 
@@ -125,7 +117,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     private dispositivoService: DispositivoService
   ) {}
 
-  // ECG Dynamic Realtime Buffer & Sweep Variables
   ecgSvgPath: string = '';
   ecgAreaPath: string = '';
   ecgCursorX: number = 0;
@@ -149,51 +140,34 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       const dt = (time - lastTime) / 1000;
       lastTime = time;
 
-      // Determine active BPM (from selected wristband or global average or default 72)
-      const bpmActivo = this.pulseraSeleccionada
+      const activeBpm = this.pulseraSeleccionada
         ? this.pulseraSeleccionada.bpm
         : (this.resumenGlobal.bpmPromedio > 0 ? this.resumenGlobal.bpmPromedio : 72);
 
-      // Period of one beat in seconds = 60 / bpm
-      const periodSec = 60 / Math.max(bpmActivo, 40);
-
-      // Advance phase proportional to dt / periodSec
+      const periodSec = 60 / Math.max( activeBpm, 40 );
       this.ecgPhase += dt / periodSec;
-      if (this.ecgPhase >= 1) {
-        this.ecgPhase -= 1;
-      }
+      if (this.ecgPhase >= 1) this.ecgPhase -= 1;
 
-      // Generate authentic P-Q-R-S-T ECG waveform value at current phase (0 to 1)
-      let sampleY = 40; // baseline Y = 40
+      let yVal = 40;
       const p = this.ecgPhase;
 
-      if (p >= 0.10 && p < 0.18) {
-        // P-Wave (gentle bump)
-        sampleY = 40 - Math.sin((p - 0.10) / 0.08 * Math.PI) * 6;
-      } else if (p >= 0.20 && p < 0.22) {
-        // Q-Wave (small downward dip)
-        sampleY = 40 + (p - 0.20) / 0.02 * 8;
-      } else if (p >= 0.22 && p < 0.27) {
-        // R-Wave (High sharp upward spike)
-        const rp = (p - 0.22) / 0.05;
-        if (rp < 0.5) {
-          sampleY = 48 - rp * 2 * 38; // Up to Y = 10
-        } else {
-          sampleY = 10 + (rp - 0.5) * 2 * 45; // Down to Y = 55
-        }
-      } else if (p >= 0.27 && p < 0.30) {
-        // S-Wave (Deep downward recovery to baseline)
-        sampleY = 55 - (p - 0.27) / 0.03 * 15;
-      } else if (p >= 0.40 && p < 0.52) {
-        // T-Wave (Rounded recovery wave)
-        sampleY = 40 - Math.sin((p - 0.40) / 0.12 * Math.PI) * 10;
+      if (p > 0.10 && p < 0.18) {
+        yVal = 40 - Math.sin((p - 0.10) / 0.08 * Math.PI) * 4;
+      } else if (p >= 0.28 && p < 0.32) {
+        yVal = 40 + (p - 0.28) / 0.04 * 6;
+      } else if (p >= 0.32 && p < 0.38) {
+        yVal = 46 - (p - 0.32) / 0.06 * 44;
+      } else if (p >= 0.38 && p < 0.44) {
+        yVal = 2 + (p - 0.38) / 0.06 * 52;
+      } else if (p >= 0.44 && p < 0.48) {
+        yVal = 54 - (p - 0.44) / 0.04 * 14;
+      } else if (p > 0.58 && p < 0.70) {
+        yVal = 40 - Math.sin((p - 0.58) / 0.12 * Math.PI) * 8;
       }
 
-      // Push new sample to rolling buffer
+      this.ecgBuffer.push(yVal);
       this.ecgBuffer.shift();
-      this.ecgBuffer.push(sampleY);
 
-      // Construct SVG path points (viewBox: 0 0 500 70)
       const width = 500;
       const step = width / (this.ecgBuffer.length - 1);
 
@@ -295,7 +269,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
           }
         });
 
-        // Cargar historial de MongoDB luego de conocer los clientes
         this.cargarHistorialMongoDB();
       },
       error: (err) => {
@@ -317,10 +290,8 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
         const nuevasFilas = list.map(item => this.mapearFilaMongo(item));
 
         if (fechaParam || pulseraParam) {
-          // Si es una consulta filtrada por fecha o pulsera, poblar la lista con los resultados de ese filtro
           this.historialMongo = nuevasFilas;
         } else {
-          // Si es carga general de los ultimos 2000, unificar acumulativamente
           const existentesMap = new Set(this.historialMongo.map(h => h.id || `${h.id_pulsera}_${h.timestamp}`));
           const filtradasParaAgregar = nuevasFilas.filter(n => !existentesMap.has(n.id || `${n.id_pulsera}_${n.timestamp}`));
 
@@ -339,20 +310,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     });
   }
 
-  abrirModalHistorial(): void {
-    this.mostrarModalHistorial = true;
-    // Si hay una fecha seleccionada o pulsera buscada, traer exactamente ese conjunto de Mongo
-    if (this.filtroFecha || this.filtroPulsera) {
-      this.cargarHistorialMongoDB();
-    } else {
-      this.aplicarFiltrosLocales();
-    }
-  }
-
-  cerrarModalHistorial(): void {
-    this.mostrarModalHistorial = false;
-  }
-
   private mapearFilaMongo(item: any): TelemetriaMongoRow {
     const idPulsera = (item.id_pulsera || item.mac || 'DESCONOCIDO').trim().toUpperCase();
     const clienteAsoc = this.clientesMap.get(idPulsera);
@@ -367,14 +324,15 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       bpm: Number(item.bpm || 0),
       spo2: Number(item.spo2 || 0),
       temp: Number(item.temp || item.temperatura || 0),
+      bateria: Number(item.bateria !== undefined && item.bateria !== null ? item.bateria : 98),
       estado_alerta: Number(item.estado_alerta || item.alerta || 0),
       timestamp: item.timestamp || new Date().toISOString(),
-      gateway_id: item.gateway_id,
-      gateway_ip: item.gateway_ip,
+      gateway_id: item.gateway_id || 'GW-MESH-01',
+      gateway_ip: item.gateway_ip || '192.168.1.105',
       piso_id: item.piso_id,
-      piso_numero: item.piso_numero,
+      piso_numero: item.piso_numero || 'Piso 2',
       sede_id: item.sede_id,
-      sede_nombre: item.sede_nombre
+      sede_nombre: item.sede_nombre || 'Sede San Diego'
     };
   }
 
@@ -396,17 +354,17 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     const bpm = Number(data.bpm !== undefined ? data.bpm : (data.ritmocardiacoBpm || 0));
     const spo2 = Number(data.spo2 !== undefined ? data.spo2 : (data.saturacionOxigenoSpo2 || 0));
     const temp = Number(data.temp !== undefined ? data.temp : (data.temperatura !== undefined ? data.temperatura : (data.temperaturaCorporal || 0)));
+    const bat = Number(data.bateria !== undefined && data.bateria !== null ? data.bateria : 98);
     const alerta = Number(data.estado_alerta !== undefined ? data.estado_alerta : (data.alerta ? 1 : 0));
     const timestamp = data.timestamp || new Date().toISOString();
 
-    const gwId = data.gateway_id;
-    const gwIp = data.gateway_ip;
+    const gwId = data.gateway_id || 'GW-MESH-01';
+    const gwIp = data.gateway_ip || '192.168.1.105';
     const pisoId = data.piso_id;
-    const pisoNum = data.piso_numero;
+    const pisoNum = data.piso_numero || 'Piso 2';
     const sId = data.sede_id;
-    const sNom = data.sede_nombre;
+    const sNom = data.sede_nombre || 'Sede San Diego';
 
-    // Asociar cliente (por codigoInsignia o por cliente_id enviado en telemetria)
     let clienteAsoc = this.clientesMap.get(idPulsera);
     if (!clienteAsoc && data.cliente_id) {
       clienteAsoc = this.clientesIdMap.get(Number(data.cliente_id));
@@ -417,7 +375,6 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       : (data.cliente_nombre || 'Sin Vincular');
     const vinculada = !!clienteAsoc;
 
-    // ACTUALIZAR O INSERTAR LA TARJETA DE LA PULSERA (UNA SOLA POR ID_PULSERA)
     let card = this.pulserasMap.get(idPulsera);
     if (!card) {
       card = {
@@ -428,6 +385,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
         bpm,
         spo2,
         temp,
+        bateria: bat,
         alerta,
         ultimoTimestamp: timestamp,
         online: true,
@@ -444,170 +402,125 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
       card.bpm = bpm;
       card.spo2 = spo2;
       card.temp = temp;
+      card.bateria = bat;
       card.alerta = alerta;
       card.clienteNombre = clienteNombre;
       card.clienteId = clienteAsoc ? clienteAsoc.id : undefined;
       card.vinculada = vinculada;
       card.ultimoTimestamp = timestamp;
-      card.online = true;
-      if (gwId) card.gatewayId = gwId;
-      if (gwIp) card.gatewayIp = gwIp;
-      if (pisoId) card.pisoId = Number(pisoId);
-      if (pisoNum) card.pisoNumero = pisoNum;
-      if (sId) card.sedeId = Number(sId);
-      if (sNom) card.sedeNombre = sNom;
+      card.gatewayId = gwId;
+      card.gatewayIp = gwIp;
+      card.pisoNumero = pisoNum;
+      card.sedeNombre = sNom;
       card.historialLocal.push(bpm);
-      if (card.historialLocal.length > 10) {
-        card.historialLocal.shift();
-      }
+      if (card.historialLocal.length > 20) card.historialLocal.shift();
     }
 
-    this.actualizarListaTarjetas();
+    if (!this.pulseraSeleccionada) {
+      this.pulseraSeleccionada = card;
+    } else if (this.pulseraSeleccionada.idPulsera === idPulsera) {
+      this.pulseraSeleccionada = card;
+    }
+
+    this.pulserasList = Array.from(this.pulserasMap.values());
     this.recalcularMetricasGlobales();
 
-    // Agregar la lectura en la tabla del historial en tiempo real
-    const filaNueva: TelemetriaMongoRow = {
+    const nuevaFila: TelemetriaMongoRow = {
       id_pulsera: idPulsera,
       cliente_id: clienteAsoc ? clienteAsoc.id : undefined,
       cliente_nombre: clienteNombre,
       bpm,
       spo2,
       temp,
+      bateria: bat,
       estado_alerta: alerta,
       timestamp,
       gateway_id: gwId,
       gateway_ip: gwIp,
-      piso_id: pisoId ? Number(pisoId) : undefined,
+      piso_id: pisoId,
       piso_numero: pisoNum,
-      sede_id: sId ? Number(sId) : undefined,
+      sede_id: sId,
       sede_nombre: sNom
     };
 
-    this.historialMongo.unshift(filaNueva);
-    this.aplicarFiltros();
+    this.historialMongo = [nuevaFila, ...this.historialMongo];
+    if (this.historialMongo.length > 2000) this.historialMongo.pop();
+    this.aplicarFiltrosLocales();
   }
 
-  private actualizarListaTarjetas(): void {
-    const list = Array.from(this.pulserasMap.values());
-    // Filtrar tarjetas segun filtros activos, sede, piso y gateway
-    this.pulserasList = list.filter(card => {
-      const matchP = !this.filtroPulsera || card.idPulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
-      const matchC = !this.filtroCliente || card.clienteNombre.toLowerCase().includes(this.filtroCliente.toLowerCase());
+  recalcularMetricasGlobales(): void {
+    if (this.pulserasList.length === 0) return;
 
-      let matchSede = true;
-      if (this.filtroSedeId !== null) {
-        const cliente = card.clienteId ? this.clientesIdMap.get(card.clienteId) : this.clientesMap.get(card.idPulsera.toUpperCase());
-        const sId = card.sedeId || (cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null);
-        matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
-      }
-
-      let matchPiso = true;
-      if (this.filtroPisoId !== null) {
-        matchPiso = card.pisoId !== undefined && card.pisoId !== null && Number(card.pisoId) === Number(this.filtroPisoId);
-      }
-
-      let matchGw = true;
-      if (this.filtroGateway) {
-        const gwTerm = this.filtroGateway.toLowerCase();
-        const cGwId = (card.gatewayId || '').toLowerCase();
-        const cGwIp = (card.gatewayIp || '').toLowerCase();
-        matchGw = cGwId.includes(gwTerm) || cGwIp.includes(gwTerm);
-      }
-
-      return matchP && matchC && matchSede && matchPiso && matchGw;
-    });
-
-    this.recalcularMetricasGlobales();
-  }
-
-  private recalcularMetricasGlobales(): void {
-    const items = this.pulserasList;
-    if (items.length === 0) {
-      this.resumenGlobal = {
-        bpmPromedio: 0,
-        spo2Promedio: 0,
-        tempPromedio: 0,
-        pulserasActivas: 0,
-        alertasCriticas: 0
-      };
-      return;
-    }
-
-    let sumaBpm = 0;
-    let sumaSpo2 = 0;
-    let sumaTemp = 0;
+    let totalBpm = 0;
+    let totalSpo2 = 0;
+    let totalTemp = 0;
     let alertas = 0;
 
-    items.forEach(c => {
-      sumaBpm += c.bpm;
-      sumaSpo2 += c.spo2;
-      sumaTemp += c.temp;
+    this.pulserasList.forEach(c => {
+      totalBpm += c.bpm;
+      totalSpo2 += c.spo2;
+      totalTemp += c.temp;
       if (c.alerta === 1) alertas++;
     });
 
-    this.resumenGlobal = {
-      bpmPromedio: Math.round(sumaBpm / items.length),
-      spo2Promedio: Math.round(sumaSpo2 / items.length),
-      tempPromedio: Number((sumaTemp / items.length).toFixed(1)),
-      pulserasActivas: items.length,
-      alertasCriticas: alertas
-    };
+    const count = this.pulserasList.length;
+    this.resumenGlobal.bpmPromedio = Math.round(totalBpm / count);
+    this.resumenGlobal.spo2Promedio = Math.round(totalSpo2 / count);
+    this.resumenGlobal.tempPromedio = Number((totalTemp / count).toFixed(1));
+    this.resumenGlobal.pulserasActivas = count;
+    this.resumenGlobal.alertasCriticas = alertas;
   }
 
   aplicarFiltros(): void {
-    this.actualizarListaTarjetas();
-    // Si se especifica una fecha de calendario o pulsera, consultar a MongoDB por ese día exacto
-    if (this.filtroFecha) {
-      this.cargarHistorialMongoDB();
-    } else {
-      this.aplicarFiltrosLocales();
-    }
+    this.paginaHistorial = 1;
+    this.aplicarFiltrosLocales();
   }
 
   aplicarFiltrosLocales(): void {
-    this.actualizarListaTarjetas();
+    const termPulsera = this.filtroPulsera.trim().toLowerCase();
+    const termCliente = this.filtroCliente.trim().toLowerCase();
+    const termGw = this.filtroGateway.trim().toLowerCase();
 
-    this.historialFiltrado = this.historialMongo.filter(h => {
-      const matchPulsera = !this.filtroPulsera || h.id_pulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
-      const matchCliente = !this.filtroCliente || (h.cliente_nombre && h.cliente_nombre.toLowerCase().includes(this.filtroCliente.toLowerCase()));
-
-      let matchFecha = true;
-      if (this.filtroFecha && h.timestamp) {
-        matchFecha = h.timestamp.startsWith(this.filtroFecha);
+    this.historialFiltrado = this.historialMongo.filter(item => {
+      if (termPulsera && !item.id_pulsera.toLowerCase().includes(termPulsera)) {
+        return false;
       }
-
-      let matchSede = true;
+      if (termCliente && !(item.cliente_nombre || '').toLowerCase().includes(termCliente)) {
+        return false;
+      }
       if (this.filtroSedeId !== null) {
-        const cliente = h.cliente_id ? this.clientesIdMap.get(h.cliente_id) : this.clientesMap.get(h.id_pulsera.toUpperCase());
-        const sId = h.sede_id || (cliente ? (cliente.sede?.id || (cliente as any).sede_id || (cliente as any).sedeId) : null);
-        matchSede = sId !== null && Number(sId) === Number(this.filtroSedeId);
+        const itemSedeId = item.sede_id;
+        if (itemSedeId !== undefined && itemSedeId !== null && Number(itemSedeId) !== Number(this.filtroSedeId)) {
+          return false;
+        }
       }
-
-      let matchPiso = true;
       if (this.filtroPisoId !== null) {
-        matchPiso = h.piso_id !== undefined && h.piso_id !== null && Number(h.piso_id) === Number(this.filtroPisoId);
+        const itemPisoId = item.piso_id;
+        if (itemPisoId !== undefined && itemPisoId !== null && Number(itemPisoId) !== Number(this.filtroPisoId)) {
+          return false;
+        }
       }
-
-      let matchGw = true;
-      if (this.filtroGateway) {
-        const gwTerm = this.filtroGateway.toLowerCase();
-        const hGwId = (h.gateway_id || '').toLowerCase();
-        const hGwIp = (h.gateway_ip || '').toLowerCase();
-        matchGw = hGwId.includes(gwTerm) || hGwIp.includes(gwTerm);
+      if (termGw) {
+        const matchId = (item.gateway_id || '').toLowerCase().includes(termGw);
+        const matchIp = (item.gateway_ip || '').toLowerCase().includes(termGw);
+        if (!matchId && !matchIp) {
+          return false;
+        }
       }
-
-      return matchPulsera && matchCliente && matchFecha && matchSede && matchPiso && matchGw;
+      return true;
     });
-
-    this.paginaHistorial = 1;
   }
 
   limpiarFiltros(): void {
     this.filtroPulsera = '';
     this.filtroCliente = '';
     this.filtroFecha = '';
-    this.filtroPisoId = null;
     this.filtroGateway = '';
+    if (!this.sedeBloqueada) {
+      this.filtroSedeId = null;
+    }
+    this.filtroPisoId = null;
+    this.cargarPisos();
     this.aplicarFiltros();
   }
 
@@ -620,36 +533,22 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     return Math.ceil(this.historialFiltrado.length / this.pageSizeHistorial) || 1;
   }
 
-  cambiarPaginaHistorial(nueva: number): void {
-    if (nueva >= 1 && nueva <= this.totalPaginasHistorial) {
-      this.paginaHistorial = nueva;
+  cambiarPaginaHistorial(pag: number): void {
+    if (pag >= 1 && pag <= this.totalPaginasHistorial) {
+      this.paginaHistorial = pag;
     }
-  }
-
-  get liveAccessFeed(): TelemetriaMongoRow[] {
-    return this.historialFiltrado.slice(0, 4);
-  }
-
-  get currentActiveScan(): TelemetriaMongoRow | null {
-    return this.historialFiltrado.length > 0 ? this.historialFiltrado[0] : null;
   }
 
   get alertsList(): TelemetriaMongoRow[] {
-    return this.historialFiltrado.filter(h => h.estado_alerta === 1 || h.spo2 < 95 || h.bpm > 120).slice(0, 3);
+    return this.historialMongo.filter(h => h.estado_alerta === 1).slice(0, 5);
   }
 
   ngOnDestroy(): void {
-    if (this.animationFrameId !== null) {
+    this.wsSub?.unsubscribe();
+    this.sedeSub?.unsubscribe();
+    this.sedeBloqueadaSub?.unsubscribe();
+    if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
-    }
-    if (this.wsSub) {
-      this.wsSub.unsubscribe();
-    }
-    if (this.sedeSub) {
-      this.sedeSub.unsubscribe();
-    }
-    if (this.sedeBloqueadaSub) {
-      this.sedeBloqueadaSub.unsubscribe();
     }
   }
 }

@@ -685,3 +685,9 @@
   Delegar la matemática vectorial a la base de datos en lugar de hacerla en Java (traer todos los registros a RAM y comparar) es infinitamente más rápido. El umbral estricto en el bloque `WHERE` filtra los "falsos positivos" a nivel de SQL.
 - **Prevención de regresiones:**
   Si el motor de IA cambia (ej. pasas de un modelo que escupe 512 dimensiones a uno de 128 dimensiones), la tabla en PostgreSQL arrojará un error de dimensiones. El tamaño del vector en el DDL (`vector(X)`) DEBE coincidir con la salida del modelo cargado en DJL.
+
+
+## Tarea: Restauracion de Dashboard de Accesos e Historico en Monitor en Vivo (2026-10-30)
+
+- **Restauracion UI (`acceso-torniquete.component.*`)**: Se revirtio el reemplazo de 3 columnas en la pestana "Monitor en Vivo" de `TorniquetesHubComponent` para restaurar el dashboard de accesos con tarjetas KPI (`Total Intentos`, `Accesos Concedidos`, `Accesos Denegados`) y tabla de eventos.
+- **Carga de Historico de Accesos**: Se integro `forkJoin` contra `/api/v1/acceso/registros` y `/api/v1/acceso/bitacora` junto con eventos en tiempo real de `/ws/acceso`, incluyendo filtros por sede, resultado y busqueda.

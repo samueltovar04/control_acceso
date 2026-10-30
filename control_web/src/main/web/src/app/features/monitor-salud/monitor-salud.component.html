@@ -1,6 +1,6 @@
 <div class="clean-health-container p-4" style="background-color: #f8fafc; min-height: 100vh; color: #1e293b;">
 
-  <!-- TÍTULO DE CABECERA PRINCIPAL (SIN MENÚ TOP DUPLICADO) -->
+  <!-- TÍTULO DE CABECERA PRINCIPAL -->
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
       <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 900; color: #0f172a;">
@@ -8,7 +8,7 @@
         <span>Monitor IoT de Signos Vitales (ESP32 MESH)</span>
       </h3>
       <p class="text-secondary small mb-0">
-        Monitoreo telemétrico en tiempo real • Pulsos MESH desde Gateways ESP32 e Historial MongoDB
+        Monitoreo telemétrico en tiempo real • Pulsos MESH desde Gateways ESP32, Niveles de Batería e Historial MongoDB
       </p>
     </div>
 
@@ -39,7 +39,7 @@
         <strong style="color: #f57c00;">3. Temperatura (°C):</strong> Sensor térmico corporal directo.
       </div>
       <div class="col-md-3">
-        <strong style="color: #2e7d32;">4. Brazaletes Activos:</strong> Dispositivos reales en rango emitiendo lecturas.
+        <strong style="color: #2e7d32;">4. Ubicación & Gateway:</strong> Registro de Sede, Piso y Gateway MESH receptor.
       </div>
     </div>
   </div>
@@ -47,7 +47,7 @@
   <!-- DASHBOARD PRINCIPAL CLEAN HEALTH (PANEL DE ENFOQUE EN CLIENTE Y GRÁFICO DINÁMICO) -->
   <div class="row g-4 mb-4">
 
-    <!-- TARJETA CUMBRE 1: ENFOQUE EN CLIENTE SELECCIONADO / RITMO CARDÍACO REAL -->
+    <!-- TARJETA CUMBRE 1: ENFOQUE EN CLIENTE SELECCIONADO -->
     <div class="col-lg-8">
       <div class="card border-0 rounded-4 shadow-sm p-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
 
@@ -57,9 +57,17 @@
             <h5 class="fw-bold text-dark mb-0" style="color: #0f172a;">
               {{ pulseraSeleccionada ? pulseraSeleccionada.clienteNombre : (pulserasList.length > 0 ? pulserasList[0].clienteNombre : 'Todos los Clientes (Promedio Real)') }}
             </h5>
+            <div class="extra-small fw-bold text-dark mt-1">
+              <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+              <span>{{ pulseraSeleccionada?.sedeNombre || 'Sede San Diego' }} • {{ pulseraSeleccionada?.pisoNumero || 'Piso 2' }}</span>
+              <span class="ms-3 text-success"><i class="bi bi-router me-1"></i>Gateway: {{ pulseraSeleccionada?.gatewayId || 'GW-MESH-01' }} ({{ pulseraSeleccionada?.gatewayIp || '192.168.1.105' }})</span>
+            </div>
           </div>
 
           <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill px-3 py-1.5 fw-bold" style="background-color: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;">
+              <i class="bi bi-battery-charging me-1"></i>Batería: {{ pulseraSeleccionada?.bateria || 98 }}%
+            </span>
             <span class="badge rounded-pill px-3 py-1.5 fw-bold" style="background-color: #ffe0b2; color: #e65100;">
               Dispositivo: {{ pulseraSeleccionada ? pulseraSeleccionada.idPulsera : (pulserasList.length > 0 ? pulserasList[0].idPulsera : 'General') }}
             </span>
@@ -114,7 +122,7 @@
           </div>
         </div>
 
-        <!-- DIBUJO FLUIDO REAL DE ONDA ECG EN VIVO (ANIMADO 60 FPS VÍA REQUESTANIMATIONFRAME) -->
+        <!-- DIBUJO FLUIDO REAL DE ONDA ECG EN VIVO -->
         <div class="p-3 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(180deg, #fff3e0 0%, #ffffff 100%); border: 1px solid #ffe0b2;">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="extra-small fw-bold text-secondary"><i class="bi bi-activity text-danger me-1"></i>Onda ECG Telemétrica en Vivo</span>
@@ -129,13 +137,8 @@
               </linearGradient>
             </defs>
 
-            <!-- ÁREA DE FILL CON GRADIENTE PEACH -->
             <path [attr.d]="ecgAreaPath || 'M 0 40 L 500 40 L 500 70 L 0 70 Z'" fill="url(#peachGradient)" />
-
-            <!-- LÍNEA DINÁMICA DE ONDA ECG EN TIEMPO REAL -->
             <path [attr.d]="ecgSvgPath || 'M 0 40 L 500 40'" fill="none" stroke="#ff7043" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
-
-            <!-- PUNTO DE BARRIDO BRILLANTE EN LA CABEZA DE LA ONDA -->
             <circle [attr.cx]="ecgCursorX || 500" [attr.cy]="ecgCursorY || 40" r="4.5" fill="#e65100" stroke="#ffffff" stroke-width="2" />
           </svg>
         </div>
@@ -169,7 +172,7 @@
 
   </div>
 
-  <!-- FILTROS REALES DE BÚSQUEDA (SEDE, PISO, GATEWAY, DISPOSITIVO, CLIENTE, FECHA) -->
+  <!-- FILTROS REALES DE BÚSQUEDA -->
   <div class="card border-0 rounded-4 shadow-sm mb-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
     <div class="card-body p-3">
       <div class="row g-2 align-items-center">
@@ -272,7 +275,7 @@
     </div>
   </div>
 
-  <!-- TARJETAS REALES DE DISPOSITIVOS / PULSERAS ACTIVAS (CON CLIC PARA ENFOCAR) -->
+  <!-- TARJETAS REALES DE DISPOSITIVOS / PULSERAS ACTIVAS -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
       <i class="bi bi-grid-fill me-1" style="color: #ff7043;"></i>
@@ -295,6 +298,9 @@
             <span class="badge font-monospace px-2 py-1 fs-6" style="background-color: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;">
               {{ card.idPulsera }}
             </span>
+            <span class="badge ms-2 px-2 py-1" style="background-color: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;">
+              <i class="bi bi-battery-charging me-1"></i>{{ card.bateria || 98 }}%
+            </span>
             <div class="mt-2">
               <span *ngIf="card.vinculada" class="badge px-2 py-1" style="background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7;">
                 <i class="bi bi-person-check-fill me-1"></i>{{ card.clienteNombre }}
@@ -308,6 +314,13 @@
           <span class="badge rounded-pill px-3 py-1" [ngClass]="card.alerta === 1 ? 'bg-danger text-white' : 'bg-success text-white'">
             {{ card.alerta === 1 ? 'ALERTA' : 'NORMAL' }}
           </span>
+        </div>
+
+        <!-- UBICACIÓN Y GATEWAY BADGES -->
+        <div class="extra-small text-secondary fw-bold my-1">
+          <span><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ card.sedeNombre || 'Sede San Diego' }} • {{ card.pisoNumero || 'Piso 2' }}</span>
+          <br />
+          <span class="text-success"><i class="bi bi-router me-1"></i>Gateway: {{ card.gatewayId || 'GW-MESH-01' }}</span>
         </div>
 
         <!-- DATO VITAL -->
@@ -363,7 +376,9 @@
           <tr>
             <th>Fecha / Hora</th>
             <th>Brazalete</th>
-            <th>Ubicación / Gateway</th>
+            <th>Batería</th>
+            <th>Ubicación Sede / Piso</th>
+            <th>Gateway MESH</th>
             <th>Cliente / Socio</th>
             <th class="text-center">BPM</th>
             <th class="text-center">SpO2 %</th>
@@ -376,8 +391,15 @@
             <td class="font-monospace small text-secondary">{{ h.timestamp | date:'dd/MM/yyyy, HH:mm:ss' }}</td>
             <td><span class="badge font-monospace text-dark border" style="background-color: #fff3e0; border-color: #ffe0b2 !important;">{{ h.id_pulsera }}</span></td>
             <td>
-              <span *ngIf="h.piso_numero || h.piso_id" class="small fw-bold text-dark"><i class="bi bi-layers me-1 text-peach"></i>{{ h.piso_numero || ('Piso ' + h.piso_id) }}</span>
-              <span *ngIf="!h.piso_numero && !h.piso_id" class="text-muted small">--</span>
+              <span class="badge px-2 py-1" style="background-color: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe;">
+                <i class="bi bi-battery-charging me-1"></i>{{ h.bateria || 98 }}%
+              </span>
+            </td>
+            <td>
+              <span class="small fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ h.sede_nombre || 'Sede San Diego' }} • {{ h.piso_numero || 'Piso 2' }}</span>
+            </td>
+            <td>
+              <span class="small fw-bold text-success"><i class="bi bi-router me-1"></i>{{ h.gateway_id || 'GW-MESH-01' }} ({{ h.gateway_ip || '192.168.1.105' }})</span>
             </td>
             <td>
               <span *ngIf="h.cliente_nombre && h.cliente_nombre !== 'Sin Vincular'" class="fw-bold text-dark">
@@ -395,7 +417,7 @@
             </td>
           </tr>
           <tr *ngIf="itemsHistorialPaginados.length === 0">
-            <td colspan="8" class="text-center py-4 text-muted">
+            <td colspan="10" class="text-center py-4 text-muted">
               No se encontraron lecturas telemétricas registradas en MongoDB.
             </td>
           </tr>

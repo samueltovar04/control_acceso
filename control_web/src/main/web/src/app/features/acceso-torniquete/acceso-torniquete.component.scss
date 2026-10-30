@@ -1,74 +1,16 @@
-/* CLEAN HEALTH LIGHT MODE - ACCESO TORNIQUETE SCSS */
-.clean-health-wrapper {
-  background-color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+.radar-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
 }
 
-.text-orange { color: #ff7043 !important; }
-.text-peach  { color: #ff8a65 !important; }
-
-.btn-orange-solid {
-  background-color: #ff7043 !important;
-  color: #ffffff !important;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #f4511e !important;
-    box-shadow: 0 4px 15px rgba(255, 112, 67, 0.35);
-  }
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
 }
 
-/* CÁMARA CON RECUADRO FACIAL VERDE */
-.camera-feed-container {
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-  border: 2px solid rgba(255, 183, 77, 0.3);
-}
-
-.camera-overlay-grid {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-size: 20px 20px;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-}
-
-.facial-box-target {
-  width: 170px;
-  height: 200px;
-  border: 2px dashed #22c55e;
-  position: relative;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding-bottom: 10px;
-}
-
-.facial-tag-name {
-  background-color: rgba(34, 197, 94, 0.9);
-  color: #ffffff;
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-  text-align: center;
-}
-
-.corner {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: #22c55e;
-  border-style: solid;
-}
-
-.corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
-.corner-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; }
-.corner-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; }
-.corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
-
-.extra-small {
-  font-size: 0.72rem;
+.acceso-row {
+  transition: background-color 0.3s ease;
 }

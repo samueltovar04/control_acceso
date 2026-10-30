@@ -7,6 +7,7 @@ public class GatewayTelemetriaDTO {
     private Float bpm;
     private Float spo2;
     private Float temperatura;
+    private Integer bateria;
     private Integer estado_alerta;
     private String gateway_id;
     private String gateway_ip;
@@ -56,6 +57,14 @@ public class GatewayTelemetriaDTO {
 
     public void setTemperatura(Float temperatura) {
         this.temperatura = temperatura;
+    }
+
+    public Integer getBateria() {
+        return bateria;
+    }
+
+    public void setBateria(Integer bateria) {
+        this.bateria = bateria;
     }
 
     public Integer getEstado_alerta() {

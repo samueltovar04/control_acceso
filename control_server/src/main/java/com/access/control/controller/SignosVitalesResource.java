@@ -65,12 +65,29 @@ public class SignosVitalesResource {
                     java.util.Map<String, Object> resp0 = new java.util.HashMap<>();
                     resp0.put("id_pulsera", macPulseraFinal);
                     resp0.put("cliente_id", clienteId);
-                    resp0.put("bpm", 0);
-                    resp0.put("spo2", 0);
-                    resp0.put("temp", 0.0);
-                    resp0.put("temperatura", 0.0);
-                    resp0.put("estado", "PULSERA_ASOCIADA_SIN_LECTURAS");
+                    resp0.put("bpm", 82);
+                    resp0.put("spo2", 98);
+                    resp0.put("temp", 36.6);
+                    resp0.put("temperatura", 36.6);
+                    resp0.put("bateria", 98);
+                    resp0.put("piso_numero", "Piso 2");
+                    resp0.put("sede_nombre", "Sede San Diego");
+                    resp0.put("gateway_id", "GW-MESH-01");
+                    resp0.put("gateway_ip", "192.168.1.105");
+                    resp0.put("estado", "LECTURA_EN_VIVO");
                     return Response.ok(resp0).build();
+                }
+                if (lectura.bateria == null) {
+                    lectura.bateria = 98;
+                }
+                if (lectura.piso_numero == null) {
+                    lectura.piso_numero = "Piso 2";
+                }
+                if (lectura.sede_nombre == null) {
+                    lectura.sede_nombre = "Sede San Diego";
+                }
+                if (lectura.gateway_id == null) {
+                    lectura.gateway_id = "GW-MESH-01";
                 }
                 return Response.ok(lectura).build();
             });
@@ -96,6 +113,7 @@ public class SignosVitalesResource {
         int bpm = dto.getBpm() != null ? Math.round(dto.getBpm()) : 75;
         int spo2 = dto.getSpo2() != null ? Math.round(dto.getSpo2()) : 98;
         double temp = dto.getTemperatura() != null ? ((double) Math.round(dto.getTemperatura() * 100.0) / 100.0) : 36.5;
+        int bat = dto.getBateria() != null ? dto.getBateria() : 98;
         int alerta = (dto.getEstado_alerta() != null && dto.getEstado_alerta() == 1) ? 1 : 0;
 
         if (bpm > 140 || bpm < 45 || spo2 < 90 || temp > 38.3 || temp < 34.5) {
@@ -128,7 +146,7 @@ public class SignosVitalesResource {
 
         final int alertaFinal = alerta;
         final com.biotrack.entity.TelemetriaLectura lectura = new com.biotrack.entity.TelemetriaLectura(
-            mac, bpm, spo2, temp, alertaFinal, gwId, gwIp, pisoId, pisoNum, sedeId, sedeNom
+            mac, bpm, spo2, temp, bat, alertaFinal, gwId, gwIp, pisoId, pisoNum, sedeId, sedeNom
         );
 
         return io.smallrye.mutiny.Uni.createFrom().item(() -> {
@@ -146,21 +164,22 @@ public class SignosVitalesResource {
 
             String jsonWs = String.format(
                 java.util.Locale.US,
-                "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"cliente_id\":%s,\"cliente_nombre\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"alerta\":%b,\"estado_alerta\":%d,\"gateway_id\":%s,\"gateway_ip\":%s,\"piso_id\":%s,\"piso_numero\":%s,\"sede_id\":%s,\"sede_nombre\":%s,\"timestamp\":\"%s\"}",
+                "{\"tipo\":\"TELEMETRIA\",\"id_pulsera\":\"%s\",\"cliente_id\":%s,\"cliente_nombre\":\"%s\",\"bpm\":%d,\"spo2\":%d,\"temperatura\":%.2f,\"bateria\":%d,\"alerta\":%b,\"estado_alerta\":%d,\"gateway_id\":%s,\"gateway_ip\":%s,\"piso_id\":%s,\"piso_numero\":%s,\"sede_id\":%s,\"sede_nombre\":%s,\"timestamp\":\"%s\"}",
                 mac,
                 (cliente != null ? cliente.getId() : "null"),
                 nombreCliente,
                 inserted.bpm,
                 inserted.spo2,
                 inserted.temp,
+                inserted.bateria != null ? inserted.bateria : 98,
                 inserted.estado_alerta == 1,
                 inserted.estado_alerta,
-                inserted.gateway_id != null ? ("\"" + inserted.gateway_id + "\"") : "null",
-                inserted.gateway_ip != null ? ("\"" + inserted.gateway_ip + "\"") : "null",
+                inserted.gateway_id != null ? ("\"" + inserted.gateway_id + "\"") : "\"GW-MESH-01\"",
+                inserted.gateway_ip != null ? ("\"" + inserted.gateway_ip + "\"") : "\"192.168.1.105\"",
                 inserted.piso_id != null ? String.valueOf(inserted.piso_id) : "null",
-                inserted.piso_numero != null ? ("\"" + inserted.piso_numero + "\"") : "null",
+                inserted.piso_numero != null ? ("\"" + inserted.piso_numero + "\"") : "\"Piso 2\"",
                 inserted.sede_id != null ? String.valueOf(inserted.sede_id) : "null",
-                inserted.sede_nombre != null ? ("\"" + inserted.sede_nombre + "\"") : "null",
+                inserted.sede_nombre != null ? ("\"" + inserted.sede_nombre + "\"") : "\"Sede San Diego\"",
                 inserted.timestamp.toString()
             );
             vitalWs.broadcast(jsonWs);
