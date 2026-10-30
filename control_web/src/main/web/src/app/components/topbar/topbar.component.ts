@@ -21,7 +21,7 @@ import { Sede } from '../../shared/sede/sede.service';
 export class TopbarComponent implements OnInit, OnDestroy {
   public branding: any = { nombreEmpresa: 'Control de Acceso' };
   public usuarioActivo: string = 'Administrador';
-  public monedaActiva: 'USD' | 'EUR' = 'USD';
+  public monedaActiva: 'USD' | 'EUR' | 'VES' = 'USD';
 
   public sedesList: Sede[] = [];
   public sedeSeleccionadaId: number | null = null;
