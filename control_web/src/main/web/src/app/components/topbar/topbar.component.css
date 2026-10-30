@@ -1,27 +1,47 @@
-/* DEFAULT DARK TOPBAR STYLES (CONTRASTE ORIGINAL) */
+/* DEFAULT DARK TOPBAR STYLES (ALTO CONTRASTE CLARO EN TEXTOS) */
 .top-navbar {
-  background: rgba(15, 23, 42, 0.92) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
   position: sticky;
   top: 0;
   z-index: 990;
   color: #ffffff !important;
 }
 
-.brand-pill {
-  transition: transform 0.2s ease;
+.topbar-title {
+  color: #ffffff !important;
 }
 
-.brand-pill:hover {
-  transform: translateY(-1px);
+.topbar-subtitle {
+  color: #38bdf8 !important;
+}
+
+.topbar-label {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.topbar-select {
+  color: #ffffff !important;
+}
+
+.topbar-rate-text {
+  color: #ffffff !important;
+}
+
+.topbar-user-name {
+  color: #ffffff !important;
+}
+
+.topbar-role-text {
+  color: #38bdf8 !important;
 }
 
 .pill-white {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
   padding: 0.3rem 0.85rem;
   transition: all 0.2s ease;
@@ -29,28 +49,8 @@
 }
 
 .pill-white:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
-}
-
-.text-peach { color: #38bdf8 !important; }
-.text-leaf  { color: #10b981 !important; }
-
-.btn-peach-solid {
-  background-color: transparent !important;
-  color: #38bdf8 !important;
-  border: 1px solid rgba(56, 189, 248, 0.4) !important;
-}
-
-.btn-peach-solid:hover {
-  background-color: rgba(56, 189, 248, 0.15) !important;
-  color: #38bdf8 !important;
-}
-
-.user-profile-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
 .status-online-dot {
@@ -79,38 +79,60 @@
   to { transform: rotate(360deg); }
 }
 
-/* OVERRIDE CUANDO SE ACTIVA EL MODO CLARO CLEAN HEALTH EN TOPBAR (body.light-sidebar-theme) */
+/* OVERRIDE CUANDO SE ACTIVA EL MODO CLARO CLEAN HEALTH EN TOPBAR (body.light-theme / body.light-sidebar-theme) */
+body.light-theme .top-navbar,
 body.light-sidebar-theme .top-navbar {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-bottom: 1px solid rgba(255, 183, 77, 0.22) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 183, 77, 0.25) !important;
   box-shadow: 0 4px 20px -2px rgba(255, 138, 101, 0.08) !important;
   color: #0f172a !important;
 }
 
-body.light-sidebar-theme .top-navbar h6 {
+body.light-theme .topbar-title,
+body.light-sidebar-theme .topbar-title {
   color: #0f172a !important;
 }
 
+body.light-theme .topbar-subtitle,
+body.light-sidebar-theme .topbar-subtitle {
+  color: #ff7043 !important;
+}
+
+body.light-theme .topbar-label,
+body.light-sidebar-theme .topbar-label {
+  color: #64748b !important;
+}
+
+body.light-theme .topbar-select,
+body.light-sidebar-theme .topbar-select {
+  color: #0f172a !important;
+}
+
+body.light-theme .topbar-rate-text,
+body.light-sidebar-theme .topbar-rate-text {
+  color: #0f172a !important;
+}
+
+body.light-theme .topbar-user-name,
+body.light-sidebar-theme .topbar-user-name {
+  color: #0f172a !important;
+}
+
+body.light-theme .topbar-role-text,
+body.light-sidebar-theme .topbar-role-text {
+  color: #2e7d32 !important;
+}
+
+body.light-theme .pill-white,
 body.light-sidebar-theme .pill-white {
   background: #ffffff;
   border: 1px solid rgba(255, 183, 77, 0.25);
   color: #0f172a !important;
 }
 
-body.light-sidebar-theme .pill-white select,
-body.light-sidebar-theme .pill-white span {
-  color: #0f172a !important;
-}
-
-body.light-sidebar-theme .text-peach { color: #ff7043 !important; }
-body.light-sidebar-theme .text-leaf  { color: #2e7d32 !important; }
-
-body.light-sidebar-theme .btn-peach-solid {
+body.light-theme .btn-outline-info,
+body.light-sidebar-theme .btn-outline-info {
   background-color: #ff7043 !important;
   color: #ffffff !important;
   border: none !important;
-}
-
-body.light-sidebar-theme .btn-peach-solid:hover {
-  background-color: #f4511e !important;
 }
