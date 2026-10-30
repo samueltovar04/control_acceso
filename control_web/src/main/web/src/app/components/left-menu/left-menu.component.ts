@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -9,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-left-menu',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './left-menu.component.html',
   styleUrls: ['./left-menu.component.css']
 })
@@ -18,9 +19,14 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public router = inject(Router);
   menuPagosAbierto: boolean = true;
+  esModoOscuro: boolean = false;
   private navSub?: Subscription;
 
   ngOnInit(): void {
+    const savedTheme = localStorage.getItem('theme_mode');
+    this.esModoOscuro = savedTheme === 'dark';
+    this.aplicarTemaBody();
+
     this.navSub = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
@@ -28,6 +34,22 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
         this.sidebarService.close();
       }
     });
+  }
+
+  toggleModoOscuro(): void {
+    this.esModoOscuro = !this.esModoOscuro;
+    localStorage.setItem('theme_mode', this.esModoOscuro ? 'dark' : 'light');
+    this.aplicarTemaBody();
+  }
+
+  aplicarTemaBody(): void {
+    if (this.esModoOscuro) {
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
+    } else {
+      document.body.classList.add('light-theme');
+      document.body.classList.remove('dark-theme');
+    }
   }
 
   ngOnDestroy(): void {
