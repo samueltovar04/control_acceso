@@ -1,17 +1,17 @@
-<div class="sidebar-wrapper bg-dark text-white d-flex flex-column h-100 w-100" style="min-height: 100vh;">
+<div class="sidebar-wrapper bg-white text-dark d-flex flex-column h-100 w-100" style="min-height: 100vh; background-color: #ffffff !important;">
   <!-- BRAND / HEADER -->
-  <div class="sidebar-header p-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
+  <div class="sidebar-header p-3 border-bottom d-flex align-items-center justify-content-between" style="border-color: rgba(255, 183, 77, 0.25) !important;">
     <div class="d-flex align-items-center">
-      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 34px; width: auto; object-fit: contain;" class="me-2 rounded" />
+      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 36px; width: auto; object-fit: contain;" class="me-2 rounded-3" />
       <div class="d-flex flex-column">
-        <span class="fs-6 fw-bold tracking-tight text-white line-height-1">ANDES</span>
-        <span class="text-info fw-semibold" style="font-size: 0.68rem; letter-spacing: 1px;">CONTROL ACCESO</span>
+        <span class="fs-6 fw-extrabold tracking-tight text-dark line-height-1" style="font-weight: 900; color: #0f172a;">ANDES</span>
+        <span class="fw-bold" style="font-size: 0.68rem; letter-spacing: 1px; color: #ff7043;">CONTROL ACCESO</span>
       </div>
     </div>
-    <button 
-      type="button" 
-      class="btn btn-sm btn-link text-white-50 d-md-none p-1" 
-      (click)="sidebarService.close()" 
+    <button
+      type="button"
+      class="btn btn-sm btn-link text-secondary d-md-none p-1"
+      (click)="sidebarService.close()"
       title="Cerrar Menú"
       aria-label="Cerrar Menú">
       <i class="bi bi-x-lg fs-5"></i>
@@ -21,214 +21,215 @@
   <!-- NAVEGACIÓN -->
   <div class="sidebar-menu flex-grow-1 py-3 px-2 overflow-auto">
 
-    <!-- PORTAL CLIENTE (DISPONIBLE PARA CLIENTE O ADMIN) -->
-    <div *ngIf="canViewPortalCliente()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      <i class="bi bi-person-circle me-1 text-info"></i>Mi Cuenta
+    <!-- MI CUENTA -->
+    <div *ngIf="canViewPortalCliente()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      <i class="bi bi-person-circle me-1 text-peach"></i>MI CUENTA
     </div>
     <ul *ngIf="canViewPortalCliente()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
-          routerLink="/home/portal-cliente" routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+          routerLink="/home/portal-cliente" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-person-badge me-3 fs-5 text-info"></i> Datos y Pagos Personales
+          <i class="bi bi-person-badge me-3 fs-5 text-peach"></i> Datos y Pagos Personales
         </a>
       </li>
     </ul>
 
-    <!-- PANEL & VISION (RECEPCION, OPERACION, ADMIN, SUPERADMIN) -->
-    <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      Panel & Visión
+    <!-- PANEL & VISIÓN -->
+    <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      PANEL & VISIÓN
     </div>
     <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
-          routerLink="/home/gym-dashboard" routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+          routerLink="/home/gym-dashboard" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-speedometer me-3 fs-5 text-info"></i> Gym Dashboard Pro
+          <i class="bi bi-speedometer me-3 fs-5 text-peach"></i> Gym Dashboard Pro
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
-          routerLink="/home/acceso-torniquetes" routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+          routerLink="/home/acceso-torniquetes" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-door-open-fill me-3 fs-5 text-warning"></i> Control de Torniquetes
+          <i class="bi bi-door-open-fill me-3 fs-5 text-peach"></i> Control de Torniquetes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/monitor-salud"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/monitor-salud"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-heart-pulse me-3 fs-5"></i> Monitor de Salud IoT
+          <i class="bi bi-heart-pulse me-3 fs-5 text-coral"></i> Monitor de Salud IoT
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
           href="/dashboard-dinamico.html" target="_blank"
           (click)="onNavClick()">
-          <i class="bi bi-activity me-3 fs-5 text-danger"></i> Telemetría Dinámica
+          <i class="bi bi-activity me-3 fs-5 text-peach"></i> Telemetría Dinámica
         </a>
       </li>
     </ul>
 
-    <!-- MODULO PAGOS Y FINANZAS (CONTABLE, ADMIN, SUPERADMIN) -->
+    <!-- GESTIÓN DE PAGOS -->
     <div *ngIf="canViewPagos()"
-      class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
-      style="cursor: pointer;" (click)="menuPagosAbierto = !menuPagosAbierto">
-      <span><i class="bi bi-cash-coin me-2 text-success"></i>Gestion de Pagos</span>
+      class="menu-section small text-uppercase fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
+      style="cursor: pointer; color: #78350f !important;" (click)="menuPagosAbierto = !menuPagosAbierto">
+      <span><i class="bi bi-cash-coin me-2 text-leaf"></i>GESTIÓN DE PAGOS</span>
       <i class="bi" [ngClass]="menuPagosAbierto ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
     </div>
     <ul class="nav flex-column mb-3" *ngIf="canViewPagos() && menuPagosAbierto">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/admin-dashboard"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/admin-dashboard"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-speedometer2 me-3 fs-5"></i> Control Finanzas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pagos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pagos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-cash-stack me-3 fs-5 text-success"></i> Control Pagos
+          <i class="bi bi-cash-stack me-3 fs-5 text-leaf"></i> Control Pagos
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/conciliacion"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/conciliacion"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-wallet2 me-3 fs-5 text-info"></i> Conciliacion Pagos
+          <i class="bi bi-wallet2 me-3 fs-5 text-peach"></i> Conciliación Pagos
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tasas"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tasas"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-currency-exchange me-3 fs-5 text-warning"></i> Tasas Cambiarias BCV
+          <i class="bi bi-currency-exchange me-3 fs-5 text-peach"></i> Tasas Cambiarias BCV
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/bancos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/bancos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-bank2 me-3 fs-5 text-primary"></i> Cuentas Bancarias
+          <i class="bi bi-bank2 me-3 fs-5 text-peach"></i> Cuentas Bancarias
         </a>
       </li>
     </ul>
 
-    <!-- GESTION DE ACCESO (RECEPCION, OPERACION, ADMIN, SUPERADMIN) -->
-    <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      Gestion de Acceso
+    <!-- GESTIÓN DE ACCESO -->
+    <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      GESTIÓN DE ACCESO
     </div>
     <ul *ngIf="canViewGestionAcceso()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/clientes"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/clientes"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-people-fill me-3 fs-5"></i> Clientes & Membresias
+          <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Clientes & Membresías
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/empleados"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/empleados"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-person-badge-fill me-3 fs-5"></i> Empleados
+          <i class="bi bi-person-badge-fill me-3 fs-5 text-peach"></i> Empleados
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/visitantes"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/visitantes"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-person-lines-fill me-3 fs-5"></i> Visitantes
+          <i class="bi bi-person-lines-fill me-3 fs-5 text-peach"></i> Visitantes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/membresias"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/membresias"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-card-checklist me-3 fs-5"></i> Catalogo Membresias
+          <i class="bi bi-card-checklist me-3 fs-5 text-peach"></i> Catálogo Membresías
         </a>
       </li>
     </ul>
 
-    <!-- INFRAESTRUCTURA (SOLO ADMIN Y SUPERADMIN) -->
-    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      Infraestructura
+    <!-- INFRAESTRUCTURA -->
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      INFRAESTRUCTURA
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/dispositivos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/dispositivos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-hdd-network-fill me-3 fs-5"></i> Network
+          <i class="bi bi-hdd-network-fill me-3 fs-5 text-peach"></i> Network
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/pisos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pisos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-layers-fill me-3 fs-5"></i> Pisos & Zonas
+          <i class="bi bi-layers-fill me-3 fs-5 text-peach"></i> Pisos & Zonas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/permisos-pisos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/permisos-pisos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-shield-check me-3 fs-5"></i> Permisos por Pisos
+          <i class="bi bi-shield-check me-3 fs-5 text-peach"></i> Permisos por Pisos
         </a>
       </li>
     </ul>
 
-    <!-- UBICACIONES (SOLO ADMIN Y SUPERADMIN) -->
-    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      Ubicaciones
+    <!-- UBICACIONES -->
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      UBICACIONES
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/sedes"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/sedes"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-geo-alt-fill me-3 fs-5"></i> Sedes
+          <i class="bi bi-geo-alt-fill me-3 fs-5 text-peach"></i> Sedes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/gerencias"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/gerencias"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-briefcase-fill me-3 fs-5"></i> Gerencias
+          <i class="bi bi-briefcase-fill me-3 fs-5 text-peach"></i> Gerencias
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/tipo-contratos"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tipo-contratos"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-file-earmark-text-fill me-3 fs-5"></i> Tipos de Contrato
+          <i class="bi bi-file-earmark-text-fill me-3 fs-5 text-peach"></i> Tipos de Contrato
         </a>
       </li>
     </ul>
 
-    <!-- ADMINISTRACION DEL SISTEMA (SOLO ADMIN Y SUPER_ADMIN) -->
-    <div *ngIf="isAdminOrSuperAdmin()" class="menu-section small text-uppercase text-secondary fw-bold px-3 mb-2">
-      <i class="bi bi-shield-lock me-1 text-danger"></i>Seguridad
+    <!-- SEGURIDAD -->
+    <div *ngIf="isAdminOrSuperAdmin()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+      <i class="bi bi-shield-lock me-1 text-coral"></i>SEGURIDAD
     </div>
     <ul *ngIf="isAdminOrSuperAdmin()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-white-50 py-2 px-3 rounded d-flex align-items-center" routerLink="/home/usuarios"
-          routerLinkActive="active bg-primary text-white"
+        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/usuarios"
+          routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-people-fill me-3 fs-5 text-warning"></i> Usuarios y Permisos
+          <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Usuarios y Permisos
         </a>
       </li>
     </ul>
   </div>
 
-  <!-- FOOTER LATERAL CON BOTON CERRAR SESION -->
-  <div class="sidebar-footer p-3 border-top border-secondary text-secondary small">
+  <!-- FOOTER LATERAL CON BOTÓN CERRAR SESIÓN -->
+  <div class="sidebar-footer p-3 border-top text-secondary small" style="border-color: rgba(255, 183, 77, 0.25) !important;">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <span>Acceso 2.0.0-PRO</span>
-      <span class="badge bg-success">Online</span>
+      <span class="fw-bold text-muted" style="font-size: 0.72rem;">Acceso 2.0.0-PRO</span>
+      <span class="badge" style="background-color: #e8f5e9; color: #2e7d32; font-weight: 800;">Online</span>
     </div>
-    <button class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1"
-            (click)="cerrarSesion()" 
+    <button class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1.5 rounded-3"
+            style="border: 1.5px solid #fecdd3; background-color: #fff1f2; color: #e11d48;"
+            (click)="cerrarSesion()"
             title="Cerrar Sesión del Sistema">
       <i class="bi bi-box-arrow-right fs-6"></i>
       <span>Cerrar Sesión</span>

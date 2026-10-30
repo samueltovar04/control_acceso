@@ -1,81 +1,180 @@
-<div class="container-fluid py-4">
+<div class="clean-health-wrapper p-4" style="background-color: #f8fafc; min-height: 100vh; color: #1e293b;">
+
+  <!-- TITULO Y SUBTITULO -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center gap-3">
-      <div class="radar-indicator bg-success"></div>
-      <div>
-        <h3 class="fw-bold mb-0 text-dark">Monitor de Torniquetes en Vivo</h3>
-        <small class="text-muted">Paso fisico y validacion automatica en tiempo real</small>
-      </div>
+    <div>
+      <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 900; color: #0f172a;">Control de Torniquetes y Accesos</h3>
+      <p class="text-secondary small mb-0">Paso físico y validación automática en tiempo real</p>
     </div>
-    <span class="badge bg-dark font-monospace px-3 py-2">WebSocket Activo: /ws/acceso</span>
+    <span class="badge shadow-sm px-3 py-2 rounded-pill" style="background-color: #ffe0b2; color: #e65100; font-weight: 800;">
+      <i class="bi bi-broadcast me-1"></i>WebSocket Activo: /ws/acceso
+    </span>
   </div>
 
-  <!-- KPI CARDS ACCESOS -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm p-3 bg-white">
-        <small class="text-muted fw-bold text-uppercase">Total Intentos</small>
-        <div class="fs-3 fw-bold text-dark">{{ totalHoy() }}</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm p-3 bg-white">
-        <small class="text-success fw-bold text-uppercase">Accesos Concedidos</small>
-        <div class="fs-3 fw-bold text-success">{{ permitidosHoy() }}</div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm p-3 bg-white">
-        <small class="text-danger fw-bold text-uppercase">Accesos Denegados</small>
-        <div class="fs-3 fw-bold text-danger">{{ denegadosHoy() }}</div>
-      </div>
-    </div>
-  </div>
+  <!-- GRID PRINCIPAL (2 COLUMNAS) -->
+  <div class="row g-4">
 
-  <!-- TABLA DE EVENTOS -->
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-      <h6 class="m-0 fw-bold text-dark">Registro en Tiempo Real</h6>
+    <!-- COLUMNA IZQUIERDA (TARJETA 1): TERMINAL DE VISIÓN Y TORNIQUETES EN VIVO -->
+    <div class="col-lg-7">
+      <div class="card border-0 rounded-4 shadow-sm p-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-camera-video-fill text-orange"></i>
+            <span>Terminal de Visión y Torniquetes en Vivo</span>
+          </h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold">
+            <i class="bi bi-circle-fill me-1 small"></i>EN VIVO
+          </span>
+        </div>
+
+        <!-- DROPDOWNS EN FONDO GRIS CLARO bg-slate-100 -->
+        <div class="row g-2 mb-3">
+          <!-- TORNIQUETE ASIGNADO -->
+          <div class="col-md-4">
+            <label class="extra-small fw-bold text-secondary mb-1">Torniquete Asignado</label>
+            <select class="form-select form-select-sm border-0 bg-slate-100 text-dark fw-bold rounded-3" style="background-color: #f1f5f9;">
+              <option>Torniquete Entrada (San Diego)</option>
+              <option>Torniquete Salida (San Diego)</option>
+              <option>Piso 1 Principal</option>
+            </select>
+          </div>
+
+          <!-- CÁMARA -->
+          <div class="col-md-4">
+            <label class="extra-small fw-bold text-secondary mb-1">Cámara IP</label>
+            <select class="form-select form-select-sm border-0 bg-slate-100 text-dark fw-bold rounded-3" style="background-color: #f1f5f9;">
+              <option>Cámara Hackvision IP (Entrada 01)</option>
+              <option>Webcam HD Terminal 02</option>
+            </select>
+          </div>
+
+          <!-- CAPTAHUELLAS -->
+          <div class="col-md-4">
+            <label class="extra-small fw-bold text-secondary mb-1">Captahuellas</label>
+            <select class="form-select form-select-sm border-0 bg-slate-100 text-dark fw-bold rounded-3" style="background-color: #f1f5f9;">
+              <option>Futronic FS80H USB</option>
+              <option>DigitalPersona 4500</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ACCIONES Y TOGGLE -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 p-2 rounded-3" style="background-color: #f8fafc; border: 1px solid rgba(255, 183, 77, 0.2);">
+          <!-- BOTÓN ABRIR MANUAL (NARANJA SÓLIDO bg-orange-400) -->
+          <button
+            type="button"
+            class="btn btn-orange-solid text-white fw-bold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2"
+            style="background-color: #ff7043; border: none;"
+            (click)="abrirAperturaManual()"
+            [disabled]="abriendoManual"
+          >
+            <i class="bi bi-door-open-fill fs-5"></i>
+            <span>{{ abriendoManual ? 'Abriendo...' : 'Abrir Manual' }}</span>
+          </button>
+
+          <!-- TOGGLE DE AUTO-IDENTIFICACIÓN EN VIVO ACTIVA -->
+          <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="autoIdToggle"
+              [(ngModel)]="autoIdentificacionActiva"
+              style="cursor: pointer; width: 42px; height: 22px;"
+            />
+            <label class="form-check-label fw-bold text-dark small" for="autoIdToggle" style="cursor: pointer;">
+              Auto-identificación en vivo activa
+            </label>
+          </div>
+        </div>
+
+        <div *ngIf="mensajeApertura" class="alert alert-success border-0 py-2 px-3 small fw-bold mb-3 rounded-3">
+          {{ mensajeApertura }}
+        </div>
+
+        <!-- CONTENEDOR NEGRO/GRIS OSCURO DE CÁMARA EN VIVO CON RECUADRO FACIAL VERDE -->
+        <div class="camera-feed-container rounded-4 overflow-hidden position-relative" style="background-color: #0f172a; height: 320px; display: flex; align-items: center; justify-content: center;">
+          <div class="camera-overlay-grid"></div>
+
+          <!-- RECUADRO DE RECONOCIMIENTO FACIAL VERDE -->
+          <div class="facial-box-target">
+            <div class="corner corner-tl"></div>
+            <div class="corner corner-tr"></div>
+            <div class="corner corner-bl"></div>
+            <div class="corner corner-br"></div>
+            <span class="facial-tag-name">SAMUEL TOVAR • 99.8% MATCHEA</span>
+          </div>
+
+          <!-- STATUS BADGE SOBRE LA CÁMARA -->
+          <div class="position-absolute top-0 start-0 m-3 badge bg-dark text-white border border-secondary font-monospace">
+            <i class="bi bi-record-fill text-danger me-1"></i>STREAM: 1080P @ 30 FPS
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Hora</th>
-            <th>Torniquete</th>
-            <th>Cliente</th>
-            <th>Cedula</th>
-            <th>Estado Membresia</th>
-            <th>Resultado</th>
-            <th>Detalle</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let ev of eventos()" class="acceso-row" [class.table-danger]="!ev.accesoPermitido" [class.table-success]="ev.accesoPermitido">
-            <td class="font-monospace fw-bold">{{ ev.timestamp }}</td>
-            <td><i class="bi bi-door-closed me-1"></i> {{ ev.torniquete }}</td>
-            <td class="fw-bold">{{ ev.cliente }}</td>
-            <td class="font-monospace">{{ ev.cedula }}</td>
-            <td>
-              <span class="badge" [class.bg-success]="ev.estadoMembresia === 'ACTIVA'" [class.bg-warning]="ev.estadoMembresia === 'PENDIENTE_CONCILIAR'" [class.bg-danger]="ev.estadoMembresia === 'MOROSO' || ev.estadoMembresia === 'VENCIDA'">
-                {{ ev.estadoMembresia }}
-              </span>
-            </td>
-            <td>
+
+    <!-- COLUMNA DERECHA (TARJETAS 2 Y 3 APILADAS) -->
+    <div class="col-lg-5">
+
+      <!-- TARJETA 2 (TOP): DISPOSITIVOS / TORNIQUETES EN RED -->
+      <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+        <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-hdd-network-fill text-orange"></i>
+          <span>Dispositivos / Torniquetes en Red</span>
+        </h5>
+
+        <div class="device-list-stack">
+          <div *ngFor="let d of dispositivosRed" class="device-row p-2.5 rounded-3 mb-2 d-flex justify-content-between align-items-center" style="background-color: #f8fafc; border: 1px solid rgba(203, 213, 225, 0.6);">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-router text-peach fs-5"></i>
+              <div>
+                <div class="fw-bold text-dark small">{{ d.nombre }}</div>
+                <div class="text-secondary extra-small font-monospace">{{ d.ip }} • {{ d.tipo }}</div>
+              </div>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 fw-bold">
+              {{ d.estado }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETA 3 (BOTTOM): BITÁCORA DE EVENTOS DE PASO -->
+      <div class="card border-0 rounded-4 shadow-sm p-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-orange"></i>
+            <span>Bitácora de Eventos de Paso</span>
+          </h5>
+          <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small fw-bold">
+            Total Hoy: {{ totalHoy() }}
+          </span>
+        </div>
+
+        <div class="events-log-container overflow-auto" style="max-height: 280px;">
+          <div *ngFor="let ev of eventos()" class="event-log-item p-2.5 rounded-3 mb-2" [class.bg-success-subtle]="ev.accesoPermitido" [class.bg-danger-subtle]="!ev.accesoPermitido">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold small">{{ ev.cliente }} ({{ ev.cedula }})</span>
               <span class="badge" [class.bg-success]="ev.accesoPermitido" [class.bg-danger]="!ev.accesoPermitido">
                 {{ ev.accesoPermitido ? 'PERMITIDO' : 'DENEGADO' }}
               </span>
-            </td>
-            <td class="small">{{ ev.motivo }}</td>
-          </tr>
-          <tr *ngIf="eventos().length === 0">
-            <td colspan="7" class="text-center py-5 text-muted">
-              <i class="bi bi-broadcast fs-2 d-block mb-2"></i>
-              Esperando eventos de paso por torniquete...
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center extra-small text-secondary mt-1">
+              <span><i class="bi bi-door-closed me-1"></i>{{ ev.torniquete }}</span>
+              <span class="font-monospace">{{ ev.timestamp }}</span>
+            </div>
+          </div>
+
+          <!-- TEXTO SI NO HAY EVENTOS AÚN -->
+          <div *ngIf="eventos().length === 0" class="text-center py-5 text-secondary">
+            <i class="bi bi-camera-fill fs-2 d-block mb-2 text-peach"></i>
+            <span class="fw-bold">Esperando detección de rostros...</span>
+          </div>
+        </div>
+      </div>
+
     </div>
+
   </div>
+
 </div>

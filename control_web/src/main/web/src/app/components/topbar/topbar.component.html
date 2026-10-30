@@ -1,104 +1,102 @@
-<div class="top-navbar border-bottom px-2 px-md-4 py-2 d-flex justify-content-between align-items-center">
-  <!-- LOGO Y BRANDING -->
+<div class="top-navbar px-3 px-md-4 py-2.5 d-flex justify-content-between align-items-center">
+  <!-- BRANDING & TITULAR -->
   <div class="d-flex align-items-center">
-    <!-- BOTON HAMBURGUESA MOVIL -->
-    <button 
-      class="btn btn-sm btn-dark border border-secondary d-md-none me-2 text-white shadow-sm px-2 py-1" 
-      (click)="sidebarService.toggle()" 
-      type="button" 
+    <!-- BOTÓN HAMBURGUESA MÓVIL -->
+    <button
+      class="btn btn-sm btn-light border d-md-none me-2 text-dark shadow-sm px-2 py-1"
+      (click)="sidebarService.toggle()"
+      type="button"
       title="Alternar Menú"
       aria-label="Alternar Menú">
       <i class="bi bi-list fs-4"></i>
     </button>
 
     <div class="brand-logo-container me-2 d-flex align-items-center brand-pill">
-      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 38px; width: auto; object-fit: contain;" class="rounded" />
+      <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 38px; width: auto; object-fit: contain;" class="rounded-3" />
     </div>
     <div>
-      <h6 class="m-0 fw-bold text-white text-truncate" style="max-width: 170px;">{{ branding?.nombreEmpresa || 'Andes Sistemas' }}</h6>
+      <h6 class="m-0 fw-extrabold text-dark text-truncate" style="max-width: 220px; font-weight: 900; color: #0f172a;">
+        {{ branding?.nombreEmpresa || 'Control de Acceso...' }}
+      </h6>
       <div class="d-flex align-items-center gap-1">
         <span class="status-online-dot"></span>
-        <small class="text-info font-monospace d-none d-sm-inline" style="font-size: 0.72rem;">Acceso Pro • V.2.0</small>
+        <small class="text-peach fw-bold d-none d-sm-inline" style="font-size: 0.72rem;">Clean Health Pro • V.2.0</small>
       </div>
     </div>
   </div>
 
-  <!-- ESTADO DE LA RED Y USUARIO -->
+  <!-- ESTADO DE LA RED Y USUARIO (PÍLDORAS FLOTANTES LIGHT MODE) -->
   <div class="d-flex align-items-center gap-2 gap-md-3">
-    <!-- SELECTOR CENTRALIZADO DE SEDE -->
-    <div class="d-flex align-items-center bg-dark border border-secondary rounded-pill px-2 px-md-3 py-1 shadow-sm">
-      <i class="bi bi-geo-alt-fill text-info me-1"></i>
+    <!-- SELECTOR CENTRALIZADO DE SEDE (PÍLDORA BLANCA FLOTANTE) -->
+    <div class="d-flex align-items-center pill-white shadow-sm">
+      <i class="bi bi-geo-alt-fill text-peach me-1"></i>
       <span class="small fw-bold text-muted d-none d-lg-inline me-1">Sede:</span>
-      <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-white py-0" 
-              style="font-size: 0.85rem; cursor: pointer; min-width: 140px; max-width: 220px;"
+      <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-dark py-0"
+              style="font-size: 0.85rem; cursor: pointer; min-width: 130px; max-width: 200px;"
               [disabled]="sedeBloqueada"
               [title]="sedeBloqueada ? 'Sede asignada a su usuario' : 'Filtrar por sede en todo el sistema'"
-              [(ngModel)]="sedeSeleccionadaId" 
+              [(ngModel)]="sedeSeleccionadaId"
               (ngModelChange)="onSedeChange($event)">
-        <option *ngIf="!sedeBloqueada" [ngValue]="null" class="bg-dark text-white">Todas las Sedes</option>
+        <option *ngIf="!sedeBloqueada" [ngValue]="null" class="bg-white text-dark">Todas las Sedes</option>
         <ng-container *ngFor="let s of sedesList">
-          <option *ngIf="!sedeBloqueada || s.id === sedeSeleccionadaId" [ngValue]="s.id" class="bg-dark text-white">
+          <option *ngIf="!sedeBloqueada || s.id === sedeSeleccionadaId" [ngValue]="s.id" class="bg-white text-dark">
             {{ s.sede }}
           </option>
         </ng-container>
       </select>
-      <span *ngIf="sedeBloqueada" class="badge bg-secondary rounded-pill ms-1" title="Sede fijada por rol">
-        <i class="bi bi-lock-fill text-white" style="font-size: 0.7rem;"></i>
-      </span>
     </div>
 
-    <!-- WIDGET BCV MULTIMONEDA -->
-    <div class="d-none d-lg-flex align-items-center bcv-chip rounded-pill px-3 py-1 shadow-sm gap-2">
+    <!-- WIDGET BCV MULTIMONEDA (PÍLDORA BLANCA) -->
+    <div class="d-none d-lg-flex align-items-center pill-white shadow-sm gap-2">
       <div class="btn-group btn-group-sm p-0" role="group">
-        <button type="button" class="btn btn-sm px-2 py-0 fw-bold" 
-                [class.btn-primary]="monedaActiva === 'USD'" 
+        <button type="button" class="btn btn-sm px-2 py-0.5 fw-bold rounded-pill"
+                [class.btn-primary]="monedaActiva === 'USD'"
                 [class.btn-outline-secondary]="monedaActiva !== 'USD'"
                 (click)="monedaActiva = 'USD'">USD</button>
-        <button type="button" class="btn btn-sm px-2 py-0 fw-bold" 
-                [class.btn-primary]="monedaActiva === 'EUR'" 
+        <button type="button" class="btn btn-sm px-2 py-0.5 fw-bold rounded-pill ms-1"
+                [class.btn-primary]="monedaActiva === 'EUR'"
                 [class.btn-outline-secondary]="monedaActiva !== 'EUR'"
                 (click)="monedaActiva = 'EUR'">EUR</button>
+        <button type="button" class="btn btn-sm px-2 py-0.5 fw-bold rounded-pill ms-1"
+                [class.btn-primary]="monedaActiva === 'VES'"
+                [class.btn-outline-secondary]="monedaActiva !== 'VES'"
+                (click)="monedaActiva = 'VES'">VES</button>
       </div>
 
-      <span class="fw-bold text-white font-monospace" style="font-size: 0.85rem;">
+      <span class="fw-extrabold text-dark font-monospace" style="font-size: 0.85rem;">
         {{ monedaActiva === 'USD' ? (tasaService.tasaUsdSignal() || '---') : (tasaService.tasaEurSignal() || '---') }}
-        <small class="text-info">VES</small>
+        <small class="text-peach fw-bold">VES</small>
       </span>
 
-      <span class="badge rounded-circle p-1" 
-            [class.bg-success]="tasaService.esTasaVigenteHoy()" 
-            [class.bg-warning]="!tasaService.esTasaVigenteHoy()" 
-            [title]="tasaService.esTasaVigenteHoy() ? 'Cotizacion Oficial al dia' : 'Cotizacion pendiente de sincronizar'">
-        <i class="bi bi-clock-history text-white" style="font-size: 0.65rem;"></i>
-      </span>
-
-      <button class="btn btn-link btn-sm p-0 text-info" 
-              [disabled]="tasaService.cargandoSignal()" 
-              (click)="tasaService.sincronizarMoneda(monedaActiva)" 
-              title="Consultar DolarAPI y sincronizar">
+      <button class="btn btn-link btn-sm p-0 text-peach"
+              [disabled]="tasaService.cargandoSignal()"
+              (click)="tasaService.sincronizarMoneda(monedaActiva)"
+              title="Sincronizar Tasa Oficial">
         <i class="bi bi-arrow-repeat fs-6" [class.spin-animation]="tasaService.cargandoSignal()"></i>
       </button>
     </div>
 
     <!-- TERMINAL RÁPIDA -->
-    <a *ngIf="!authService.isCliente() || authService.isAdminOrSuperAdmin()" routerLink="/home/biometria-facial" class="btn btn-outline-info btn-sm rounded-pill fw-bold px-2 px-sm-3 shadow-sm">
-      <i class="bi bi-camera-video me-sm-1"></i>
+    <a *ngIf="!authService.isCliente() || authService.isAdminOrSuperAdmin()" routerLink="/home/biometria-facial" class="btn btn-peach-solid btn-sm rounded-pill fw-bold px-3 py-1.5 shadow-sm">
+      <i class="bi bi-camera-video me-1"></i>
       <span class="d-none d-sm-inline">Terminal Visión</span>
     </a>
 
     <!-- PERFIL Y SALIR -->
-    <div class="d-flex align-items-center border-start border-secondary ps-3 gap-2">
-      <div class="user-profile-chip d-flex align-items-center gap-2">
-        <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600;">
+    <div class="d-flex align-items-center border-start ps-3 gap-2" style="border-color: rgba(255, 183, 77, 0.25) !important;">
+      <div class="user-profile-chip pill-white d-flex align-items-center gap-2 shadow-sm">
+        <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+             style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 800; background: #ff7043; color: #ffffff;">
           {{ usuarioActivo.charAt(0).toUpperCase() }}
         </div>
         <div class="d-none d-sm-block me-1 text-start">
-          <div class="small fw-bold text-white lh-1">{{ usuarioActivo }}</div>
-          <small class="text-success fw-semibold" style="font-size: 0.68rem;">En línea</small>
+          <div class="small fw-bold text-dark lh-1">{{ usuarioActivo }}</div>
+          <small class="text-leaf fw-bold" style="font-size: 0.68rem;">superadmin</small>
         </div>
       </div>
-      <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 fw-bold px-2 px-md-3 py-1 shadow-sm rounded-pill"
-              title="Cerrar Sesión del Sistema" 
+      <button class="btn btn-sm d-flex align-items-center gap-1 fw-bold px-2 px-md-3 py-1.5 shadow-sm rounded-pill"
+              style="border: 1.5px solid #fecdd3; background-color: #fff1f2; color: #e11d48;"
+              title="Cerrar Sesión del Sistema"
               (click)="cerrarSesion()">
         <i class="bi bi-box-arrow-right fs-6"></i>
         <span class="d-none d-md-inline">Salir</span>

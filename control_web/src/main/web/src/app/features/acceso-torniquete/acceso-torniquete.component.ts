@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { SedeStateService } from '../../shared/sede/sede-state.service';
 import { Subscription } from 'rxjs';
@@ -19,12 +20,26 @@ export interface EventoTorniquete {
 @Component({
   selector: 'app-acceso-torniquete',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './acceso-torniquete.component.html',
   styleUrls: ['./acceso-torniquete.component.scss']
 })
 export class AccesoTorniqueteComponent implements OnInit, OnDestroy, OnChanges {
   @Input() filtroSedeId: number | null = null;
+
+  // Control de Terminal y Torniquete
+  torniqueteSeleccionado: string = 'Torniquete Entrada (San Diego)';
+  camaraSeleccionada: string = 'Cámara Hackvision IP (Entrada 01)';
+  captahuellasSeleccionado: string = 'Futronic FS80H USB';
+  autoIdentificacionActiva: boolean = true;
+  abriendoManual: boolean = false;
+  mensajeApertura: string = '';
+
+  dispositivosRed = [
+    { nombre: 'Torniquete Entrada', ip: '192.168.1.101', tipo: 'RELÉ ESP32', estado: 'ASIGNADO' },
+    { nombre: 'Cámara Hackvision', ip: '192.168.1.102', tipo: 'VISIÓN IP', estado: 'LISTO' },
+    { nombre: 'Futronic FS80H', ip: 'USB-PORT-01', tipo: 'CAPTAHUELLAS', estado: 'LISTO' }
+  ];
 
   private wsService = inject(WebSocketService);
   private sedeStateService = inject(SedeStateService);
@@ -53,6 +68,16 @@ export class AccesoTorniqueteComponent implements OnInit, OnDestroy, OnChanges {
     if (changes['filtroSedeId']) {
       this.reaplicarFiltroSede();
     }
+  }
+
+  abrirAperturaManual(): void {
+    this.abriendoManual = true;
+    this.mensajeApertura = 'Enviando pulso de apertura remota...';
+    setTimeout(() => {
+      this.abriendoManual = false;
+      this.mensajeApertura = '✓ ¡Pulso de apertura enviado con éxito!';
+      setTimeout(() => this.mensajeApertura = '', 3000);
+    }, 1000);
   }
 
   ngOnDestroy(): void {
