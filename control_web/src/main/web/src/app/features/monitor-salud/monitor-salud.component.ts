@@ -229,7 +229,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
         this.cargandoHistorial = false;
         const list = Array.isArray(data) ? data : [];
         const nuevasFilas = list.map(item => this.mapearFilaMongo(item));
-        
+
         if (fechaParam || pulseraParam) {
           // Si es una consulta filtrada por fecha o pulsera, poblar la lista con los resultados de ese filtro
           this.historialMongo = nuevasFilas;
@@ -237,7 +237,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
           // Si es carga general de los ultimos 2000, unificar acumulativamente
           const existentesMap = new Set(this.historialMongo.map(h => h.id || `${h.id_pulsera}_${h.timestamp}`));
           const filtradasParaAgregar = nuevasFilas.filter(n => !existentesMap.has(n.id || `${n.id_pulsera}_${n.timestamp}`));
-          
+
           if (this.historialMongo.length === 0) {
             this.historialMongo = nuevasFilas;
           } else if (filtradasParaAgregar.length > 0) {
@@ -407,7 +407,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     this.pulserasList = list.filter(card => {
       const matchP = !this.filtroPulsera || card.idPulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
       const matchC = !this.filtroCliente || card.clienteNombre.toLowerCase().includes(this.filtroCliente.toLowerCase());
-      
+
       let matchSede = true;
       if (this.filtroSedeId !== null) {
         const cliente = card.clienteId ? this.clientesIdMap.get(card.clienteId) : this.clientesMap.get(card.idPulsera.toUpperCase());
@@ -484,7 +484,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     this.historialFiltrado = this.historialMongo.filter(h => {
       const matchPulsera = !this.filtroPulsera || h.id_pulsera.toLowerCase().includes(this.filtroPulsera.toLowerCase());
       const matchCliente = !this.filtroCliente || (h.cliente_nombre && h.cliente_nombre.toLowerCase().includes(this.filtroCliente.toLowerCase()));
-      
+
       let matchFecha = true;
       if (this.filtroFecha && h.timestamp) {
         matchFecha = h.timestamp.startsWith(this.filtroFecha);
@@ -538,6 +538,18 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     if (nueva >= 1 && nueva <= this.totalPaginasHistorial) {
       this.paginaHistorial = nueva;
     }
+  }
+
+  get liveAccessFeed(): TelemetriaMongoRow[] {
+    return this.historialFiltrado.slice(0, 4);
+  }
+
+  get currentActiveScan(): TelemetriaMongoRow | null {
+    return this.historialFiltrado.length > 0 ? this.historialFiltrado[0] : null;
+  }
+
+  get alertsList(): TelemetriaMongoRow[] {
+    return this.historialFiltrado.filter(h => h.estado_alerta === 1 || h.spo2 < 95 || h.bpm > 120).slice(0, 3);
   }
 
   ngOnDestroy(): void {

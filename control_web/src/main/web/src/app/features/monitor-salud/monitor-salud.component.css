@@ -1,4 +1,623 @@
-/* monitor-salud.component.css */
-.monitor-salud-container {
+/* CLEAN HEALTH LIGHT MODE STYLES (CLON IMAGEN DE REFERENCIA 1 & 2) */
+.clean-health-wrapper {
+  background-color: #f8fafc;
+  min-height: 100vh;
   padding: 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* TOP HEADER BAR */
+.clean-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 183, 77, 0.25);
+  box-shadow: 0 10px 30px rgba(255, 138, 101, 0.08);
+}
+
+.header-left-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-a {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.brand-andes {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.brand-sub {
+  font-weight: 700;
+  font-size: 0.65rem;
+  color: #ff7043;
+  letter-spacing: 1px;
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(203, 213, 225, 0.6);
+}
+
+.system-title-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #475569;
+  letter-spacing: 0.5px;
+}
+
+.breadcrumb-arrow {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.header-right-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pill-active {
+  background-color: #ffe0b2;
+  color: #e65100;
+}
+
+.pill-gateway {
+  background-color: #ffccbc;
+  color: #bf360c;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-active {
+  background-color: #f57c00;
+  box-shadow: 0 0 8px #f57c00;
+}
+
+.dot-gateway {
+  background-color: #e64a19;
+  box-shadow: 0 0 8px #e64a19;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ff7043;
+}
+
+.avatar-arrow {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* MAIN DASHBOARD GRID (3 COLUMNAS) */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 1.25rem;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.column-title {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #1e293b;
+  letter-spacing: 0.8px;
+  margin: 0;
+}
+
+.more-options {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* GLASSMORPHIC CARDS */
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 1.1rem;
+  border: 1px solid rgba(255, 183, 77, 0.22);
+  box-shadow: 0 10px 25px rgba(255, 138, 101, 0.06);
+  margin-bottom: 1rem;
+}
+
+/* COLUMNA 1: ACCESS FEED CARDS */
+.feed-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.access-feed-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 183, 77, 0.2);
+  box-shadow: 0 4px 15px rgba(255, 138, 101, 0.05);
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #ffab91;
+}
+
+.card-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.user-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+.gate-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.user-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.card-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.date-text {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.access-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+}
+
+.badge-granted {
+  background-color: #ffccbc;
+  color: #d84315;
+}
+
+.badge-scanning {
+  background-color: #ffe0b2;
+  color: #e65100;
+}
+
+.badge-alert {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+
+/* COLUMNA 2: VITALS ANALYTICS */
+.filter-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.control-pill {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.pill-orange {
+  background-color: #ffe0b2;
+  color: #e65100;
+}
+
+.heart-rate-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.card-label {
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.heart-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #ffccbc;
+  color: #d84315;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.chart-container {
+  display: flex;
+  align-items: flex-end;
+  height: 140px;
+  position: relative;
+}
+
+.y-axis-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
+  padding-right: 0.5rem;
+}
+
+.svg-wave-wrapper {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.fluid-chart-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.peak-callout-box {
+  position: absolute;
+  top: 0px;
+  left: 52%;
+  transform: translateX(-50%);
+  background: #ff7043;
+  color: #ffffff;
+  padding: 0.25rem 0.65rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(255, 112, 67, 0.4);
+  z-index: 10;
+}
+
+.callout-pointer {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #ff7043;
+}
+
+.x-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.vitals-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* SpO2 CARD */
+.spo2-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.radial-ring-wrap {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.radial-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.radial-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.radial-num {
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.radial-sub {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+/* TEMPERATURE CARD */
+.temp-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.temp-val-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.temp-num {
+  font-weight: 900;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.temp-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #ffe0b2;
+  color: #e65100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* COLUMNA 3: ACTIVE USER & ALERTS */
+.active-user-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scan-header-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.scan-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scan-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2.5px solid #ff7043;
+}
+
+.scan-user-names {
+  display: flex;
+  flex-direction: column;
+}
+
+.scan-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.scan-telemetry-box {
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  padding: 0.6rem;
+  font-size: 0.65rem;
+  color: #475569;
+}
+
+.telemetry-label {
+  font-weight: 800;
+  color: #ff7043;
+  margin-bottom: 0.2rem;
+}
+
+/* RADAR SCANNER GRAPHIC */
+.radar-scanner-graphic {
+  width: 100%;
+  height: 90px;
+  position: relative;
+  background-color: #fff3e0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 112, 67, 0.3);
+}
+
+.circle-outer { width: 70px; height: 70px; }
+.circle-mid { width: 45px; height: 45px; }
+.circle-inner { width: 20px; height: 20px; }
+
+.radar-crosshair-h {
+  position: absolute;
+  width: 80%;
+  height: 1px;
+  background-color: rgba(255, 112, 67, 0.3);
+}
+
+.radar-crosshair-v {
+  position: absolute;
+  height: 80%;
+  width: 1px;
+  background-color: rgba(255, 112, 67, 0.3);
+}
+
+/* ALERTS STACK */
+.alerts-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.alert-card {
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.alert-coral {
+  background-color: #ffccbc;
+  color: #bf360c;
+  border: 1px solid #ffab91;
+}
+
+.alert-rose {
+  background-color: #ffcdd2;
+  color: #b71c1c;
+  border: 1px solid #ef9a9a;
+}
+
+.alert-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-type {
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.alert-user {
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.alert-timestamp {
+  font-size: 0.65rem;
+  opacity: 0.8;
 }
