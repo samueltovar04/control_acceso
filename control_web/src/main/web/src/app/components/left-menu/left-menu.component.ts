@@ -48,10 +48,13 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
 
   aplicarTemaBody(): void {
     if (this.esModoOscuro) {
-      document.body.classList.add('dark-sidebar-theme');
+      document.body.classList.add('dark-theme');
+      document.body.classList.remove('light-theme');
       document.body.classList.remove('light-sidebar-theme');
     } else {
+      document.body.classList.add('light-theme');
       document.body.classList.add('light-sidebar-theme');
+      document.body.classList.remove('dark-theme');
       document.body.classList.remove('dark-sidebar-theme');
     }
   }

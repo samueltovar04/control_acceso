@@ -80,10 +80,11 @@ button {
 }
 
 /* ==========================================================================
-   GLOBAL DARK THEME OVERRIDES (SE ACTIVA CUANDO EL SWITCH CAMBIA A MODO OSCURO)
+   MODO OSCURO COMPLETO ORIGINAL (CUANDO EL SWITCH ESTÁ EN MODO OSCURO)
+   Devuelve los módulos, sidebar y topbar al estilo oscuro original hasta ayer
    ========================================================================== */
 body.dark-theme, html.dark-theme {
-    background-color: #090d16 !important;
+    background-color: #080c14 !important;
     color: #f8fafc !important;
 }
 
@@ -92,7 +93,7 @@ body.dark-theme .clean-health-container,
 body.dark-theme .gym-dashboard-wrapper,
 body.dark-theme .container-fluid,
 body.dark-theme main {
-    background-color: #090d16 !important;
+    background-color: #080c14 !important;
     color: #f8fafc !important;
 }
 
@@ -102,12 +103,22 @@ body.dark-theme .table-card,
 body.dark-theme .settings-card,
 body.dark-theme .access-log-card,
 body.dark-theme .user-scan-card,
-body.dark-theme .sidebar-wrapper,
-body.dark-theme .top-navbar,
 body.dark-theme .bg-white {
     background-color: #0f172a !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
     color: #f8fafc !important;
+}
+
+body.dark-theme .sidebar-wrapper {
+    background: radial-gradient(circle at top left, #111827 0%, #090d16 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .top-navbar {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
 }
 
 body.dark-theme h1, body.dark-theme h2, body.dark-theme h3,
