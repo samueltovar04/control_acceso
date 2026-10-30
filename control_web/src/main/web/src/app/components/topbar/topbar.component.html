@@ -70,7 +70,7 @@
 
       <button class="btn btn-link btn-sm p-0 text-peach"
               [disabled]="tasaService.cargandoSignal()"
-              (click)="tasaService.sincronizarMoneda(monedaActiva)"
+              (click)="tasaService.sincronizarMoneda(monedaActiva === 'VES' ? 'USD' : monedaActiva)"
               title="Sincronizar Tasa Oficial">
         <i class="bi bi-arrow-repeat fs-6" [class.spin-animation]="tasaService.cargandoSignal()"></i>
       </button>

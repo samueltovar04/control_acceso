@@ -76,6 +76,11 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   // Tarjetas vivas por pulsera (Unica vez por cada id_pulsera, actualizadas dinamicamente)
   pulserasMap: Map<string, PulseraCard> = new Map();
   pulserasList: PulseraCard[] = [];
+  pulseraSeleccionada: PulseraCard | null = null;
+
+  seleccionarPulsera(card: PulseraCard): void {
+    this.pulseraSeleccionada = card;
+  }
 
   // Metricas globales en tiempo real para las 4 tarjetas superiores
   resumenGlobal = {
