@@ -1,310 +1,415 @@
-<div class="clean-health-wrapper">
+<div class="clean-health-container p-4" style="background-color: #f8fafc; min-height: 100vh; color: #1e293b;">
 
-  <!-- TOP HEADER BAR (CLON IDÉNTICO IMAGEN DE REFERENCIA 1) -->
-  <header class="clean-header-bar">
-    <div class="header-left-brand">
-      <div class="logo-mark">
-        <span class="logo-a">A</span>
-        <div class="logo-text">
-          <span class="brand-andes">ANDES</span>
-          <span class="brand-sub">ACTIVE</span>
-        </div>
+  <!-- TÍTULO DE CABECERA PRINCIPAL (SIN MENÚ TOP DUPLICADO) -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+      <h3 class="fw-extrabold text-dark mb-1" style="font-weight: 900; color: #0f172a;">
+        <i class="bi bi-heart-pulse-fill me-2" style="color: #ff7043;"></i>
+        <span>Monitor IoT de Signos Vitales (ESP32 MESH)</span>
+      </h3>
+      <p class="text-secondary small mb-0">
+        Monitoreo telemétrico en tiempo real • Pulsos MESH desde Gateways ESP32 e Historial MongoDB
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" (click)="mostrarAyudaTarjetas = !mostrarAyudaTarjetas">
+        <i class="bi bi-info-circle me-1"></i>Indicadores de Salud
+      </button>
+      <button class="btn btn-sm rounded-pill px-3 fw-bold text-white shadow-sm" style="background-color: #ff7043;" (click)="cargarHistorialMongoDB()" [disabled]="cargandoHistorial">
+        <i class="bi bi-arrow-clockwise me-1" [ngClass]="{'spin': cargandoHistorial}"></i>Sincronizar MongoDB
+      </button>
+    </div>
+  </div>
+
+  <!-- PANEL EXPLICATIVO DE LAS MÉTRICAS -->
+  <div *ngIf="mostrarAyudaTarjetas" class="alert border-0 shadow-sm mb-4 rounded-4" style="background-color: #fff3e0; color: #78350f; border-left: 4px solid #ff7043 !important;">
+    <div class="d-flex justify-content-between align-items-start">
+      <h6 class="fw-bold mb-2" style="color: #e65100;"><i class="bi bi-info-circle-fill me-2"></i>Indicadores de Telemetría Biométrica:</h6>
+      <button type="button" class="btn-close" (click)="mostrarAyudaTarjetas = false"></button>
+    </div>
+    <div class="row g-3 small">
+      <div class="col-md-3">
+        <strong style="color: #e53935;">1. Ritmo Cardíaco (BPM):</strong> Captura óptica de frecuencia cardíaca. Rango seguro: 60 - 120 BPM.
       </div>
-      <div class="header-divider"></div>
-      <div class="system-title-nav">
-        <span class="title-main">GYM ACCESS & VITAL MONITORING SYSTEM</span>
-        <i class="bi bi-chevron-right breadcrumb-arrow"></i>
+      <div class="col-md-3">
+        <strong style="color: #0288d1;">2. Oxígeno SpO2 (%):</strong> Oximetría de pulso arterial. Rango óptimo: ≥ 95%.
+      </div>
+      <div class="col-md-3">
+        <strong style="color: #f57c00;">3. Temperatura (°C):</strong> Sensor térmico corporal directo.
+      </div>
+      <div class="col-md-3">
+        <strong style="color: #2e7d32;">4. Brazaletes Activos:</strong> Dispositivos reales en rango emitiendo lecturas.
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PRINCIPAL CLEAN HEALTH (PANEL DE ENFOQUE EN CLIENTE Y GRÁFICO DINÁMICO) -->
+  <div class="row g-4 mb-4">
+
+    <!-- TARJETA CUMBRE 1: ENFOQUE EN CLIENTE SELECCIONADO / RITMO CARDÍACO REAL -->
+    <div class="col-lg-8">
+      <div class="card border-0 rounded-4 shadow-sm p-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <span class="text-secondary extra-small fw-bold text-uppercase d-block" style="color: #78350f !important;">ENFOQUE EN CLIENTE EN TIEMPO REAL</span>
+            <h5 class="fw-bold text-dark mb-0" style="color: #0f172a;">
+              {{ pulseraSeleccionada ? pulseraSeleccionada.clienteNombre : (pulserasList.length > 0 ? pulserasList[0].clienteNombre : 'Todos los Clientes (Promedio Real)') }}
+            </h5>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill px-3 py-1.5 fw-bold" style="background-color: #ffe0b2; color: #e65100;">
+              Dispositivo: {{ pulseraSeleccionada ? pulseraSeleccionada.idPulsera : (pulserasList.length > 0 ? pulserasList[0].idPulsera : 'General') }}
+            </span>
+          </div>
+        </div>
+
+        <!-- VALORES REALES DEL ENFOQUE -->
+        <div class="row g-3 mb-3">
+          <!-- BPM REAL -->
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background-color: #fff1f2; border: 1px solid #fecdd3;">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="extra-small fw-bold text-secondary">Frecuencia Cardíaca</span>
+                <i class="bi bi-heart-pulse-fill text-danger fs-5"></i>
+              </div>
+              <div class="fs-2 fw-extrabold text-danger my-1" style="font-weight: 900;">
+                {{ pulseraSeleccionada ? pulseraSeleccionada.bpm : (resumenGlobal.bpmPromedio > 0 ? resumenGlobal.bpmPromedio : '--') }}
+                <span class="fs-6 text-muted font-normal">BPM</span>
+              </div>
+              <span class="extra-small fw-bold text-success">
+                {{ (pulseraSeleccionada ? pulseraSeleccionada.bpm : resumenGlobal.bpmPromedio) > 0 ? '✓ Ritmo Fisiológico Activo' : 'Sin señal' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- SpO2 REAL -->
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background-color: #e0f2fe; border: 1px solid #bae6fd;">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="extra-small fw-bold text-secondary">Saturación Oxígeno</span>
+                <i class="bi bi-droplet-fill text-primary fs-5"></i>
+              </div>
+              <div class="fs-2 fw-extrabold text-primary my-1" style="font-weight: 900;">
+                {{ pulseraSeleccionada ? pulseraSeleccionada.spo2 : (resumenGlobal.spo2Promedio > 0 ? resumenGlobal.spo2Promedio : '--') }}%
+              </div>
+              <span class="extra-small fw-bold text-primary">Saturación Arterial Óptima</span>
+            </div>
+          </div>
+
+          <!-- TEMP REAL -->
+          <div class="col-md-4">
+            <div class="p-3 rounded-3" style="background-color: #fef3c7; border: 1px solid #fde68a;">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="extra-small fw-bold text-secondary">Temperatura Corporal</span>
+                <i class="bi bi-thermometer-half text-warning fs-5"></i>
+              </div>
+              <div class="fs-2 fw-extrabold text-warning my-1" style="font-weight: 900;">
+                {{ pulseraSeleccionada ? (pulseraSeleccionada.temp | number:'1.1-2') : (resumenGlobal.tempPromedio > 0 ? resumenGlobal.tempPromedio : '--') }} °C
+              </div>
+              <span class="extra-small fw-bold text-warning">Temperatura Corporal Directa</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DIBUJO FLUIDO SVG DE ONDA ECG EN VIVO -->
+        <div class="p-3 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(180deg, #fff3e0 0%, #ffffff 100%); border: 1px solid #ffe0b2;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="extra-small fw-bold text-secondary"><i class="bi bi-activity text-danger me-1"></i>Onda ECG Telemétrica en Vivo</span>
+            <span class="extra-small font-monospace text-muted">Tiempo Real vía WebSocket</span>
+          </div>
+
+          <svg viewBox="0 0 500 70" class="w-100" style="height: 70px;">
+            <defs>
+              <linearGradient id="peachGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff7043" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#ffb74d" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+            <path d="M 0 45 Q 25 45 35 45 L 40 10 L 48 60 L 55 20 L 60 45 Q 85 45 100 45 L 105 10 L 113 60 L 120 20 L 125 45 Q 150 45 165 45 L 170 10 L 178 60 L 185 20 L 190 45 Q 215 45 230 45 L 235 10 L 243 60 L 250 20 L 255 45 Q 280 45 295 45 L 300 10 L 308 60 L 315 20 L 320 45 Q 345 45 360 45 L 365 10 L 373 60 L 380 20 L 385 45 Q 410 45 425 45 L 430 10 L 438 60 L 445 20 L 450 45 Q 475 45 500 45 L 500 70 L 0 70 Z"
+              fill="url(#peachGradient)" />
+            <path d="M 0 45 Q 25 45 35 45 L 40 10 L 48 60 L 55 20 L 60 45 Q 85 45 100 45 L 105 10 L 113 60 L 120 20 L 125 45 Q 150 45 165 45 L 170 10 L 178 60 L 185 20 L 190 45 Q 215 45 230 45 L 235 10 L 243 60 L 250 20 L 255 45 Q 280 45 295 45 L 300 10 L 308 60 L 315 20 L 320 45 Q 345 45 360 45 L 365 10 L 373 60 L 380 20 L 385 45 Q 410 45 425 45 L 430 10 L 438 60 L 445 20 L 450 45 Q 475 45 500 45"
+              fill="none" stroke="#ff7043" stroke-width="2.5" />
+          </svg>
+        </div>
       </div>
     </div>
 
-    <div class="header-right-pills">
-      <div class="status-pill pill-active">
-        <span class="status-dot dot-active"></span>
-        <span class="pill-label">SYSTEM STATUS: <strong class="text-uppercase">ACTIVE</strong></span>
-      </div>
+    <!-- TARJETA CUMBRE 2: RESUMEN GLOBAL Y MÁS ALERTAS REALES -->
+    <div class="col-lg-4">
+      <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+        <h5 class="fw-bold text-dark mb-3" style="color: #0f172a;">
+          <i class="bi bi-shield-exclamation text-danger me-2"></i>Panel de Alertas Telemétricas
+        </h5>
 
-      <div class="status-pill pill-gateway">
-        <span class="status-dot dot-gateway"></span>
-        <span class="pill-label">GATEWAY: <strong class="text-uppercase">ONLINE</strong></span>
-      </div>
+        <div class="alerts-stack-real">
+          <div *ngFor="let alert of alertsList" class="p-3 rounded-3 mb-2" style="background-color: #fff1f2; border: 1px solid #fecdd3;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>ALERTA FISIOLÓGICA</span>
+              <span class="badge bg-danger text-white extra-small">{{ alert.bpm }} BPM</span>
+            </div>
+            <div class="fw-bold text-dark small mt-1">{{ alert.cliente_nombre }} ({{ alert.id_pulsera }})</div>
+            <div class="text-secondary extra-small mt-1">{{ alert.timestamp | date:'shortTime' }} • SpO2: {{ alert.spo2 }}% • Temp: {{ alert.temp }}°C</div>
+          </div>
 
-      <div class="user-profile-badge">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Admin Avatar" class="header-avatar" />
-        <i class="bi bi-chevron-down avatar-arrow"></i>
+          <div *ngIf="alertsList.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-check-circle-fill text-success fs-2 d-block mb-2"></i>
+            <span class="fw-bold small">Sin alertas telemétricas críticas. Todos los valores se encuentran en rangos seguros.</span>
+          </div>
+        </div>
       </div>
     </div>
-  </header>
-
-  <!-- MAIN DASHBOARD CONTENT GRID (3 COLUMNAS: ACCESS FEED | VITALS ANALYTICS | ACTIVE USER & ALERTS) -->
-  <div class="dashboard-grid">
-
-    <!-- COLUMNA 1: LIVE ACCESS FEED -->
-    <section class="grid-column col-feed">
-      <div class="section-title-bar">
-        <h4 class="column-title">LIVE ACCESS FEED</h4>
-        <div class="more-options">•••</div>
-      </div>
-
-      <div class="feed-cards-stack">
-        <!-- MARCO R. -->
-        <div class="access-feed-card">
-          <div class="card-avatar-wrap">
-            <img src="https://ui-avatars.com/api/?name=Marco+R&background=ff8a65&color=fff" alt="User" class="user-avatar" />
-          </div>
-          <div class="card-user-info">
-            <div class="user-name-row">
-              <span class="user-name">MARCO R.</span>
-              <span class="gate-label">GATE ID</span>
-            </div>
-            <div class="user-meta-row">
-              <span class="checkin-time">CHECK-IN: 02:1:54</span>
-              <span class="gate-id">TURNSTILE 01</span>
-            </div>
-            <div class="card-footer-row">
-              <span class="date-text">2026-10-21 10:47 AM</span>
-              <span class="access-badge badge-granted">ACCESS GRANTED</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ALEXA G. -->
-        <div class="access-feed-card">
-          <div class="card-avatar-wrap">
-            <img src="https://ui-avatars.com/api/?name=Alexa+G&background=ffb74d&color=fff" alt="User" class="user-avatar" />
-          </div>
-          <div class="card-user-info">
-            <div class="user-name-row">
-              <span class="user-name">ALEXA G.</span>
-              <span class="gate-label">GATE ID</span>
-            </div>
-            <div class="user-meta-row">
-              <span class="checkin-time">CHECK-IN: 02YCO</span>
-              <span class="gate-id">TURNSTILE 02</span>
-            </div>
-            <div class="card-footer-row">
-              <span class="date-text">2026-10-21 10:35 AM</span>
-              <span class="access-badge badge-scanning">SCANNING</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- SAMUEL T. -->
-        <div class="access-feed-card">
-          <div class="card-avatar-wrap">
-            <img src="https://ui-avatars.com/api/?name=Samuel+T&background=81c784&color=fff" alt="User" class="user-avatar" />
-          </div>
-          <div class="card-user-info">
-            <div class="user-name-row">
-              <span class="user-name">SAMUEL T.</span>
-              <span class="gate-label">GATE ID</span>
-            </div>
-            <div class="user-meta-row">
-              <span class="checkin-time">CHECK-IN: 02J0S0</span>
-              <span class="gate-id">TURNSTILE 01</span>
-            </div>
-            <div class="card-footer-row">
-              <span class="date-text">2026-10-21 10:47 AM</span>
-              <span class="access-badge badge-scanning">SCANNING</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- LUCAS M. -->
-        <div class="access-feed-card">
-          <div class="card-avatar-wrap">
-            <img src="https://ui-avatars.com/api/?name=Lucas+M&background=e57373&color=fff" alt="User" class="user-avatar" />
-          </div>
-          <div class="card-user-info">
-            <div class="user-name-row">
-              <span class="user-name">LUCAS M.</span>
-              <span class="gate-label">GATE ID</span>
-            </div>
-            <div class="user-meta-row">
-              <span class="checkin-time">CHECK-IN: 03.038</span>
-              <span class="gate-id">TURNSTILE 02</span>
-            </div>
-            <div class="card-footer-row">
-              <span class="date-text">2026-10-21 10:33 AM</span>
-              <span class="access-badge badge-alert">ALERT</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- COLUMNA 2: VITALS ANALYTICS (GRÁFICOS Y MÉTRICAS) -->
-    <section class="grid-column col-analytics">
-      <div class="section-title-bar">
-        <h4 class="column-title">VITALS ANALYTICS</h4>
-        <div class="filter-controls">
-          <span class="control-pill">GOART <i class="bi bi-chevron-down ms-1"></i></span>
-          <span class="control-pill pill-orange">ACTIVE <i class="bi bi-chevron-down ms-1"></i></span>
-        </div>
-      </div>
-
-      <!-- CARD CUMBRE: HEART RATE (BPM) ÁREA FLUIDA PEACH/CORAL -->
-      <div class="glass-card heart-rate-card">
-        <div class="card-title-row">
-          <span class="card-label">HEART RATE (BPM)</span>
-          <div class="heart-icon-badge">
-            <i class="bi bi-heart-pulse-fill"></i>
-          </div>
-        </div>
-
-        <!-- EJE Y Y GRÁFICO FLUIDO DE ONDA ECG -->
-        <div class="chart-container">
-          <div class="y-axis-labels">
-            <span>130</span>
-            <span>120</span>
-            <span>100</span>
-            <span>90</span>
-            <span>60</span>
-            <span>30</span>
-          </div>
-
-          <div class="svg-wave-wrapper">
-            <!-- CALLOUT TOOLTIP 132 BPM (ACTIVE) -->
-            <div class="peak-callout-box">
-              <span class="callout-val">{{ resumenGlobal.bpmPromedio > 0 ? resumenGlobal.bpmPromedio : 132 }} BPM (Active)</span>
-              <div class="callout-pointer"></div>
-            </div>
-
-            <svg viewBox="0 0 500 120" class="fluid-chart-svg" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="peachGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#ff8a65" stop-opacity="0.45" />
-                  <stop offset="100%" stop-color="#ffb74d" stop-opacity="0.02" />
-                </linearGradient>
-              </defs>
-
-              <!-- ÁREA DE GRADIENTE -->
-              <path d="M 0 80 Q 30 80 45 65 T 90 85 T 120 40 T 150 75 T 180 90 T 210 50 T 240 70 T 270 20 T 300 80 T 330 60 T 360 85 T 400 70 T 450 80 T 500 75 L 500 120 L 0 120 Z"
-                    fill="url(#peachGradient)" />
-
-              <!-- LÍNEA FLUIDA NEÓN PEACH -->
-              <path d="M 0 80 Q 30 80 45 65 T 90 85 T 120 40 T 150 75 T 180 90 T 210 50 T 240 70 T 270 20 T 300 80 T 330 60 T 360 85 T 400 70 T 450 80 T 500 75"
-                    fill="none" stroke="#ff7043" stroke-width="3" stroke-linecap="round" />
-
-              <!-- PEAK CIRCLE CALLOUT -->
-              <circle cx="270" cy="20" r="6" fill="#ff7043" stroke="#ffffff" stroke-width="2.5" />
-            </svg>
-          </div>
-        </div>
-
-        <div class="x-axis-labels">
-          <span>19:20</span>
-          <span>9:75</span>
-          <span>9:75</span>
-          <span>0:20</span>
-          <span>9:35</span>
-          <span>10:35</span>
-          <span>19:00</span>
-        </div>
-      </div>
-
-      <!-- FILA INFERIOR: SpO2 Y BODY TEMPERATURE -->
-      <div class="vitals-bottom-row">
-        <!-- SpO2 (BLOOD OXYGEN) -->
-        <div class="glass-card spo2-card">
-          <span class="card-label">SpO2 (BLOOD OXYGEN)</span>
-          <div class="radial-ring-wrap">
-            <svg viewBox="0 0 100 100" class="radial-svg">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#ffe0b2" stroke-width="10" />
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#ff7043" stroke-width="10"
-                      stroke-dasharray="251.2" stroke-dashoffset="20" stroke-linecap="round" />
-            </svg>
-            <div class="radial-center-text">
-              <span class="radial-num">{{ resumenGlobal.spo2Promedio > 0 ? resumenGlobal.spo2Promedio : 98 }}%</span>
-              <span class="radial-sub">NORMAL</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- BODY TEMPERATURE -->
-        <div class="glass-card temp-card">
-          <span class="card-label">BODY TEMPERATURE</span>
-          <div class="temp-val-wrap">
-            <span class="temp-num">{{ resumenGlobal.tempPromedio > 0 ? resumenGlobal.tempPromedio : '36.7' }}°C</span>
-            <div class="temp-icon-box">
-              <i class="bi bi-thermometer-half"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- COLUMNA 3: ACTIVE USER & ALERTS PANEL -->
-    <section class="grid-column col-right">
-      <div class="section-title-bar">
-        <h4 class="column-title">ACTIVE USER</h4>
-        <div class="more-options">•••</div>
-      </div>
-
-      <!-- ACTIVE USER / CURRENT SCAN CARD -->
-      <div class="glass-card active-user-card">
-        <span class="scan-header-label">CURRENT SCAN</span>
-
-        <div class="scan-user-profile">
-          <img src="https://ui-avatars.com/api/?name=Focus+Samuel&background=ff7043&color=fff" alt="Active User" class="scan-avatar" />
-          <div class="scan-user-names">
-            <span class="scan-title font-bold">Focus</span>
-            <span class="scan-sub text-muted">Samuel Tovar</span>
-          </div>
-        </div>
-
-        <div class="scan-telemetry-box">
-          <div class="telemetry-label">
-            <i class="bi bi-broadcast me-1 text-peach"></i>
-            <span>BIOMETRIC TELEMETRY</span>
-          </div>
-          <div class="telemetry-values">
-            <span>❤️ {{ resumenGlobal.spo2Promedio > 0 ? resumenGlobal.spo2Promedio : 98 }}% - {{ resumenGlobal.bpmPromedio > 0 ? resumenGlobal.bpmPromedio : 96 }}% - 69 nem - RAX: 4.50 ppm</span>
-          </div>
-        </div>
-
-        <!-- HOLOGRAPHIC RADAR SCANNER GRAPHIC -->
-        <div class="radar-scanner-graphic">
-          <div class="radar-circle circle-outer"></div>
-          <div class="radar-circle circle-mid"></div>
-          <div class="radar-circle circle-inner"></div>
-          <div class="radar-crosshair-h"></div>
-          <div class="radar-crosshair-v"></div>
-          <div class="radar-sweep-hand"></div>
-        </div>
-      </div>
-
-      <!-- ALERTS PANEL -->
-      <div class="alerts-panel-wrapper">
-        <div class="section-title-bar">
-          <h4 class="column-title">ALERTS PANEL</h4>
-          <div class="more-options">•••</div>
-        </div>
-
-        <div class="alerts-stack">
-          <div class="alert-card alert-coral">
-            <div class="alert-title-row">
-              <span class="alert-type">SpO2 DROP</span>
-              <span class="alert-user">Unauthrorizer (G. WANG)</span>
-            </div>
-            <span class="alert-timestamp">2026-10-21 10:33 AM</span>
-          </div>
-
-          <div class="alert-card alert-coral">
-            <div class="alert-title-row">
-              <span class="alert-type">SpO2 DROP</span>
-            </div>
-            <span class="alert-timestamp">2026-10-21 10:33 AM</span>
-          </div>
-
-          <div class="alert-card alert-rose">
-            <div class="alert-title-row">
-              <span class="alert-type">UNAUTHORIZED ENTRY TRY</span>
-            </div>
-            <span class="alert-timestamp">2026-10-21 10:33 AM</span>
-          </div>
-        </div>
-      </div>
-    </section>
 
   </div>
+
+  <!-- FILTROS REALES DE BÚSQUEDA (SEDE, PISO, GATEWAY, DISPOSITIVO, CLIENTE, FECHA) -->
+  <div class="card border-0 rounded-4 shadow-sm mb-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+    <div class="card-body p-3">
+      <div class="row g-2 align-items-center">
+        <!-- SEDE -->
+        <div class="col-md-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0"><i class="bi bi-building text-muted"></i></span>
+            <select
+              class="form-select border-0 bg-light text-dark fw-bold"
+              [ngModel]="filtroSedeId"
+              (ngModelChange)="onSedeChange($event)"
+              [disabled]="sedeBloqueada"
+            >
+              <option [ngValue]="null">Todas las Sedes</option>
+              <option *ngFor="let s of sedes" [ngValue]="s.id">{{ s.sede }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- PISO -->
+        <div class="col-md-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0"><i class="bi bi-layers text-muted"></i></span>
+            <select
+              class="form-select border-0 bg-light text-dark fw-bold"
+              [ngModel]="filtroPisoId"
+              (ngModelChange)="onPisoChange($event)"
+            >
+              <option [ngValue]="null">Todos los Pisos</option>
+              <option *ngFor="let p of pisos" [ngValue]="p.id">
+                {{ p.numeroPiso || p.descripcion || p.piso || ('Piso ' + p.id) }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- GATEWAY -->
+        <div class="col-md-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0"><i class="bi bi-router text-muted"></i></span>
+            <select
+              class="form-select border-0 bg-light text-dark fw-bold"
+              [(ngModel)]="filtroGateway"
+              (ngModelChange)="aplicarFiltros()"
+            >
+              <option value="">Todos los Gateways</option>
+              <option *ngFor="let gw of gateways" [value]="gw.descripcion || gw.ip">
+                {{ gw.descripcion }} ({{ gw.ip }})
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- PULSERA -->
+        <div class="col-md-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0"><i class="bi bi-smartwatch text-muted"></i></span>
+            <input
+              type="text"
+              class="form-control border-0 bg-light text-dark fw-bold"
+              placeholder="Pulsera..."
+              [(ngModel)]="filtroPulsera"
+              (input)="aplicarFiltros()"
+            />
+          </div>
+        </div>
+
+        <!-- CLIENTE -->
+        <div class="col-md-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-0"><i class="bi bi-person text-muted"></i></span>
+            <input
+              type="text"
+              class="form-control border-0 bg-light text-dark fw-bold"
+              placeholder="Cliente / Socio..."
+              [(ngModel)]="filtroCliente"
+              (input)="aplicarFiltros()"
+            />
+          </div>
+        </div>
+
+        <!-- FECHA -->
+        <div class="col-md-1">
+          <input
+            type="date"
+            class="form-control form-control-sm border-0 bg-light text-dark fw-bold px-1 text-center"
+            [(ngModel)]="filtroFecha"
+            (change)="aplicarFiltros()"
+            title="Filtrar por fecha"
+          />
+        </div>
+
+        <!-- BOTÓN LIMPIAR -->
+        <div class="col-md-1 text-end">
+          <button class="btn btn-sm btn-outline-secondary w-100 rounded-3" (click)="limpiarFiltros()" title="Limpiar Filtros">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TARJETAS REALES DE DISPOSITIVOS / PULSERAS ACTIVAS (CON CLIC PARA ENFOCAR) -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-grid-fill me-1" style="color: #ff7043;"></i>
+      <span>Brazaletes Activos en Vivo ({{ pulserasList.length }})</span>
+    </h5>
+    <small class="text-secondary">Haz clic en una tarjeta para hacer FOCUS y visualizar sus signos en el monitor</small>
+  </div>
+
+  <div class="row g-3 mb-4" *ngIf="pulserasList.length > 0">
+    <div class="col-md-4" *ngFor="let card of pulserasList">
+      <div
+        class="card border-0 rounded-4 shadow-sm p-3 bg-white h-100"
+        style="cursor: pointer; border: 1.5px solid rgba(255, 183, 77, 0.25); transition: all 0.2s ease;"
+        [class.selected-card]="pulseraSeleccionada?.idPulsera === card.idPulsera"
+        (click)="seleccionarPulsera(card)"
+      >
+        <!-- HEADER TARJETA -->
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <span class="badge font-monospace px-2 py-1 fs-6" style="background-color: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;">
+              {{ card.idPulsera }}
+            </span>
+            <div class="mt-2">
+              <span *ngIf="card.vinculada" class="badge px-2 py-1" style="background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7;">
+                <i class="bi bi-person-check-fill me-1"></i>{{ card.clienteNombre }}
+              </span>
+              <span *ngIf="!card.vinculada" class="badge px-2 py-1" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;">
+                <i class="bi bi-link-45deg me-1"></i>Sin Vincular
+              </span>
+            </div>
+          </div>
+
+          <span class="badge rounded-pill px-3 py-1" [ngClass]="card.alerta === 1 ? 'bg-danger text-white' : 'bg-success text-white'">
+            {{ card.alerta === 1 ? 'ALERTA' : 'NORMAL' }}
+          </span>
+        </div>
+
+        <!-- DATO VITAL -->
+        <div class="row text-center g-2 my-2 py-2 border-top border-bottom border-light">
+          <div class="col-4 border-end">
+            <small class="text-secondary d-block extra-small">Ritmo</small>
+            <span class="fw-bold fs-5 text-danger">{{ card.bpm }}</span>
+            <small class="text-muted d-block extra-small">BPM</small>
+          </div>
+          <div class="col-4 border-end">
+            <small class="text-secondary d-block extra-small">Oxígeno</small>
+            <span class="fw-bold fs-5 text-primary">{{ card.spo2 }}%</span>
+            <small class="text-muted d-block extra-small">SpO2</small>
+          </div>
+          <div class="col-4">
+            <small class="text-secondary d-block extra-small">Temp</small>
+            <span class="fw-bold fs-5 text-warning">{{ card.temp | number:'1.1-2' }}°C</span>
+            <small class="text-muted d-block extra-small">Corporal</small>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center extra-small text-secondary pt-1">
+          <span>Último pulso: {{ card.ultimoTimestamp | date:'mediumTime' }}</span>
+          <span class="text-success fw-bold"><i class="bi bi-broadcast me-1"></i>En Vivo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="pulserasList.length === 0" class="card border-0 rounded-4 shadow-sm p-5 text-center bg-white mb-4" style="border: 1px solid rgba(255, 183, 77, 0.25) !important;">
+    <i class="bi bi-broadcast fs-1 mb-2" style="color: #ff7043;"></i>
+    <h5 class="fw-bold text-dark">Esperando paquetes telemétricos del Gateway ESP32...</h5>
+    <p class="text-secondary small mb-0">Cuando las pulseras envíen lecturas se visualizarán automáticamente aquí.</p>
+  </div>
+
+  <!-- TABLA REAL DE HISTORIAL TELEMÉTRICO EN MONGODB -->
+  <div class="card border-0 rounded-4 shadow-sm p-4 bg-white" style="border: 1px solid rgba(255, 183, 77, 0.25) !important; box-shadow: 0 8px 30px rgba(0,0,0,0.04) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold text-dark mb-0">
+          <i class="bi bi-clock-history me-2" style="color: #ff7043;"></i>Historial de Lecturas Telemétricas en MongoDB
+        </h5>
+        <small class="text-secondary">Registro histórico real acumulado en la base de datos de telemetría</small>
+      </div>
+      <span class="badge rounded-pill px-3 py-1.5 fw-bold" style="background-color: #fff3e0; color: #e65100;">
+        Registros Filtrados: {{ historialFiltrado.length }}
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Fecha / Hora</th>
+            <th>Brazalete</th>
+            <th>Ubicación / Gateway</th>
+            <th>Cliente / Socio</th>
+            <th class="text-center">BPM</th>
+            <th class="text-center">SpO2 %</th>
+            <th class="text-center">Temp °C</th>
+            <th class="text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of itemsHistorialPaginados">
+            <td class="font-monospace small text-secondary">{{ h.timestamp | date:'dd/MM/yyyy, HH:mm:ss' }}</td>
+            <td><span class="badge font-monospace text-dark border" style="background-color: #fff3e0; border-color: #ffe0b2 !important;">{{ h.id_pulsera }}</span></td>
+            <td>
+              <span *ngIf="h.piso_numero || h.piso_id" class="small fw-bold text-dark"><i class="bi bi-layers me-1 text-peach"></i>{{ h.piso_numero || ('Piso ' + h.piso_id) }}</span>
+              <span *ngIf="!h.piso_numero && !h.piso_id" class="text-muted small">--</span>
+            </td>
+            <td>
+              <span *ngIf="h.cliente_nombre && h.cliente_nombre !== 'Sin Vincular'" class="fw-bold text-dark">
+                <i class="bi bi-person-fill me-1 text-peach"></i>{{ h.cliente_nombre }}
+              </span>
+              <span *ngIf="!h.cliente_nombre || h.cliente_nombre === 'Sin Vincular'" class="text-muted small">--</span>
+            </td>
+            <td class="text-center fw-bold text-danger">{{ h.bpm }}</td>
+            <td class="text-center fw-bold text-primary">{{ h.spo2 }}%</td>
+            <td class="text-center fw-bold text-warning">{{ h.temp | number:'1.1-2' }}°C</td>
+            <td class="text-center">
+              <span class="badge px-2 py-1" [ngClass]="h.estado_alerta === 0 ? 'bg-success text-white' : 'bg-danger text-white'">
+                {{ h.estado_alerta === 0 ? 'Normal' : 'Alerta' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="itemsHistorialPaginados.length === 0">
+            <td colspan="8" class="text-center py-4 text-muted">
+              No se encontraron lecturas telemétricas registradas en MongoDB.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top" *ngIf="historialFiltrado.length > pageSizeHistorial">
+      <span class="small text-muted">Página {{ paginaHistorial }} de {{ totalPaginasHistorial }}</span>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="paginaHistorial === 1">
+          <button class="page-link" (click)="cambiarPaginaHistorial(paginaHistorial - 1)">Anterior</button>
+        </li>
+        <li class="page-item" [class.disabled]="paginaHistorial === totalPaginasHistorial">
+          <button class="page-link" (click)="cambiarPaginaHistorial(paginaHistorial + 1)">Siguiente</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
 </div>
