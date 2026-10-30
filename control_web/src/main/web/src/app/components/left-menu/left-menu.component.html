@@ -228,7 +228,7 @@
       <span class="badge" style="background-color: #e8f5e9; color: #2e7d32; font-weight: 800;">Online</span>
     </div>
 
-    <!-- SWITCH MODO OSCURO / MODO CLARO (INVERTIDO: SWITCH ON = MODO OSCURO / SWITCH OFF = MODO CLARO) -->
+    <!-- SWITCH MODO CLARO (SWITCH ON = MODO CLARO CLEAN HEALTH / SWITCH OFF = MODO OSCURO) -->
     <div class="d-flex align-items-center justify-content-between p-2 rounded-3 mb-2 theme-switch-box">
       <div class="d-flex align-items-center gap-2">
         <i class="bi" [ngClass]="esModoOscuro ? 'bi-moon-stars-fill text-info' : 'bi-sun-fill text-warning'"></i>
@@ -240,7 +240,7 @@
           type="checkbox"
           role="switch"
           id="themeToggleSwitch"
-          [checked]="esModoOscuro"
+          [checked]="!esModoOscuro"
           (change)="toggleModoOscuro()"
           style="cursor: pointer;"
         />
