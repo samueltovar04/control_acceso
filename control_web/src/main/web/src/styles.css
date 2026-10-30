@@ -2,12 +2,14 @@
 @import 'primeicons/primeicons.css';
 @import 'primeng/resources/primeng.min.css';
 
+/* LIGHT MODE DEFAULTS */
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    background-color: #f8fafc !important;
+    color: #0f172a;
 }
 
 *:focus {
@@ -75,4 +77,66 @@ button {
     .btn-group {
         flex-wrap: wrap;
     }
+}
+
+/* ==========================================================================
+   GLOBAL DARK THEME OVERRIDES (SE ACTIVA CUANDO EL SWITCH CAMBIA A MODO OSCURO)
+   ========================================================================== */
+body.dark-theme, html.dark-theme {
+    background-color: #090d16 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .clean-health-wrapper,
+body.dark-theme .clean-health-container,
+body.dark-theme .gym-dashboard-wrapper,
+body.dark-theme .container-fluid,
+body.dark-theme main {
+    background-color: #090d16 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .card,
+body.dark-theme .glass-card,
+body.dark-theme .table-card,
+body.dark-theme .settings-card,
+body.dark-theme .access-log-card,
+body.dark-theme .user-scan-card,
+body.dark-theme .sidebar-wrapper,
+body.dark-theme .top-navbar,
+body.dark-theme .bg-white {
+    background-color: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3,
+body.dark-theme h4, body.dark-theme h5, body.dark-theme h6,
+body.dark-theme span, body.dark-theme p, body.dark-theme label,
+body.dark-theme td, body.dark-theme th, body.dark-theme .text-dark {
+    color: #f8fafc !important;
+}
+
+body.dark-theme .bg-light,
+body.dark-theme .bg-slate-100 {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme input,
+body.dark-theme select,
+body.dark-theme textarea {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-theme .table {
+    color: #f8fafc !important;
+}
+
+body.dark-theme .table-light,
+body.dark-theme .table th {
+    background-color: #1e293b !important;
+    color: #94a3b8 !important;
 }

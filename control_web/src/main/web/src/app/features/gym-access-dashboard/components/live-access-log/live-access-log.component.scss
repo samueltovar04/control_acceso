@@ -1,20 +1,16 @@
 /* ==========================================================================
-   LIVE ACCESS LOG - CARDS & NEON STATUS BADGES
+   LIVE ACCESS LOG - CLEAN HEALTH LIGHT MODE
    ========================================================================== */
 
-$bg-slate-900: #0f172a;
-$bg-slate-800: #1e293b;
-$border-color: rgba(255, 255, 255, 0.08);
-
 .access-log-card {
-  background: $bg-slate-900;
-  border: 1px solid $border-color;
+  background: #ffffff;
+  border: 1px solid rgba(255, 183, 77, 0.25);
   border-radius: 1.25rem;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   height: 100%;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 
   .log-header {
     display: flex;
@@ -22,7 +18,7 @@ $border-color: rgba(255, 255, 255, 0.08);
     justify-content: space-between;
     margin-bottom: 1.25rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid rgba(255, 183, 77, 0.2);
 
     .title-wrap {
       display: flex;
@@ -32,36 +28,36 @@ $border-color: rgba(255, 255, 255, 0.08);
       .icon-pulse {
         width: 36px;
         height: 36px;
-        background: rgba(56, 189, 248, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
         border-radius: 0.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #38bdf8;
+        color: #ff7043;
       }
 
       .card-title {
         margin: 0;
         font-size: 1.1rem;
-        font-weight: 700;
-        color: #f8fafc;
+        font-weight: 800;
+        color: #0f172a;
       }
 
       .card-subtitle {
         font-size: 0.72rem;
-        color: #94a3b8;
+        color: #64748b;
       }
     }
 
     .counter-badge {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid $border-color;
+      background: #f8fafc;
+      border: 1px solid rgba(203, 213, 225, 0.6);
       padding: 0.25rem 0.65rem;
       border-radius: 9999px;
       font-size: 0.75rem;
-      color: #94a3b8;
-      font-weight: 600;
+      color: #475569;
+      font-weight: 700;
     }
   }
 
@@ -73,39 +69,38 @@ $border-color: rgba(255, 255, 255, 0.08);
     max-height: 680px;
     padding-right: 0.35rem;
 
-    /* Custom thin scrollbar */
     &::-webkit-scrollbar {
       width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 183, 77, 0.3);
       border-radius: 4px;
     }
   }
 
   .user-scan-card {
-    background: $bg-slate-800;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #f8fafc;
+    border: 1px solid rgba(255, 183, 77, 0.2);
     border-radius: 0.85rem;
     padding: 0.95rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s ease;
     position: relative;
     overflow: hidden;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px -2px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 8px 20px rgba(255, 138, 101, 0.1);
     }
 
     &.card-granted {
-      border-left: 3px solid #10b981;
+      border-left: 4px solid #2e7d32;
     }
 
     &.card-expired {
-      border-left: 3px solid #ef4444;
+      border-left: 4px solid #c62828;
     }
 
     .user-meta {
@@ -124,7 +119,7 @@ $border-color: rgba(255, 255, 255, 0.08);
           height: 100%;
           border-radius: 50%;
           object-fit: cover;
-          border: 2px solid rgba(255, 255, 255, 0.1);
+          border: 2px solid #ff7043;
         }
 
         .status-dot {
@@ -134,16 +129,14 @@ $border-color: rgba(255, 255, 255, 0.08);
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          border: 2px solid $bg-slate-800;
+          border: 2px solid #ffffff;
 
           &.dot-green {
-            background-color: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            background-color: #2e7d32;
           }
 
           &.dot-red {
-            background-color: #ef4444;
-            box-shadow: 0 0 8px #ef4444;
+            background-color: #c62828;
           }
         }
       }
@@ -156,8 +149,8 @@ $border-color: rgba(255, 255, 255, 0.08);
         .user-name {
           margin: 0;
           font-size: 0.95rem;
-          font-weight: 700;
-          color: #f8fafc;
+          font-weight: 800;
+          color: #0f172a;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -168,12 +161,13 @@ $border-color: rgba(255, 255, 255, 0.08);
           align-items: center;
           gap: 0.35rem;
           font-size: 0.72rem;
-          color: #94a3b8;
+          color: #64748b;
           margin-top: 0.15rem;
 
           .timestamp {
-            color: #cbd5e1;
+            color: #334155;
             font-family: monospace;
+            font-weight: 700;
           }
         }
       }
@@ -184,7 +178,6 @@ $border-color: rgba(255, 255, 255, 0.08);
       justify-content: flex-end;
     }
 
-    /* NEON STATUS BADGES */
     .neon-status-badge {
       display: inline-flex;
       align-items: center;
@@ -195,30 +188,17 @@ $border-color: rgba(255, 255, 255, 0.08);
       font-weight: 800;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      transition: all 0.25s ease;
 
-      /* GRANTED: NEON GREEN */
       &.badge-granted {
-        color: #00ff88;
-        background: rgba(0, 255, 136, 0.08);
-        border: 1px solid #00ff88;
-        box-shadow: 0 0 14px rgba(0, 255, 136, 0.25), inset 0 0 8px rgba(0, 255, 136, 0.15);
-
-        &:hover {
-          box-shadow: 0 0 20px rgba(0, 255, 136, 0.45), inset 0 0 12px rgba(0, 255, 136, 0.25);
-        }
+        color: #2e7d32;
+        background: #e8f5e9;
+        border: 1px solid #a5d6a7;
       }
 
-      /* EXPIRED: NEON RED */
       &.badge-expired {
-        color: #ff3366;
-        background: rgba(255, 51, 102, 0.08);
-        border: 1px solid #ff3366;
-        box-shadow: 0 0 14px rgba(255, 51, 102, 0.25), inset 0 0 8px rgba(255, 51, 102, 0.15);
-
-        &:hover {
-          box-shadow: 0 0 20px rgba(255, 51, 102, 0.45), inset 0 0 12px rgba(255, 51, 102, 0.25);
-        }
+        color: #c62828;
+        background: #ffebee;
+        border: 1px solid #ffcdd2;
       }
     }
   }

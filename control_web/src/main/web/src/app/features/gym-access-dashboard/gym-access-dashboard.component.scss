@@ -1,19 +1,18 @@
 /* ==========================================================================
-   GYM ACCESS DASHBOARD - DARK THEME & 3-COLUMN CSS GRID
+   GYM ACCESS DASHBOARD - CLEAN HEALTH LIGHT THEME & 3-COLUMN GRID
    ========================================================================== */
 
-$bg-slate-950: #080c14;
-$bg-slate-900: #0f172a;
-$bg-slate-800: #1e293b;
-$border-color: rgba(255, 255, 255, 0.08);
-$text-light: #f8fafc;
-$text-muted: #94a3b8;
-$accent-cyan: #06b6d4;
+$bg-light-wrapper: #f8fafc;
+$card-white: #ffffff;
+$border-color: rgba(255, 183, 77, 0.25);
+$text-dark: #0f172a;
+$text-muted: #64748b;
+$accent-peach: #ff7043;
 
 .gym-dashboard-wrapper {
-  background-color: $bg-slate-950;
+  background-color: $bg-light-wrapper;
   min-height: 100vh;
-  color: $text-light;
+  color: $text-dark;
   display: flex;
   flex-direction: column;
   padding: 1.25rem 2rem;
@@ -26,13 +25,13 @@ $accent-cyan: #06b6d4;
   align-items: center;
   justify-content: space-between;
   padding: 0.65rem 1.25rem;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid $border-color;
-  border-radius: 0.85rem;
+  border-radius: 1rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 
   .tabs-list {
     display: flex;
@@ -46,7 +45,7 @@ $accent-cyan: #06b6d4;
       font-size: 0.9rem;
       font-weight: 600;
       padding: 0.6rem 1.15rem;
-      border-radius: 0.6rem;
+      border-radius: 0.65rem;
       position: relative;
       cursor: pointer;
       display: flex;
@@ -59,14 +58,14 @@ $accent-cyan: #06b6d4;
       }
 
       &:hover {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.05);
+        color: $accent-peach;
+        background: #fff8f6;
       }
 
       &.active {
-        color: #38bdf8;
-        background: rgba(56, 189, 248, 0.12);
-        font-weight: 700;
+        color: #e65100;
+        background: #fff3e0;
+        font-weight: 800;
 
         .tab-indicator {
           position: absolute;
@@ -74,9 +73,9 @@ $accent-cyan: #06b6d4;
           left: 15%;
           right: 15%;
           height: 2px;
-          background: #38bdf8;
+          background: #ff7043;
           border-radius: 2px;
-          box-shadow: 0 0 8px #38bdf8;
+          box-shadow: 0 0 8px #ff7043;
         }
       }
     }
@@ -86,24 +85,24 @@ $accent-cyan: #06b6d4;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
     padding: 0.35rem 0.85rem;
     border-radius: 9999px;
 
     .live-dot {
       width: 8px;
       height: 8px;
-      background-color: #10b981;
+      background-color: #2e7d32;
       border-radius: 50%;
-      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6);
       animation: pulseGreen 1.8s infinite;
     }
 
     .status-text {
       font-size: 0.75rem;
-      font-weight: 700;
-      color: #10b981;
+      font-weight: 800;
+      color: #2e7d32;
       letter-spacing: 0.05em;
     }
   }
@@ -125,9 +124,9 @@ $accent-cyan: #06b6d4;
     .view-title-group {
       .view-title {
         font-size: 1.25rem;
-        font-weight: 800;
+        font-weight: 900;
         margin: 0;
-        color: #ffffff;
+        color: $text-dark;
       }
       .view-subtitle {
         font-size: 0.82rem;
@@ -140,11 +139,12 @@ $accent-cyan: #06b6d4;
       display: flex;
       align-items: center;
       gap: 0.65rem;
-      background: rgba(30, 41, 59, 0.6);
+      background: #ffffff;
       border: 1px solid $border-color;
       padding: 0.5rem 1rem;
-      border-radius: 0.65rem;
+      border-radius: 0.75rem;
       min-width: 280px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 
       i {
         color: $text-muted;
@@ -154,7 +154,7 @@ $accent-cyan: #06b6d4;
         background: transparent;
         border: none;
         outline: none;
-        color: #ffffff;
+        color: $text-dark;
         font-size: 0.85rem;
         width: 100%;
 
@@ -166,10 +166,11 @@ $accent-cyan: #06b6d4;
   }
 
   .table-card {
-    background: rgba(15, 23, 42, 0.85);
+    background: #ffffff;
     border: 1px solid $border-color;
-    border-radius: 0.85rem;
+    border-radius: 1rem;
     overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 
     .loading-state {
       padding: 3rem;
@@ -182,7 +183,7 @@ $accent-cyan: #06b6d4;
 
       i {
         font-size: 2rem;
-        color: #38bdf8;
+        color: $accent-peach;
       }
     }
 
@@ -191,11 +192,11 @@ $accent-cyan: #06b6d4;
       border-collapse: collapse;
 
       th {
-        background: rgba(30, 41, 59, 0.5);
+        background: #f8fafc;
         padding: 0.85rem 1.25rem;
         text-align: left;
         font-size: 0.75rem;
-        font-weight: 700;
+        font-weight: 800;
         color: $text-muted;
         letter-spacing: 0.05em;
         border-bottom: 1px solid $border-color;
@@ -203,13 +204,13 @@ $accent-cyan: #06b6d4;
 
       td {
         padding: 0.85rem 1.25rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid #f1f5f9;
         font-size: 0.85rem;
-        color: #e2e8f0;
+        color: $text-dark;
       }
 
       tr:hover td {
-        background: rgba(255, 255, 255, 0.02);
+        background: #fff8f6;
       }
 
       .client-cell {
@@ -222,12 +223,12 @@ $accent-cyan: #06b6d4;
           height: 34px;
           border-radius: 50%;
           object-fit: cover;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 2px solid $accent-peach;
         }
 
         .client-name {
-          font-weight: 600;
-          color: #ffffff;
+          font-weight: 700;
+          color: $text-dark;
         }
       }
 
@@ -236,15 +237,15 @@ $accent-cyan: #06b6d4;
         padding: 0.25rem 0.65rem;
         border-radius: 9999px;
         font-size: 0.72rem;
-        font-weight: 700;
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        font-weight: 800;
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
 
         &.badge-active {
-          background: rgba(16, 185, 129, 0.15);
-          color: #10b981;
-          border-color: rgba(16, 185, 129, 0.3);
+          background: #e8f5e9;
+          color: #2e7d32;
+          border-color: #a5d6a7;
         }
       }
 
@@ -257,11 +258,12 @@ $accent-cyan: #06b6d4;
   }
 
   .settings-card {
-    background: rgba(15, 23, 42, 0.85);
+    background: #ffffff;
     border: 1px solid $border-color;
-    border-radius: 0.85rem;
+    border-radius: 1rem;
     padding: 1.75rem;
     max-width: 650px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 
     .settings-form {
       display: flex;
@@ -275,21 +277,21 @@ $accent-cyan: #06b6d4;
 
         label {
           font-size: 0.85rem;
-          font-weight: 600;
-          color: #e2e8f0;
+          font-weight: 700;
+          color: $text-dark;
         }
 
         .dark-input {
-          background: rgba(30, 41, 59, 0.7);
+          background: #f8fafc;
           border: 1px solid $border-color;
-          color: #ffffff;
+          color: $text-dark;
           padding: 0.6rem 0.85rem;
           border-radius: 0.5rem;
           font-size: 0.9rem;
           outline: none;
 
           &:focus {
-            border-color: #38bdf8;
+            border-color: $accent-peach;
           }
         }
 
@@ -306,12 +308,12 @@ $accent-cyan: #06b6d4;
         margin-top: 0.5rem;
 
         .btn-save-settings {
-          background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+          background: #ff7043;
           color: #ffffff;
           border: none;
           padding: 0.65rem 1.35rem;
           border-radius: 0.5rem;
-          font-weight: 700;
+          font-weight: 800;
           font-size: 0.85rem;
           cursor: pointer;
           display: flex;
@@ -325,9 +327,9 @@ $accent-cyan: #06b6d4;
         }
 
         .saved-alert {
-          color: #10b981;
+          color: #2e7d32;
           font-size: 0.85rem;
-          font-weight: 600;
+          font-weight: 700;
           display: flex;
           align-items: center;
           gap: 0.4rem;
@@ -363,29 +365,17 @@ $accent-cyan: #06b6d4;
 }
 
 @keyframes pulseGreen {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(46, 125, 50, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
 }
 
-/* RESPONSIVE LAYOUT (TABLET & MOBILE) */
 @media (max-width: 1200px) {
   .gym-grid-container {
     grid-template-columns: 1fr;
 
     .col-log, .col-highlight, .col-metrics {
       grid-column: span 1;
-    }
-  }
-
-  .gym-topbar {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-
-    .topbar-right {
-      width: 100%;
-      justify-content: space-between;
     }
   }
 }
