@@ -2,11 +2,14 @@
 @import 'primeicons/primeicons.css';
 @import 'primeng/resources/primeng.min.css';
 
+/* LIGHT MODE DEFAULTS */
 body, html {
     margin: 0;
     padding: 0;
     height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8fafc !important;
+    color: #0f172a;
 }
 
 *:focus {
@@ -77,10 +80,10 @@ button {
 }
 
 /* ==========================================================================
-   MODO OSCURO (PERFECTO, NO TOCAR NADA EN MODO OSCURO)
+   GLOBAL DARK THEME OVERRIDES (SE ACTIVA CUANDO EL SWITCH CAMBIA A MODO OSCURO)
    ========================================================================== */
 body.dark-theme, html.dark-theme {
-    background-color: #080c14 !important;
+    background-color: #090d16 !important;
     color: #f8fafc !important;
 }
 
@@ -89,7 +92,7 @@ body.dark-theme .clean-health-container,
 body.dark-theme .gym-dashboard-wrapper,
 body.dark-theme .container-fluid,
 body.dark-theme main {
-    background-color: #080c14 !important;
+    background-color: #090d16 !important;
     color: #f8fafc !important;
 }
 
@@ -99,22 +102,12 @@ body.dark-theme .table-card,
 body.dark-theme .settings-card,
 body.dark-theme .access-log-card,
 body.dark-theme .user-scan-card,
+body.dark-theme .sidebar-wrapper,
+body.dark-theme .top-navbar,
 body.dark-theme .bg-white {
     background-color: #0f172a !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
     color: #f8fafc !important;
-}
-
-body.dark-theme .sidebar-wrapper {
-    background: radial-gradient(circle at top left, #111827 0%, #090d16 100%) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
-}
-
-body.dark-theme .top-navbar {
-    background: rgba(15, 23, 42, 0.92) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
 }
 
 body.dark-theme h1, body.dark-theme h2, body.dark-theme h3,
@@ -146,74 +139,4 @@ body.dark-theme .table-light,
 body.dark-theme .table th {
     background-color: #1e293b !important;
     color: #94a3b8 !important;
-}
-
-/* ==========================================================================
-   MODO CLARO CLEAN HEALTH (SE ACTIVA EXCLUSIVAMENTE CON EL SWITCH MODO CLARO)
-   ========================================================================== */
-body.light-theme, html.light-theme {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .clean-health-wrapper,
-body.light-theme .clean-health-container,
-body.light-theme .gym-dashboard-wrapper,
-body.light-theme .container-fluid,
-body.light-theme main {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .sidebar-wrapper {
-    background: #ffffff !important;
-    border-right: 1px solid rgba(255, 183, 77, 0.25) !important;
-    box-shadow: 0 10px 30px rgba(255, 138, 101, 0.05);
-    color: #0f172a !important;
-}
-
-body.light-theme .top-navbar {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-bottom: 1px solid rgba(255, 183, 77, 0.25) !important;
-    box-shadow: 0 4px 20px -2px rgba(255, 138, 101, 0.08) !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .topbar-title,
-body.light-theme .topbar-select,
-body.light-theme .topbar-rate-text,
-body.light-theme .topbar-user-name {
-    color: #0f172a !important;
-}
-
-body.light-theme .pill-white {
-    background: #ffffff !important;
-    border: 1px solid rgba(255, 183, 77, 0.25) !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .card,
-body.light-theme .glass-card,
-body.light-theme .table-card,
-body.light-theme .settings-card,
-body.light-theme .access-log-card,
-body.light-theme .user-scan-card {
-    background-color: #ffffff !important;
-    border: 1px solid rgba(255, 183, 77, 0.25) !important;
-    box-shadow: 0 8px 30px rgba(255, 138, 101, 0.05) !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .nav-link.active-clean-health,
-body.light-theme .nav-link.active {
-    background: #fff3e0 !important;
-    color: #e65100 !important;
-    border: 1px solid rgba(255, 138, 101, 0.35) !important;
-}
-
-body.light-theme .btn-orange-solid,
-body.light-theme .btn-peach-solid {
-    background-color: #ff7043 !important;
-    color: #ffffff !important;
-    border: none !important;
 }
