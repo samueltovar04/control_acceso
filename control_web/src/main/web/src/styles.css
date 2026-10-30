@@ -77,65 +77,67 @@ button {
 }
 
 /* ==========================================================================
-   GLOBAL MODO OSCURO (SE ACTIVA CUANDO EL SWITCH CAMBIA A MODO OSCURO)
+   MODO OSCURO CONTRASTE (MENÚS EN NEGRO UNTOUCHED + MÓDULOS EN TONOS CLAROS)
    ========================================================================== */
-body.dark-theme, html.dark-theme {
-    background-color: #080c14 !important;
-    color: #f8fafc !important;
-}
-
+/* FONDOS CLAROS Y TEXTO NEGRO EN MÓDULOS Y VISTAS CENTRALES EN MODO OSCURO */
+body.dark-theme main,
+body.dark-theme .view-content-container,
 body.dark-theme .clean-health-wrapper,
-body.dark-theme .clean-health-container,
-body.dark-theme .gym-dashboard-wrapper,
-body.dark-theme .container-fluid,
-body.dark-theme main {
-    background-color: #080c14 !important;
-    color: #f8fafc !important;
+body.dark-theme .gym-dashboard-wrapper {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
 }
 
-body.dark-theme .card,
-body.dark-theme .glass-card,
-body.dark-theme .table-card,
-body.dark-theme .settings-card,
-body.dark-theme .access-log-card,
-body.dark-theme .user-scan-card,
-body.dark-theme .sidebar-wrapper,
-body.dark-theme .top-navbar,
-body.dark-theme .bg-white {
-    background-color: #0f172a !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    color: #f8fafc !important;
+/* TARJETAS, GRILLAS, TABLAS Y FORMULARIOS DE LOS MÓDULOS EN TONOS CLAROS */
+body.dark-theme main .card,
+body.dark-theme main .glass-card,
+body.dark-theme main .table-card,
+body.dark-theme main .settings-card,
+body.dark-theme main .access-log-card,
+body.dark-theme main .user-scan-card,
+body.dark-theme main .table,
+body.dark-theme main .dark-data-table {
+    background-color: #ffffff !important;
+    border-color: rgba(203, 213, 225, 0.6) !important;
+    color: #0f172a !important;
 }
 
-body.dark-theme h1, body.dark-theme h2, body.dark-theme h3,
-body.dark-theme h4, body.dark-theme h5, body.dark-theme h6,
-body.dark-theme span, body.dark-theme p, body.dark-theme label,
-body.dark-theme td, body.dark-theme th, body.dark-theme .text-dark {
-    color: #f8fafc !important;
+body.dark-theme main h1,
+body.dark-theme main h2,
+body.dark-theme main h3,
+body.dark-theme main h4,
+body.dark-theme main h5,
+body.dark-theme main h6,
+body.dark-theme main p,
+body.dark-theme main label,
+body.dark-theme main td,
+body.dark-theme main th,
+body.dark-theme main .view-title,
+body.dark-theme main .client-name,
+body.dark-theme main .text-dark {
+    color: #0f172a !important;
 }
 
-body.dark-theme .bg-light,
-body.dark-theme .bg-slate-100 {
-    background-color: #1e293b !important;
-    color: #ffffff !important;
+body.dark-theme main .view-subtitle,
+body.dark-theme main .text-muted,
+body.dark-theme main .hint {
+    color: #64748b !important;
 }
 
-body.dark-theme input,
-body.dark-theme select,
-body.dark-theme textarea {
-    background-color: #1e293b !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
+body.dark-theme main input.form-control,
+body.dark-theme main input.dark-input,
+body.dark-theme main input.dark-search-input,
+body.dark-theme main select.form-select,
+body.dark-theme main textarea {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
-body.dark-theme .table {
-    color: #f8fafc !important;
-}
-
-body.dark-theme .table-light,
-body.dark-theme .table th {
-    background-color: #1e293b !important;
-    color: #94a3b8 !important;
+body.dark-theme main .table-light,
+body.dark-theme main .dark-data-table th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
 }
 
 /* ==========================================================================
