@@ -1,4 +1,4 @@
-/* DEFAULT DARK SIDEBAR THEME (CONTRASTE ORIGINAL) */
+/* DEFAULT DARK SIDEBAR THEME (MODO OSCURO) */
 .sidebar-wrapper {
   background: radial-gradient(circle at top left, #111827 0%, #090d16 100%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -11,37 +11,46 @@
   background: rgba(15, 23, 42, 0.4);
 }
 
+.brand-title-text {
+  color: #ffffff !important;
+}
+
+.brand-sub-text {
+  color: #38bdf8 !important;
+}
+
+/* SECCIONES Y ENLACES EN MODO OSCURO: TEXTO CLARO NÍTIDO (SIN COLOR ROJIZO) */
 .menu-section {
   font-size: 0.72rem !important;
   letter-spacing: 0.08em;
-  color: #64748b !important;
+  color: #94a3b8 !important;
   font-weight: 800 !important;
 }
 
 .nav-link {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.88rem;
   border: 1px solid transparent;
-  color: #94a3b8 !important;
+  color: #e2e8f0 !important;
   position: relative;
   margin-bottom: 3px;
   border-radius: 10px;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.08);
   color: #ffffff !important;
   transform: translateX(3px);
 }
 
 .nav-link.active-clean-health,
 .nav-link.active {
-  background: linear-gradient(90deg, rgba(14, 165, 233, 0.18) 0%, rgba(14, 165, 233, 0.05) 100%) !important;
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.2) 0%, rgba(14, 165, 233, 0.05) 100%) !important;
   color: #38bdf8 !important;
   border: 1px solid rgba(56, 189, 248, 0.35) !important;
   box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .nav-link.active-clean-health i,
@@ -52,6 +61,21 @@
 .text-peach { color: #38bdf8 !important; }
 .text-coral { color: #f43f5e !important; }
 .text-leaf  { color: #10b981 !important; }
+
+.theme-switch-box {
+  background-color: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.theme-switch-label {
+  color: #f8fafc;
+}
+
+.btn-logout-side {
+  border: 1.5px solid #fecdd3;
+  background-color: #fff1f2;
+  color: #e11d48;
+}
 
 .sidebar-footer {
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -76,48 +100,89 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* OVERRIDE CUANDO SE ACTIVA EL MODO CLARO CLEAN HEALTH EN SIDEBAR (body.light-sidebar-theme) */
+/* ==========================================================================
+   MODO CLARO CLEAN HEALTH (CUANDO EL SWITCH ESTÁ EN MODO CLARO - IMAGEN 2 Y 3)
+   ========================================================================== */
+body.light-theme .sidebar-wrapper,
 body.light-sidebar-theme .sidebar-wrapper {
   background: #ffffff !important;
-  border-right: 1px solid rgba(255, 183, 77, 0.22) !important;
+  border-right: 1px solid rgba(255, 183, 77, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(255, 138, 101, 0.05);
   color: #0f172a !important;
 }
 
+body.light-theme .sidebar-header,
 body.light-sidebar-theme .sidebar-header {
   border-bottom: 1px solid rgba(255, 183, 77, 0.2) !important;
   background: rgba(255, 255, 255, 0.95);
 }
 
-body.light-sidebar-theme .menu-section {
-  color: #78350f !important;
+body.light-theme .brand-title-text,
+body.light-sidebar-theme .brand-title-text {
+  color: #0f172a !important;
 }
 
+body.light-theme .brand-sub-text,
+body.light-sidebar-theme .brand-sub-text {
+  color: #ff7043 !important;
+}
+
+body.light-theme .menu-section,
+body.light-sidebar-theme .menu-section {
+  color: #78350f !important;
+  font-weight: 800 !important;
+}
+
+body.light-theme .nav-link,
 body.light-sidebar-theme .nav-link {
   color: #64748b !important;
 }
 
+body.light-theme .nav-link:hover,
 body.light-sidebar-theme .nav-link:hover {
   background-color: #fff8f6;
   color: #ff7043 !important;
 }
 
+body.light-theme .nav-link.active-clean-health,
+body.light-theme .nav-link.active,
 body.light-sidebar-theme .nav-link.active-clean-health,
 body.light-sidebar-theme .nav-link.active {
   background: #fff3e0 !important;
   color: #e65100 !important;
   border: 1px solid rgba(255, 138, 101, 0.35) !important;
   box-shadow: 0 4px 12px rgba(255, 138, 101, 0.12);
+  font-weight: 800;
 }
 
+body.light-theme .nav-link.active-clean-health i,
+body.light-theme .nav-link.active i,
 body.light-sidebar-theme .nav-link.active-clean-health i,
 body.light-sidebar-theme .nav-link.active i {
   color: #e65100 !important;
 }
 
+body.light-theme .text-peach,
 body.light-sidebar-theme .text-peach { color: #ff7043 !important; }
-body.light-sidebar-theme .text-coral { color: #f06292 !important; }
-body.light-sidebar-theme .text-leaf  { color: #4caf50 !important; }
 
+body.light-theme .text-coral,
+body.light-sidebar-theme .text-coral { color: #f06292 !important; }
+
+body.light-theme .text-leaf,
+body.light-sidebar-theme .text-leaf { color: #4caf50 !important; }
+
+body.light-theme .theme-switch-box,
+body.light-sidebar-theme .theme-switch-box {
+  background-color: #f8fafc;
+  border: 1px solid rgba(255, 183, 77, 0.25);
+}
+
+body.light-theme .theme-switch-label,
+body.light-sidebar-theme .theme-switch-label {
+  color: #0f172a;
+}
+
+body.light-theme .sidebar-footer,
 body.light-sidebar-theme .sidebar-footer {
   border-top: 1px solid rgba(255, 183, 77, 0.2) !important;
   background: rgba(255, 255, 255, 0.95);

@@ -1,11 +1,11 @@
 <div class="sidebar-wrapper d-flex flex-column h-100 w-100" style="min-height: 100vh;">
-  <!-- BRAND / HEADER -->
+  <!-- BRAND / HEADER (LOGO ÚNICO EN SIDEBAR) -->
   <div class="sidebar-header p-3 border-bottom d-flex align-items-center justify-content-between">
     <div class="d-flex align-items-center">
       <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 38px; width: auto; object-fit: contain;" class="me-2 rounded-3" />
       <div class="d-flex flex-column">
-        <span class="fs-6 fw-extrabold tracking-tight line-height-1" style="font-weight: 900;">ANDES</span>
-        <span class="fw-bold" style="font-size: 0.68rem; letter-spacing: 1px; color: #38bdf8;">CONTROL ACCESO</span>
+        <span class="fs-6 fw-extrabold tracking-tight line-height-1 brand-title-text" style="font-weight: 900;">ANDES</span>
+        <span class="fw-bold brand-sub-text" style="font-size: 0.68rem; letter-spacing: 1px;">CONTROL ACCESO</span>
       </div>
     </div>
     <button
@@ -22,7 +22,7 @@
   <div class="sidebar-menu flex-grow-1 py-3 px-2 overflow-auto">
 
     <!-- MI CUENTA -->
-    <div *ngIf="canViewPortalCliente()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="canViewPortalCliente()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       <i class="bi bi-person-circle me-1 text-peach"></i>MI CUENTA
     </div>
     <ul *ngIf="canViewPortalCliente()" class="nav flex-column mb-3">
@@ -36,7 +36,7 @@
     </ul>
 
     <!-- PANEL & VISIÓN -->
-    <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       PANEL & VISIÓN
     </div>
     <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
@@ -73,7 +73,7 @@
     <!-- GESTIÓN DE PAGOS -->
     <div *ngIf="canViewPagos()"
       class="menu-section small text-uppercase fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
-      style="cursor: pointer; color: #78350f !important;" (click)="menuPagosAbierto = !menuPagosAbierto">
+      style="cursor: pointer;" (click)="menuPagosAbierto = !menuPagosAbierto">
       <span><i class="bi bi-cash-coin me-2 text-leaf"></i>GESTIÓN DE PAGOS</span>
       <i class="bi" [ngClass]="menuPagosAbierto ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
     </div>
@@ -116,7 +116,7 @@
     </ul>
 
     <!-- GESTIÓN DE ACCESO -->
-    <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       GESTIÓN DE ACCESO
     </div>
     <ul *ngIf="canViewGestionAcceso()" class="nav flex-column mb-3">
@@ -151,7 +151,7 @@
     </ul>
 
     <!-- INFRAESTRUCTURA -->
-    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       INFRAESTRUCTURA
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
@@ -179,7 +179,7 @@
     </ul>
 
     <!-- UBICACIONES -->
-    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="canViewInfraestructura()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       UBICACIONES
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
@@ -207,7 +207,7 @@
     </ul>
 
     <!-- SEGURIDAD -->
-    <div *ngIf="isAdminOrSuperAdmin()" class="menu-section small text-uppercase fw-bold px-3 mb-2" style="color: #78350f !important;">
+    <div *ngIf="isAdminOrSuperAdmin()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
       <i class="bi bi-shield-lock me-1 text-coral"></i>SEGURIDAD
     </div>
     <ul *ngIf="isAdminOrSuperAdmin()" class="nav flex-column mb-3">
@@ -222,17 +222,17 @@
   </div>
 
   <!-- FOOTER LATERAL CON SWITCH MODO CLARO/OSCURO Y BOTÓN CERRAR SESIÓN -->
-  <div class="sidebar-footer p-3 border-top text-secondary small" style="border-color: rgba(255, 183, 77, 0.25) !important;">
+  <div class="sidebar-footer p-3 border-top text-secondary small">
     <div class="d-flex justify-content-between align-items-center mb-2">
       <span class="fw-bold text-muted" style="font-size: 0.72rem;">Acceso 2.0.0-PRO</span>
       <span class="badge" style="background-color: #e8f5e9; color: #2e7d32; font-weight: 800;">Online</span>
     </div>
 
-    <!-- SWITCH MODO OSCURO / MODO CLARO -->
-    <div class="d-flex align-items-center justify-content-between p-2 rounded-3 mb-2" style="background-color: #f8fafc; border: 1px solid rgba(255, 183, 77, 0.25);">
+    <!-- SWITCH MODO CLARO (OFF = MODO OSCURO / ON = MODO CLARO CLEAN HEALTH) -->
+    <div class="d-flex align-items-center justify-content-between p-2 rounded-3 mb-2 theme-switch-box">
       <div class="d-flex align-items-center gap-2">
-        <i class="bi" [ngClass]="esModoOscuro ? 'bi-moon-stars-fill text-warning' : 'bi-sun-fill text-peach'"></i>
-        <span class="fw-bold extra-small text-dark">{{ esModoOscuro ? 'Modo Oscuro' : 'Modo Claro' }}</span>
+        <i class="bi" [ngClass]="esModoOscuro ? 'bi-moon-stars-fill text-info' : 'bi-sun-fill text-warning'"></i>
+        <span class="fw-bold extra-small theme-switch-label">{{ esModoOscuro ? 'Modo Oscuro' : 'Modo Claro' }}</span>
       </div>
       <div class="form-check form-switch mb-0">
         <input
@@ -240,15 +240,14 @@
           type="checkbox"
           role="switch"
           id="themeToggleSwitch"
-          [checked]="esModoOscuro"
+          [checked]="!esModoOscuro"
           (change)="toggleModoOscuro()"
           style="cursor: pointer;"
         />
       </div>
     </div>
 
-    <button class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1.5 rounded-3"
-            style="border: 1.5px solid #fecdd3; background-color: #fff1f2; color: #e11d48;"
+    <button class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1.5 rounded-3 btn-logout-side"
             (click)="cerrarSesion()"
             title="Cerrar Sesión del Sistema">
       <i class="bi bi-box-arrow-right fs-6"></i>
