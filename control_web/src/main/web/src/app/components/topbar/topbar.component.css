@@ -1,13 +1,14 @@
-/* CLEAN HEALTH LIGHT MODE TOPBAR STYLES */
+/* DEFAULT DARK TOPBAR STYLES (CONTRASTE ORIGINAL) */
 .top-navbar {
-  background: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(15, 23, 42, 0.92) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 183, 77, 0.22) !important;
-  box-shadow: 0 4px 20px -2px rgba(255, 138, 101, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
   position: sticky;
   top: 0;
   z-index: 990;
+  color: #ffffff !important;
 }
 
 .brand-pill {
@@ -19,30 +20,31 @@
 }
 
 .pill-white {
-  background: #ffffff;
-  border: 1px solid rgba(255, 183, 77, 0.25);
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
   padding: 0.3rem 0.85rem;
   transition: all 0.2s ease;
+  color: #ffffff !important;
 }
 
 .pill-white:hover {
-  border-color: rgba(255, 112, 67, 0.5);
-  box-shadow: 0 4px 15px rgba(255, 138, 101, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
 }
 
-.text-peach { color: #ff7043 !important; }
-.text-leaf  { color: #2e7d32 !important; }
+.text-peach { color: #38bdf8 !important; }
+.text-leaf  { color: #10b981 !important; }
 
 .btn-peach-solid {
-  background-color: #ff7043 !important;
-  color: #ffffff !important;
-  border: none !important;
+  background-color: transparent !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
 }
 
 .btn-peach-solid:hover {
-  background-color: #f4511e !important;
-  box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
+  background-color: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
 }
 
 .user-profile-chip {
@@ -54,17 +56,17 @@
 .status-online-dot {
   width: 8px;
   height: 8px;
-  background-color: #4caf50;
+  background-color: #10b981;
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
   animation: pulseDot 2s infinite;
 }
 
 @keyframes pulseDot {
-  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .spin-animation {
@@ -75,4 +77,40 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* OVERRIDE CUANDO SE ACTIVA EL MODO CLARO CLEAN HEALTH EN TOPBAR (body.light-sidebar-theme) */
+body.light-sidebar-theme .top-navbar {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 183, 77, 0.22) !important;
+  box-shadow: 0 4px 20px -2px rgba(255, 138, 101, 0.08) !important;
+  color: #0f172a !important;
+}
+
+body.light-sidebar-theme .top-navbar h6 {
+  color: #0f172a !important;
+}
+
+body.light-sidebar-theme .pill-white {
+  background: #ffffff;
+  border: 1px solid rgba(255, 183, 77, 0.25);
+  color: #0f172a !important;
+}
+
+body.light-sidebar-theme .pill-white select,
+body.light-sidebar-theme .pill-white span {
+  color: #0f172a !important;
+}
+
+body.light-sidebar-theme .text-peach { color: #ff7043 !important; }
+body.light-sidebar-theme .text-leaf  { color: #2e7d32 !important; }
+
+body.light-sidebar-theme .btn-peach-solid {
+  background-color: #ff7043 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+body.light-sidebar-theme .btn-peach-solid:hover {
+  background-color: #f4511e !important;
 }

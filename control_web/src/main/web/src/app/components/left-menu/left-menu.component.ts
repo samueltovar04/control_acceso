@@ -19,12 +19,16 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public router = inject(Router);
   menuPagosAbierto: boolean = true;
-  esModoOscuro: boolean = false;
+  esModoOscuro: boolean = true;
   private navSub?: Subscription;
 
   ngOnInit(): void {
     const savedTheme = localStorage.getItem('theme_mode');
-    this.esModoOscuro = savedTheme === 'dark';
+    if (savedTheme) {
+      this.esModoOscuro = savedTheme === 'dark';
+    } else {
+      this.esModoOscuro = true;
+    }
     this.aplicarTemaBody();
 
     this.navSub = this.router.events.pipe(
@@ -44,11 +48,11 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
 
   aplicarTemaBody(): void {
     if (this.esModoOscuro) {
-      document.body.classList.add('dark-theme');
-      document.body.classList.remove('light-theme');
+      document.body.classList.add('dark-sidebar-theme');
+      document.body.classList.remove('light-sidebar-theme');
     } else {
-      document.body.classList.add('light-theme');
-      document.body.classList.remove('dark-theme');
+      document.body.classList.add('light-sidebar-theme');
+      document.body.classList.remove('dark-sidebar-theme');
     }
   }
 
