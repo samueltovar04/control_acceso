@@ -101,7 +101,7 @@
 }
 
 /* ==========================================================================
-   MODO CLARO CLEAN HEALTH (CUANDO EL SWITCH ESTÁ EN MODO CLARO - IMAGEN 2 Y 3)
+   MODO CLARO CLEAN HEALTH (SIN FONDOS GRISES Y CON TEXTO OSCURO NÍTIDO)
    ========================================================================== */
 body.light-theme .sidebar-wrapper,
 body.light-sidebar-theme .sidebar-wrapper {
@@ -113,8 +113,8 @@ body.light-sidebar-theme .sidebar-wrapper {
 
 body.light-theme .sidebar-header,
 body.light-sidebar-theme .sidebar-header {
-  border-bottom: 1px solid rgba(255, 183, 77, 0.2) !important;
-  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(255, 183, 77, 0.25) !important;
+  background: #ffffff !important;
 }
 
 body.light-theme .brand-title-text,
@@ -129,13 +129,14 @@ body.light-sidebar-theme .brand-sub-text {
 
 body.light-theme .menu-section,
 body.light-sidebar-theme .menu-section {
-  color: #78350f !important;
+  color: #475569 !important;
   font-weight: 800 !important;
 }
 
 body.light-theme .nav-link,
 body.light-sidebar-theme .nav-link {
-  color: #64748b !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
 }
 
 body.light-theme .nav-link:hover,
@@ -150,9 +151,9 @@ body.light-sidebar-theme .nav-link.active-clean-health,
 body.light-sidebar-theme .nav-link.active {
   background: #fff3e0 !important;
   color: #e65100 !important;
-  border: 1px solid rgba(255, 138, 101, 0.35) !important;
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.12);
-  font-weight: 800;
+  border: 1.5px solid #ff7043 !important;
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.15);
+  font-weight: 800 !important;
 }
 
 body.light-theme .nav-link.active-clean-health i,
@@ -173,17 +174,18 @@ body.light-sidebar-theme .text-leaf { color: #4caf50 !important; }
 
 body.light-theme .theme-switch-box,
 body.light-sidebar-theme .theme-switch-box {
-  background-color: #f8fafc;
-  border: 1px solid rgba(255, 183, 77, 0.25);
+  background-color: #fff3e0 !important;
+  border: 1px solid #ffe0b2 !important;
 }
 
 body.light-theme .theme-switch-label,
 body.light-sidebar-theme .theme-switch-label {
-  color: #0f172a;
+  color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
 body.light-theme .sidebar-footer,
 body.light-sidebar-theme .sidebar-footer {
-  border-top: 1px solid rgba(255, 183, 77, 0.2) !important;
-  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(255, 183, 77, 0.25) !important;
+  background: #ffffff !important;
 }

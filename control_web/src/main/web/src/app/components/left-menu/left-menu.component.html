@@ -27,7 +27,7 @@
     </div>
     <ul *ngIf="canViewPortalCliente()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center"
           routerLink="/home/portal-cliente" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-person-badge me-3 fs-5 text-peach"></i> Datos y Pagos Personales
@@ -41,28 +41,28 @@
     </div>
     <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center"
           routerLink="/home/gym-dashboard" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-speedometer me-3 fs-5 text-peach"></i> Gym Dashboard Pro
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center"
           routerLink="/home/acceso-torniquetes" routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-door-open-fill me-3 fs-5 text-peach"></i> Control de Torniquetes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/monitor-salud"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/monitor-salud"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-heart-pulse me-3 fs-5 text-coral"></i> Monitor de Salud IoT
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center"
           href="/dashboard-dinamico.html" target="_blank"
           (click)="onNavClick()">
           <i class="bi bi-activity me-3 fs-5 text-peach"></i> Telemetría Dinámica
@@ -79,35 +79,35 @@
     </div>
     <ul class="nav flex-column mb-3" *ngIf="canViewPagos() && menuPagosAbierto">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/admin-dashboard"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/admin-dashboard"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-speedometer2 me-3 fs-5"></i> Control Finanzas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pagos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pagos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-cash-stack me-3 fs-5 text-leaf"></i> Control Pagos
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/conciliacion"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/conciliacion"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-wallet2 me-3 fs-5 text-peach"></i> Conciliación Pagos
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tasas"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tasas"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-currency-exchange me-3 fs-5 text-peach"></i> Tasas Cambiarias BCV
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/bancos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/bancos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-bank2 me-3 fs-5 text-peach"></i> Cuentas Bancarias
@@ -121,28 +121,28 @@
     </div>
     <ul *ngIf="canViewGestionAcceso()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/clientes"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/clientes"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Clientes & Membresías
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/empleados"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/empleados"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-person-badge-fill me-3 fs-5 text-peach"></i> Empleados
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/visitantes"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/visitantes"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-person-lines-fill me-3 fs-5 text-peach"></i> Visitantes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/membresias"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/membresias"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-card-checklist me-3 fs-5 text-peach"></i> Catálogo Membresías
@@ -156,21 +156,21 @@
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/dispositivos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/dispositivos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-hdd-network-fill me-3 fs-5 text-peach"></i> Network
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pisos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/pisos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-layers-fill me-3 fs-5 text-peach"></i> Pisos & Zonas
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/permisos-pisos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/permisos-pisos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-shield-check me-3 fs-5 text-peach"></i> Permisos por Pisos
@@ -184,21 +184,21 @@
     </div>
     <ul *ngIf="canViewInfraestructura()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/sedes"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/sedes"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-geo-alt-fill me-3 fs-5 text-peach"></i> Sedes
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/gerencias"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/gerencias"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-briefcase-fill me-3 fs-5 text-peach"></i> Gerencias
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tipo-contratos"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/tipo-contratos"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-file-earmark-text-fill me-3 fs-5 text-peach"></i> Tipos de Contrato
@@ -212,7 +212,7 @@
     </div>
     <ul *ngIf="isAdminOrSuperAdmin()" class="nav flex-column mb-3">
       <li class="nav-item">
-        <a class="nav-link text-secondary py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/usuarios"
+        <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/usuarios"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Usuarios y Permisos
