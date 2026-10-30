@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
@@ -12,7 +12,8 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './left-menu.component.html',
-  styleUrls: ['./left-menu.component.css']
+  styleUrls: ['./left-menu.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class LeftMenuComponent implements OnInit, OnDestroy {
   public sidebarService = inject(SidebarService);

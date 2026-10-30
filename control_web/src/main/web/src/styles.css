@@ -158,10 +158,10 @@ body.light-theme main {
 }
 
 body.light-theme .sidebar-wrapper {
-    background: #ffffff !important;
-    border-right: 1px solid rgba(255, 183, 77, 0.25) !important;
-    box-shadow: 0 10px 30px rgba(255, 138, 101, 0.05);
-    color: #0f172a !important;
+    background: #fff8f3 !important;
+    border-right: 1px solid #fae3d2 !important;
+    box-shadow: 0 4px 20px rgba(255, 112, 67, 0.05) !important;
+    color: #1c1917 !important;
 }
 
 body.light-theme .top-navbar {

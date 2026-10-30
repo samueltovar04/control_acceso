@@ -540,7 +540,7 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   }
 
   get alertsList(): TelemetriaMongoRow[] {
-    return this.historialMongo.filter(h => h.estado_alerta === 1).slice(0, 5);
+    return this.historialMongo.filter(h => h.estado_alerta === 1).slice(0, 3);
   }
 
   ngOnDestroy(): void {

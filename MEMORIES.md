@@ -691,3 +691,9 @@
 
 - **Restauracion UI (`acceso-torniquete.component.*`)**: Se revirtio el reemplazo de 3 columnas en la pestana "Monitor en Vivo" de `TorniquetesHubComponent` para restaurar el dashboard de accesos con tarjetas KPI (`Total Intentos`, `Accesos Concedidos`, `Accesos Denegados`) y tabla de eventos.
 - **Carga de Historico de Accesos**: Se integro `forkJoin` contra `/api/v1/acceso/registros` y `/api/v1/acceso/bitacora` junto con eventos en tiempo real de `/ws/acceso`, incluyendo filtros por sede, resultado y busqueda.
+
+
+## Tarea: Limite de Alertas Telemetricas y Rediseno de Sidebar Modo Claro (2026-10-30)
+
+- **Panel de Alertas Telemetricas (`monitor-salud.component.*`)**: Se acoto la pila de alertas para mostrar estrictamente las ultimas 3 tarjetas de alertas fisiologicas (`alertsList.slice(0, 3)`).
+- **Sidebar Estilo Clean Health (`left-menu.component.*`, `styles.css`)**: Se elimino el fondo gris de cabecera y pie. Se configuro ViewEncapsulation.None para habilitar fondo crema uniforme (`#fff8f3`), texto carbon de alto contraste (`#292524`), pastilla activa melocoton (`#ffe8d6` / `#b85d2a`) y badge de estado `System: Online` segun especificacion visual.
