@@ -1,5 +1,16 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Visualizacion de Pisos por Sede en Monitor de Salud IoT (27-Oct-2026)**:
+  - **Problema**: En `monitor-salud.component.html`, el select de pisos mostraba `{{ p.piso }}`, pero en la base de datos el campo `piso` suele estar vacio mientras que el nombre real reside en `descripcion` ("Planta Baja") o `numeroPiso`, provocando que las opciones se renderizaran vacias al filtrar por sede.
+  - **Solucion**: Se ajusto la plantilla para renderizar `{{ p.numeroPiso || p.descripcion || p.piso || ('Piso ' + p.id) }}`. Desplegado y verificado en `https://acceso.andessistemas.com`.
+
+- **Sondeo Reactivo Local en Tabla y Cards de Dispositivos (27-Oct-2026)**:
+  - **Problema**: El servidor en la nube (`13.140.162.113`) no alcanza subredes privadas (`192.168.1.x`), por lo que su `pingAll()` periódico reportaba `OFFLINE` a la tabla general aunque el modal "Info Red" (sondeado por el cliente) reportara `ONLINE`.
+  - **Solucion**: En `dispositivo-list.component.ts`, se incorporó `verificarDispositivosLocalesEnLote()` tanto en la carga inicial (`reloadData`), en el botón "Escanear Ping", como en los mensajes entrantes de WebSocket (`/ws/dispositivos`). Si el navegador cliente está en la red local y detecta los sockets de los dispositivos, actualiza de inmediato el badge de la grilla principal a `ONLINE` en verde.
+  - **Causa 1**: `access_control_frontend` no estaba vinculado a `conciliacashea_network`, imposibilitando que `viajes_gateway` alcanzara el upstream `http://172.18.0.10:80`. Se vinculo con `docker network connect conciliacashea_network access_control_frontend`.
+  - **Causa 2**: `access_control_backend` fallaba por falta de `CAM_RTSP_USER` y `CAM_RTSP_PASSWORD` y desfase de credenciales de PostgreSQL en el servidor. Se configuraron en `.env`, se restauro el password en postgres y Quarkus arranco en `http://0.0.0.0:8080`.
+  - **Resultado**: Dominio `https://acceso.andessistemas.com` respondiendo HTTP 200 OK con el frontend actualizado.
+
 - **Persistencia en MongoDB y Paginacion de Auditoria, Sesiones y Bitacora (27-Oct-2026)**:
   - **Migracion a MongoDB (biotrack_mongo:27017 / biotrack_db)**:
     - `AuditoriaAcceso`: Convertido a `@MongoEntity(collection = "auditoria_accesos")` extendiendo `PanacheMongoEntity`.
