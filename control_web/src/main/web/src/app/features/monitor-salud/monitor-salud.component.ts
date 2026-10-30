@@ -125,11 +125,92 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
     private dispositivoService: DispositivoService
   ) {}
 
+  // ECG Dynamic Realtime Buffer & Sweep Variables
+  ecgSvgPath: string = '';
+  ecgAreaPath: string = '';
+  ecgCursorX: number = 0;
+  ecgCursorY: number = 40;
+  private animationFrameId: number | null = null;
+  private ecgBuffer: number[] = Array(120).fill(40);
+  private ecgPhase: number = 0;
+
   ngOnInit(): void {
     this.iniciarGestionSedes();
     this.cargarGateways();
     this.cargarClientes();
     this.iniciarWebSocket();
+    this.iniciarGeneradorEcg();
+  }
+
+  iniciarGeneradorEcg(): void {
+    let lastTime = performance.now();
+
+    const render = (time: number) => {
+      const dt = (time - lastTime) / 1000;
+      lastTime = time;
+
+      // Determine active BPM (from selected wristband or global average or default 72)
+      const bpmActivo = this.pulseraSeleccionada
+        ? this.pulseraSeleccionada.bpm
+        : (this.resumenGlobal.bpmPromedio > 0 ? this.resumenGlobal.bpmPromedio : 72);
+
+      // Period of one beat in seconds = 60 / bpm
+      const periodSec = 60 / Math.max(bpmActivo, 40);
+
+      // Advance phase proportional to dt / periodSec
+      this.ecgPhase += dt / periodSec;
+      if (this.ecgPhase >= 1) {
+        this.ecgPhase -= 1;
+      }
+
+      // Generate authentic P-Q-R-S-T ECG waveform value at current phase (0 to 1)
+      let sampleY = 40; // baseline Y = 40
+      const p = this.ecgPhase;
+
+      if (p >= 0.10 && p < 0.18) {
+        // P-Wave (gentle bump)
+        sampleY = 40 - Math.sin((p - 0.10) / 0.08 * Math.PI) * 6;
+      } else if (p >= 0.20 && p < 0.22) {
+        // Q-Wave (small downward dip)
+        sampleY = 40 + (p - 0.20) / 0.02 * 8;
+      } else if (p >= 0.22 && p < 0.27) {
+        // R-Wave (High sharp upward spike)
+        const rp = (p - 0.22) / 0.05;
+        if (rp < 0.5) {
+          sampleY = 48 - rp * 2 * 38; // Up to Y = 10
+        } else {
+          sampleY = 10 + (rp - 0.5) * 2 * 45; // Down to Y = 55
+        }
+      } else if (p >= 0.27 && p < 0.30) {
+        // S-Wave (Deep downward recovery to baseline)
+        sampleY = 55 - (p - 0.27) / 0.03 * 15;
+      } else if (p >= 0.40 && p < 0.52) {
+        // T-Wave (Rounded recovery wave)
+        sampleY = 40 - Math.sin((p - 0.40) / 0.12 * Math.PI) * 10;
+      }
+
+      // Push new sample to rolling buffer
+      this.ecgBuffer.shift();
+      this.ecgBuffer.push(sampleY);
+
+      // Construct SVG path points (viewBox: 0 0 500 70)
+      const width = 500;
+      const step = width / (this.ecgBuffer.length - 1);
+
+      let pathD = `M 0 ${this.ecgBuffer[0].toFixed(1)}`;
+      for (let i = 1; i < this.ecgBuffer.length; i++) {
+        pathD += ` L ${(i * step).toFixed(1)} ${this.ecgBuffer[i].toFixed(1)}`;
+      }
+
+      this.ecgSvgPath = pathD;
+      this.ecgAreaPath = `${pathD} L 500 70 L 0 70 Z`;
+      this.ecgCursorX = width;
+      this.ecgCursorY = this.ecgBuffer[this.ecgBuffer.length - 1];
+
+      this.animationFrameId = requestAnimationFrame(render);
+    };
+
+    this.animationFrameId = requestAnimationFrame(render);
   }
 
   iniciarGestionSedes(): void {
@@ -558,6 +639,9 @@ export class MonitorSaludComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
     if (this.wsSub) {
       this.wsSub.unsubscribe();
     }

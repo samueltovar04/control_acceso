@@ -114,24 +114,29 @@
           </div>
         </div>
 
-        <!-- DIBUJO FLUIDO SVG DE ONDA ECG EN VIVO -->
+        <!-- DIBUJO FLUIDO REAL DE ONDA ECG EN VIVO (ANIMADO 60 FPS VÍA REQUESTANIMATIONFRAME) -->
         <div class="p-3 rounded-3 position-relative overflow-hidden" style="background: linear-gradient(180deg, #fff3e0 0%, #ffffff 100%); border: 1px solid #ffe0b2;">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="extra-small fw-bold text-secondary"><i class="bi bi-activity text-danger me-1"></i>Onda ECG Telemétrica en Vivo</span>
-            <span class="extra-small font-monospace text-muted">Tiempo Real vía WebSocket</span>
+            <span class="extra-small font-monospace text-muted">Frecuencia: {{ pulseraSeleccionada ? pulseraSeleccionada.bpm : (resumenGlobal.bpmPromedio > 0 ? resumenGlobal.bpmPromedio : 72) }} BPM</span>
           </div>
 
           <svg viewBox="0 0 500 70" class="w-100" style="height: 70px;">
             <defs>
               <linearGradient id="peachGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ff7043" stop-opacity="0.35" />
+                <stop offset="0%" stop-color="#ff7043" stop-opacity="0.45" />
                 <stop offset="100%" stop-color="#ffb74d" stop-opacity="0.0" />
               </linearGradient>
             </defs>
-            <path d="M 0 45 Q 25 45 35 45 L 40 10 L 48 60 L 55 20 L 60 45 Q 85 45 100 45 L 105 10 L 113 60 L 120 20 L 125 45 Q 150 45 165 45 L 170 10 L 178 60 L 185 20 L 190 45 Q 215 45 230 45 L 235 10 L 243 60 L 250 20 L 255 45 Q 280 45 295 45 L 300 10 L 308 60 L 315 20 L 320 45 Q 345 45 360 45 L 365 10 L 373 60 L 380 20 L 385 45 Q 410 45 425 45 L 430 10 L 438 60 L 445 20 L 450 45 Q 475 45 500 45 L 500 70 L 0 70 Z"
-              fill="url(#peachGradient)" />
-            <path d="M 0 45 Q 25 45 35 45 L 40 10 L 48 60 L 55 20 L 60 45 Q 85 45 100 45 L 105 10 L 113 60 L 120 20 L 125 45 Q 150 45 165 45 L 170 10 L 178 60 L 185 20 L 190 45 Q 215 45 230 45 L 235 10 L 243 60 L 250 20 L 255 45 Q 280 45 295 45 L 300 10 L 308 60 L 315 20 L 320 45 Q 345 45 360 45 L 365 10 L 373 60 L 380 20 L 385 45 Q 410 45 425 45 L 430 10 L 438 60 L 445 20 L 450 45 Q 475 45 500 45"
-              fill="none" stroke="#ff7043" stroke-width="2.5" />
+
+            <!-- ÁREA DE FILL CON GRADIENTE PEACH -->
+            <path [attr.d]="ecgAreaPath || 'M 0 40 L 500 40 L 500 70 L 0 70 Z'" fill="url(#peachGradient)" />
+
+            <!-- LÍNEA DINÁMICA DE ONDA ECG EN TIEMPO REAL -->
+            <path [attr.d]="ecgSvgPath || 'M 0 40 L 500 40'" fill="none" stroke="#ff7043" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- PUNTO DE BARRIDO BRILLANTE EN LA CABEZA DE LA ONDA -->
+            <circle [attr.cx]="ecgCursorX || 500" [attr.cy]="ecgCursorY || 40" r="4.5" fill="#e65100" stroke="#ffffff" stroke-width="2" />
           </svg>
         </div>
       </div>
