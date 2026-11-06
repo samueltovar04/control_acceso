@@ -44,6 +44,17 @@ export class AuthService {
     }
   }
 
+  private resolvePrimaryRole(roles: string[]): string {
+    if (!roles || roles.length === 0) return 'ROLE_EMPLEADO';
+    if (roles.some(r => r.includes('SUPER_ADMIN') || r === 'SUPERADMIN')) return 'ROLE_SUPER_ADMIN';
+    if (roles.some(r => r.includes('ADMIN'))) return 'ROLE_ADMIN';
+    if (roles.some(r => r.includes('CONTABLE') || r.includes('CONTADOR'))) return 'ROLE_CONTABLE';
+    if (roles.some(r => r.includes('ANALISTA'))) return 'ROLE_ANALISTA';
+    if (roles.some(r => r.includes('RECEPCION') || r.includes('OPERACION') || r.includes('SEGURIDAD'))) return 'ROLE_OPERACION';
+    if (roles.some(r => r.includes('CLIENTE'))) return 'ROLE_CLIENTE';
+    return roles[0];
+  }
+
   private getUserFromStorage(): UserAuth | null {
     const saved = localStorage.getItem('currentUser');
     if (!saved) {
@@ -52,14 +63,18 @@ export class AuthService {
     try {
       const parsed: UserAuth = JSON.parse(saved);
       if (parsed && parsed.token) {
-        // Sincronizar e hidratar claims autoritativos desde la firma del JWT
         const claims = this.parseJwtPayload(parsed.token);
         if (claims) {
           if (claims.groups && Array.isArray(claims.groups)) {
             parsed.roles = claims.groups;
-            parsed.role = claims.groups[0] || parsed.role;
+            parsed.role = this.resolvePrimaryRole(claims.groups);
           }
-          if (claims.clienteId !== undefined && claims.clienteId !== null) {
+          const isPrivileged = parsed.roles && parsed.roles.some((r: string) =>
+            r.includes('ADMIN') || r.includes('SUPER_ADMIN') || r.includes('CONTABLE') || r.includes('ANALISTA')
+          );
+          if (isPrivileged) {
+            parsed.clienteId = undefined;
+          } else if (claims.clienteId !== undefined && claims.clienteId !== null) {
             parsed.clienteId = Number(claims.clienteId) > 0 ? Number(claims.clienteId) : undefined;
           }
         }
@@ -80,15 +95,25 @@ export class AuthService {
       tap(res => {
         if (res && res.token) {
           const claims = this.parseJwtPayload(res.token);
-          const resolvedClienteId = (claims && claims.clienteId && Number(claims.clienteId) > 0)
-            ? Number(claims.clienteId)
-            : (res.clienteId ? Number(res.clienteId) : undefined);
+          const rawRoles = (claims && claims.groups && Array.isArray(claims.groups))
+            ? claims.groups
+            : (res.roles || [res.role || 'ROLE_EMPLEADO']);
+          const primaryRole = this.resolvePrimaryRole(rawRoles);
+          const isPrivileged = rawRoles.some((r: string) =>
+            r.includes('ADMIN') || r.includes('SUPER_ADMIN') || r.includes('CONTABLE') || r.includes('ANALISTA')
+          );
+
+          const resolvedClienteId = isPrivileged ? undefined : (
+            (claims && claims.clienteId && Number(claims.clienteId) > 0)
+              ? Number(claims.clienteId)
+              : (res.clienteId ? Number(res.clienteId) : undefined)
+          );
 
           const user: UserAuth = {
             token: res.token,
             username: res.username || res.correo || 'Usuario',
-            role: res.role || 'ROLE_EMPLEADO',
-            roles: res.roles || [res.role || 'ROLE_EMPLEADO'],
+            role: primaryRole,
+            roles: rawRoles,
             clienteId: resolvedClienteId,
             sedeId: res.sedeId ? Number(res.sedeId) : undefined,
             sedeNombre: res.sedeNombre,
@@ -100,6 +125,8 @@ export class AuthService {
           localStorage.setItem('usuario_activo', user.username);
           if (user.clienteId) {
             localStorage.setItem('cliente_id', user.clienteId.toString());
+          } else {
+            localStorage.removeItem('cliente_id');
           }
           this.currentUserSubject.next(user);
         }
@@ -246,6 +273,7 @@ export class AuthService {
   getAuthenticatedClienteId(): number | null {
     const user = this.currentUserValue;
     if (!user) return null;
+    if (this.isAdminOrSuperAdmin() || this.isContable() || this.isAnalista()) return null;
     if (user.token) {
       const claims = this.parseJwtPayload(user.token);
       if (claims && claims.clienteId && Number(claims.clienteId) > 0) {

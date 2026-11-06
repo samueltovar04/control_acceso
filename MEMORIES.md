@@ -1,5 +1,23 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Diagnostico y Resolucion de Login de Administradores y Prevencion de Degeneracion de Roles (06-Nov-2026)**:
+  - **Causa Raiz Identificada**:
+    - Usuario `admin` no existia en la tabla `users` de PostgreSQL (unicamente existia `superadmin` y cuentas cliente/empleado de prueba).
+    - La cuenta `superadmin` (id 1) poseia vinculo en la tabla `clientes` (`user_id = 1`). En `AuthResource.java`, al acumular roles en un `HashSet` desordenado, se serializaba `ROLE_CLIENTE` en la posicion 0 de `groups`.
+    - En Angular (`auth.service.ts`), `getUserFromStorage()` tomaba `claims.groups[0]`, asignando rol `ROLE_CLIENTE` a `superadmin`. Al navegar a `/home/membresias`, `RbacDataProtectionFilter` evaluaba al usuario como cliente y retornaba `401 Unauthorized`.
+    - Los errores `502 Bad Gateway` en `/login` y `/api/v1/auth/login` se produjeron por la indisponibilidad temporal del upstream `access_control_backend:8080` en Nginx durante el reinicio del contenedor.
+  - **Solucion Implementada**:
+    - `DatabaseMigrationBean.java`: Integrado metodo `asegurarUsuariosAdministrativos()` ejecutado en evento Startup. Asegura existencia de roles `ROLE_SUPER_ADMIN` y `ROLE_ADMIN`, garantiza `superadmin` y crea `admin` (`admin@controlacceso.com`) con clave BCrypt `Admin123!`, y desvincula cuentas administrativas de la tabla `clientes` (`UPDATE clientes SET user_id = NULL WHERE user_id IN (...)`).
+    - `AuthResource.java`: Sustituido `HashSet` por `LinkedHashSet` garantizando precedencia estricta de roles (`ROLE_SUPER_ADMIN` y `ROLE_ADMIN` en indice 0). Omitida la insercion de `ROLE_CLIENTE` para usuarios con credenciales de gestion y forzado `clienteId = 0L` en firma JWT.
+    - `auth.service.ts`: Implementado `resolvePrimaryRole()` con precedencia jerarquica (`SUPER_ADMIN` > `ADMIN` > `CONTABLE` > `ANALISTA` > `OPERACION` > `CLIENTE`). Eliminado `clienteId` de la sesion para usuarios administrativos, protegiendo contra BOLA/IDOR y previniendo ejecucion en modo cliente.
+  - **Verificacion y Calidad**:
+    - `tests/run_security_rbac_tests.js`: 46/46 PASSED.
+    - `tests/run_frontend_tests.js`: 65/65 PASSED.
+    - `tests/run_crud_persistence_tests.js`: 37/37 PASSED.
+    - Total baterias: 148/148 PASSED.
+    - Codificacion 100% ASCII pura verificada sin caracteres especiales.
+
+
 - **Auditoria de Persistencia CRUD (MySQL y MongoDB) y Eliminacion de Mocks (06-Nov-2026)**:
   - **Patron de Persistencia Hibrida (Relacional + Documental NoSQL)**:
     - `MySQL (Panache ORM / @Transactional)`:

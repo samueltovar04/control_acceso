@@ -210,30 +210,43 @@ public class AuthResource {
                     clienteAsociado = clienteRepository.findByEmail(pgUser.getUsername());
                 }
 
-                // Obtener rol principal
+                boolean isSuperAdminUser = pgUser.isSuperAdmin() || "superadmin".equalsIgnoreCase(pgUser.getUsername());
+                boolean isAdminUser = isSuperAdminUser || pgUser.isAdminOrSuperAdmin() || "admin".equalsIgnoreCase(pgUser.getUsername());
+
+                // Obtener rol principal con orden jerarquico garantizado
                 String principalRole = "ROLE_EMPLEADO";
-                Set<String> rolesList = new HashSet<>();
-                if (pgUser.getAuthorities() != null && !pgUser.getAuthorities().isEmpty()) {
-                    for (Authority a : pgUser.getAuthorities()) {
-                        rolesList.add(a.getName());
-                    }
-                    if (pgUser.isAdminOrSuperAdmin()) {
-                        principalRole = "ROLE_ADMIN";
-                    } else {
-                        principalRole = pgUser.getAuthorities().iterator().next().getName();
-                    }
-                } else {
-                    if (clienteAsociado != null) {
-                        principalRole = "ROLE_CLIENTE";
-                    }
-                    rolesList.add(principalRole);
+                if (isSuperAdminUser) {
+                    principalRole = "ROLE_SUPER_ADMIN";
+                } else if (isAdminUser) {
+                    principalRole = "ROLE_ADMIN";
                 }
 
-                if (clienteAsociado != null) {
-                    rolesList.add("ROLE_CLIENTE");
-                    if (!pgUser.isAdminOrSuperAdmin()) {
-                        principalRole = "ROLE_CLIENTE";
+                Set<String> rolesList = new LinkedHashSet<>();
+                if (isSuperAdminUser) {
+                    rolesList.add("ROLE_SUPER_ADMIN");
+                    rolesList.add("ROLE_ADMIN");
+                } else if (isAdminUser) {
+                    rolesList.add("ROLE_ADMIN");
+                }
+
+                if (pgUser.getAuthorities() != null && !pgUser.getAuthorities().isEmpty()) {
+                    for (Authority a : pgUser.getAuthorities()) {
+                        if (a != null && a.getName() != null) {
+                            rolesList.add(a.getName());
+                        }
                     }
+                    if (!isAdminUser) {
+                        principalRole = pgUser.getAuthorities().iterator().next().getName();
+                    }
+                }
+
+                if (clienteAsociado != null && !isAdminUser) {
+                    rolesList.add("ROLE_CLIENTE");
+                    principalRole = "ROLE_CLIENTE";
+                }
+
+                if (rolesList.isEmpty()) {
+                    rolesList.add(principalRole);
                 }
 
                 // Token SmallRye JWT con claims inmutables para RBAC y Anti-IDOR
@@ -243,7 +256,7 @@ public class AuthResource {
                         .groups(rolesList)
                         .claim("username", pgUser.getUsername())
                         .claim("userId", pgUser.getId() != null ? pgUser.getId() : 0L)
-                        .claim("clienteId", clienteAsociado != null ? clienteAsociado.getId() : 0L)
+                        .claim("clienteId", (clienteAsociado != null && !isAdminUser) ? clienteAsociado.getId() : 0L)
                         .claim("email", pgUser.getEmail() != null ? pgUser.getEmail() : "")
                         .expiresIn(Duration.ofHours(24))
                         .sign();
@@ -269,7 +282,7 @@ public class AuthResource {
                 resp.put("sedeId", pgUser.getSede() != null ? pgUser.getSede().getId() : null);
                 resp.put("sedeNombre", pgUser.getSede() != null ? pgUser.getSede().getSede() : null);
 
-                if (clienteAsociado != null) {
+                if (clienteAsociado != null && !isAdminUser) {
                     resp.put("clienteId", clienteAsociado.getId());
                     resp.put("documento", clienteAsociado.getDocumento());
                     resp.put("estadoSuscripcion", clienteAsociado.getEstadoSuscripcion());
