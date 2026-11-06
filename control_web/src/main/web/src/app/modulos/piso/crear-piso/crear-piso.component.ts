@@ -1,11 +1,11 @@
-import { Observable, Subject} from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { Router } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 
 import { PisoService } from '../../../shared/piso/piso.service';
 import { Piso } from "../../../shared/piso/piso.model";
-
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-crear-piso',
@@ -21,6 +21,7 @@ export class CrearPisoComponent implements OnInit {
   constructor(
     private pisoService: PisoService,
     private sedeService: SedeService,
+    private alertModal: AlertModalService,
     private router: Router
   ) { }
 
@@ -41,13 +42,28 @@ export class CrearPisoComponent implements OnInit {
       this.piso.sedeId = this.piso.sede_id;
     }
     this.pisoService.createPiso(this.piso)
-      .subscribe(data => {
-        this.gotoList();
-      }, error => console.error(error));
+      .subscribe({
+        next: () => {
+          this.alertModal.success('Piso creado exitosamente.', 'Registro Exitoso');
+          this.gotoList();
+        },
+        error: (error) => {
+          console.error(error);
+          this.alertModal.error('No se pudo crear el piso. Verifique los datos ingresados.', 'Error al Crear');
+        }
+      });
   }
 
   onSubmit() {
     this.submitted = true;
+    if (!this.piso.piso || !this.piso.piso.trim()) {
+      this.alertModal.warning('Por favor ingrese el numero o nombre del piso.', 'Campo Requerido');
+      return;
+    }
+    if (!this.piso.descripcion || !this.piso.descripcion.trim()) {
+      this.alertModal.warning('Por favor ingrese la descripcion del piso.', 'Campo Requerido');
+      return;
+    }
     this.save();
   }
 

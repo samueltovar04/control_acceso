@@ -46,7 +46,7 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   private ultimoTimestampFacialAuto: number = 0;
   public autoIdentificacionFacialActiva: boolean = true;
 
-  // Modal Flotante de Identificación de Persona
+  // Modal Flotante de Identificacion de Persona
   public mostrarModalPersona: boolean = false;
   public datosPersonaIdentificada: any = null;
   public origenIdentificacion: string = '';
@@ -190,20 +190,13 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
         }
       }
 
-      // 2. Disparo automatico de identificacion facial si esta habilitado y se detecta rostro en vision optima
       if (this.autoIdentificacionFacialActiva && !this.procesando && this.estadoTorniquete !== 'ABIERTO') {
         const ahora = Date.now();
-        const tieneRostroEnfocado = this.biometricCapture && (this.biometricCapture.faceDetectado && !!this.biometricCapture.faceBox);
+        const tieneRostroEnfocado = this.biometricCapture && (this.biometricCapture.faceDetectado || !!this.biometricCapture.faceBox);
         
-        if (tieneRostroEnfocado) {
-          const box = this.biometricCapture!.faceBox!;
-          // Vision optima: rostro centrado y con dimension visible suficiente
-          const esVisionOptima = (box.width >= 16 && box.height >= 20 && box.left >= 5 && box.left <= 75 && box.top <= 65);
-          
-          if (esVisionOptima && (ahora - this.ultimoTimestampFacialAuto > 2500)) {
-            this.ultimoTimestampFacialAuto = ahora;
-            this.capturarRostro();
-          }
+        if (tieneRostroEnfocado && (ahora - this.ultimoTimestampFacialAuto > 2500)) {
+          this.ultimoTimestampFacialAuto = ahora;
+          this.capturarRostro();
         }
       }
     }, 350);
@@ -244,7 +237,7 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
                           tipoTexto.includes('lector') ||
                           tipoTexto.includes('huella') ||
                           tipoTexto.includes('camara') ||
-                          tipoTexto.includes('cámara') ||
+                          tipoTexto.includes('camara') ||
                           tipoTexto.includes('biometric');
       if (!esRelevante) return false;
 
@@ -260,6 +253,16 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
         this.dispositivoSeleccionadoId = this.torniquetesDisponibles[0].id;
       } else {
         this.dispositivoSeleccionadoId = undefined;
+      }
+    }
+  }
+
+  public onRostroDetectadoDinamico(evento: { faceBox: any }): void {
+    if (this.autoIdentificacionFacialActiva && !this.procesando && this.estadoTorniquete !== 'ABIERTO') {
+      const ahora = Date.now();
+      if (ahora - this.ultimoTimestampFacialAuto > 2500) {
+        this.ultimoTimestampFacialAuto = ahora;
+        this.capturarRostro();
       }
     }
   }
@@ -486,7 +489,7 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
 
   /**
    * Captura de huella dactilar directa desde el captahuellas USB Suprema activo
-   * @param dedo 1: Índice, 2: Pulgar
+   * @param dedo 1: Indice, 2: Pulgar
    */
   public capturarHuellaTerminal(dedo: number = 1): void {
     const nombreDedo = dedo === 1 ? 'Indice' : 'Pulgar';

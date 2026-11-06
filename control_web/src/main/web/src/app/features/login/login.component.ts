@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { WebcamModule, WebcamImage } from 'ngx-webcam';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { AlertModalService } from '../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-login',
@@ -47,7 +48,8 @@ export class LoginComponent {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private alertModal: AlertModalService
   ) {}
 
   public get triggerObservable(): Observable<void> {
@@ -87,17 +89,33 @@ export class LoginComponent {
         if (err && err.error && err.error.error) {
           this.errorLogin = err.error.error;
         } else if (err.status === 401) {
-          this.errorLogin = 'Credenciales invalidas.';
+          this.errorLogin = 'Credenciales invalidas. Verifique su usuario y contrasena.';
         } else if (err.status === 403) {
-          this.errorLogin = 'El usuario esta inactivo. Contacte al administrador.';
+          this.errorLogin = 'El usuario esta inactivo o bloqueado. Contacte al administrador.';
         } else {
-          // Contingencia en desarrollo si backend estuviese desconectado
-          localStorage.setItem('auth_token', 'JWT_MOCK_TOKEN_ADMIN');
-          localStorage.setItem('usuario_activo', this.usuario);
-          this.router.navigate(['/home/admin-dashboard']);
+          this.errorLogin = 'No se pudo conectar con el servidor de autenticacion. Intente nuevamente.';
         }
       }
     });
+  }
+
+  private validarPasswordSegura(p: string): { valida: boolean; mensaje: string } {
+    if (!p || p.length < 8) {
+      return { valida: false, mensaje: 'La nueva clave debe tener al menos 8 caracteres.' };
+    }
+    if (!/[A-Z]/.test(p)) {
+      return { valida: false, mensaje: 'La nueva clave debe contener al menos una letra mayuscula.' };
+    }
+    if (!/[a-z]/.test(p)) {
+      return { valida: false, mensaje: 'La nueva clave debe contener al menos una letra minuscula.' };
+    }
+    if (!/[0-9]/.test(p)) {
+      return { valida: false, mensaje: 'La nueva clave debe contener al menos un numero.' };
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p)) {
+      return { valida: false, mensaje: 'La nueva clave debe contener al menos un caracter especial (!@#$%...).' };
+    }
+    return { valida: true, mensaje: '' };
   }
 
   ejecutarCambioClave(): void {
@@ -112,8 +130,9 @@ export class LoginComponent {
       return;
     }
 
-    if (this.nuevaClave.length < 6) {
-      this.errorLogin = 'La nueva clave debe tener al menos 6 caracteres.';
+    const validacion = this.validarPasswordSegura(this.nuevaClave);
+    if (!validacion.valida) {
+      this.errorLogin = validacion.mensaje;
       return;
     }
 
@@ -232,33 +251,48 @@ export class LoginComponent {
 
   // Huella Login
   iniciarLoginHuella(): void {
+    if (this.escaneandoHuella) return;
     this.errorLogin = '';
     this.escaneandoHuella = true;
-    this.progresoHuella = 0;
-    this.mensajeHuella = 'Coloque el dedo sobre el sensor biometrico...';
+    this.progresoHuella = 30;
+    this.mensajeHuella = 'Coloque el dedo sobre el sensor biometrico USB...';
 
-    const interval = setInterval(() => {
-      this.progresoHuella += 25;
-      if (this.progresoHuella >= 100) {
-        clearInterval(interval);
+    this.http.post<any>('/api/v1/biometria/capturar-huella-usb', { dedo: 1 }).subscribe({
+      next: (captura) => {
+        this.progresoHuella = 100;
         this.escaneandoHuella = false;
-        this.verificarTemplateHuella('FINGERPRINT_TPL_1_SAMPLE_W3C');
+        const tpl = captura?.templateBase64 || captura?.huella || '';
+        if (!tpl) {
+          this.errorLogin = 'No se detecto huella dactilar en el lector.';
+          this.alertModal.warning(this.errorLogin, 'Lectura Dactilar');
+          return;
+        }
+        this.verificarTemplateHuella(tpl);
+      },
+      error: () => {
+        this.escaneandoHuella = false;
+        this.progresoHuella = 0;
+        this.errorLogin = 'Lector biometrico USB no detectado o sin respuesta.';
+        this.alertModal.error(this.errorLogin, 'Error de Lector');
       }
-    }, 200);
+    });
   }
 
   private verificarTemplateHuella(template: string): void {
     this.http.post<any>('/api/v1/biometria/verificar-huella', { huella: template }).subscribe({
       next: (res) => {
-        if (res.match) {
+        if (res && res.match) {
           this.authService.setSessionFromBiometric(res, res.persona?.nombre || 'Usuario Huella');
+          this.alertModal.success('Identidad biometrica verificada.', 'Bienvenido');
           this.router.navigate(['/home/admin-dashboard']);
         } else {
           this.errorLogin = 'Huella dactilar no autorizada.';
+          this.alertModal.error(this.errorLogin, 'Acceso Denegado');
         }
       },
       error: () => {
-        this.errorLogin = 'Error al comunicarse con el lector dactilar.';
+        this.errorLogin = 'Error al comunicarse con el servicio biometrico.';
+        this.alertModal.error(this.errorLogin, 'Error');
       }
     });
   }

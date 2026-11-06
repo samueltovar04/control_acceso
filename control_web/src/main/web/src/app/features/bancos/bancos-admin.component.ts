@@ -20,6 +20,7 @@ export class BancosAdminComponent implements OnInit {
   cargando = signal<boolean>(false);
   filtroTipo = signal<string>('TODOS');
   mostrarModal = signal<boolean>(false);
+  guardando = signal<boolean>(false);
   editandoId: number | null = null;
   copiadoTexto: string | null = null;
 
@@ -118,30 +119,41 @@ export class BancosAdminComponent implements OnInit {
   }
 
   guardar(): void {
+    if (this.guardando()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.alertModal.warning('Por favor completa los campos requeridos (nombre de entidad, titular y moneda).', 'Formulario Incompleto');
       return;
     }
 
     const payload: Banco = this.form.value;
+    this.guardando.set(true);
 
     if (this.editandoId) {
       this.bancoService.actualizarBanco(this.editandoId, payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.cerrarModal();
           this.cargarBancos();
           this.alertModal.success('Cuenta bancaria actualizada correctamente.', 'Guardado');
         },
-        error: (err) => this.alertModal.error('Error al actualizar cuenta bancaria: ' + err.message, 'Error')
+        error: (err) => {
+          this.guardando.set(false);
+          this.alertModal.error('Error al actualizar cuenta bancaria: ' + err.message, 'Error');
+        }
       });
     } else {
       this.bancoService.crearBanco(payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.cerrarModal();
           this.cargarBancos();
           this.alertModal.success('Cuenta bancaria registrada correctamente.', 'Guardado');
         },
-        error: (err) => this.alertModal.error('Error al registrar cuenta bancaria: ' + err.message, 'Error')
+        error: (err) => {
+          this.guardando.set(false);
+          this.alertModal.error('Error al registrar cuenta bancaria: ' + err.message, 'Error');
+        }
       });
     }
   }
@@ -150,8 +162,37 @@ export class BancosAdminComponent implements OnInit {
     if (!banco.id) return;
     const nuevoEstado = !banco.activo;
     this.bancoService.actualizarBanco(banco.id, { ...banco, activo: nuevoEstado }).subscribe({
-      next: () => this.cargarBancos(),
-      error: (err) => console.error('Error al cambiar estado:', err)
+      next: () => {
+        banco.activo = nuevoEstado;
+        this.cargarBancos();
+        this.alertModal.success(`Cuenta ${banco.nombre} ${nuevoEstado ? 'activada' : 'inactivada'} correctamente.`, 'Estado Actualizado');
+      },
+      error: (err) => {
+        console.error('Error al cambiar estado:', err);
+        this.alertModal.error('No se pudo cambiar el estado de la cuenta.', 'Error');
+      }
+    });
+  }
+
+  async eliminarBanco(banco: Banco): Promise<void> {
+    if (!banco.id) return;
+    const confirmado = await this.alertModal.confirm(
+      `Desea eliminar la cuenta bancaria / pasarela "${banco.nombre}"?`,
+      'Eliminar Cuenta Bancaria',
+      'Eliminar',
+      'Cancelar'
+    );
+    if (!confirmado) return;
+
+    this.bancoService.eliminarBanco(banco.id).subscribe({
+      next: () => {
+        this.cargarBancos();
+        this.alertModal.success(`La cuenta "${banco.nombre}" fue eliminada exitosamente.`, 'Cuenta Eliminada');
+      },
+      error: (err) => {
+        console.error('Error al eliminar banco:', err);
+        this.alertModal.error('No se pudo eliminar la cuenta bancaria.', 'Error al Eliminar');
+      }
     });
   }
 

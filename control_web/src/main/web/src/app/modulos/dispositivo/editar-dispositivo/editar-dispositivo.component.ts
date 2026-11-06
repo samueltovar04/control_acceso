@@ -5,6 +5,7 @@ import { Dispositivo } from '../../../shared/dispositivo/dispositivo.model';
 import { PisoService } from '../../../shared/piso/piso.service';
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
 import { SedeStateService } from '../../../shared/sede/sede-state.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-editar-dispositivo',
@@ -28,7 +29,8 @@ export class EditarDispositivoComponent implements OnInit {
     private dispositivoService: DispositivoService,
     private pisoService: PisoService,
     private sedeService: SedeService,
-    private sedeStateService: SedeStateService
+    private sedeStateService: SedeStateService,
+    private alertModal: AlertModalService
   ) { }
 
   ngOnInit() {
@@ -121,7 +123,36 @@ export class EditarDispositivoComponent implements OnInit {
   }
 
   onSubmit() {
+    if (this.submitted) return;
     this.submitted = true;
+
+    if (!this.dispositivo.descripcion || !this.dispositivo.descripcion.trim()) {
+      this.alertModal.warning('Por favor ingrese la descripcion del dispositivo.', 'Campo Requerido');
+      this.submitted = false;
+      return;
+    }
+    const ip = (this.dispositivo.ip || '').trim();
+    if (!ip) {
+      this.alertModal.warning('Por favor ingrese la direccion IP del dispositivo.', 'Campo Requerido');
+      this.submitted = false;
+      return;
+    }
+
+    const ipPattern = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^localhost$/i;
+    if (!ipPattern.test(ip)) {
+      this.alertModal.warning('La direccion IP ingresada no posee un formato IPv4 valido (ejemplo: 192.168.1.100).', 'IP Invalida');
+      this.submitted = false;
+      return;
+    }
+
+    if (this.dispositivo.port) {
+      const portNum = Number(this.dispositivo.port);
+      if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+        this.alertModal.warning('El puerto TCP debe ser un numero entre 1 y 65535.', 'Puerto Invalido');
+        this.submitted = false;
+        return;
+      }
+    }
 
     if (this.dispositivo.piso_id) {
       const pId = Number(this.dispositivo.piso_id);
@@ -152,9 +183,13 @@ export class EditarDispositivoComponent implements OnInit {
     }
 
     this.dispositivoService.updateDispositivo(this.id, this.dispositivo).subscribe({
-      next: () => this.gotoList(),
+      next: () => {
+        this.alertModal.success('Dispositivo actualizado exitosamente.', 'Actualizacion Exitosa');
+        this.gotoList();
+      },
       error: (err) => {
         console.log('Error actualizando dispositivo:', err);
+        this.alertModal.error('No se pudo actualizar el dispositivo.', 'Error al Actualizar');
         this.submitted = false;
       }
     });

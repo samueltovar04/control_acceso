@@ -79,6 +79,10 @@ export class LeftMenuComponent implements OnInit, OnDestroy {
     return this.authService.isAdminOrSuperAdmin();
   }
 
+  isContable(): boolean {
+    return this.authService.isContable();
+  }
+
   canViewPanelVision(): boolean {
     return this.authService.canViewPanelVision();
   }

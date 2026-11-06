@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
       <h3 class="fw-bold text-dark mb-1">Control Financiero de Sucursal & Deudores</h3>
-      <p class="text-muted small mb-0">Balance consolidado de ingresos, egresos operativos y auditoría de morosidad</p>
+      <p class="text-muted small mb-0">Balance consolidado de ingresos, egresos operativos y auditoria de morosidad</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3" (click)="cargarDatos()">
@@ -88,9 +88,9 @@
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <div>
         <h5 class="fw-bold text-secondary m-0">
-          <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Control de Deudores / Membresías Vencidas
+          <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Control de Deudores / Membresias Vencidas
         </h5>
-        <span class="text-muted small">Clientes con pagos pendientes o membresía expirada</span>
+        <span class="text-muted small">Clientes con pagos pendientes o membresia expirada</span>
       </div>
     </div>
 
@@ -100,10 +100,10 @@
           <tr class="small text-muted text-uppercase">
             <th class="py-3 px-3">Documento</th>
             <th class="py-3 px-3">Nombre Completo</th>
-            <th class="py-3 px-3">Email / Teléfono</th>
-            <th class="py-3 px-3">Estatus Suscripción</th>
-            <th class="py-3 px-3">Restricción Torniquete</th>
-            <th class="py-3 px-3 text-end">Acción</th>
+            <th class="py-3 px-3">Email / Telefono</th>
+            <th class="py-3 px-3">Estatus Suscripcion</th>
+            <th class="py-3 px-3">Restriccion Torniquete</th>
+            <th class="py-3 px-3 text-end">Accion</th>
           </tr>
         </thead>
         <tbody>
@@ -137,7 +137,7 @@
           <tr *ngIf="deudores.length === 0">
             <td colspan="6" class="text-center text-muted py-5">
               <i class="bi bi-check-circle-fill text-success fs-2 d-block mb-2"></i>
-              No hay deudores registrados. Todos los clientes están al día.
+              No hay deudores registrados. Todos los clientes estan al dia.
             </td>
           </tr>
         </tbody>
@@ -171,7 +171,7 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label small fw-bold text-dark">Descripción del Gasto *</label>
+              <label class="form-label small fw-bold text-dark">Descripcion del Gasto *</label>
               <input 
                 type="text" 
                 class="form-control" 
@@ -183,10 +183,10 @@
 
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label small fw-bold text-dark">Categoría *</label>
+                <label class="form-label small fw-bold text-dark">Categoria *</label>
                 <select class="form-select" [(ngModel)]="nuevoGasto.categoria" name="categoria">
                   <option value="MANTENIMIENTO">Mantenimiento</option>
-                  <option value="SERVICIOS">Servicios Básicos (Luz, Agua, Net)</option>
+                  <option value="SERVICIOS">Servicios Basicos (Luz, Agua, Net)</option>
                   <option value="SUMINISTROS">Suministros / Limpieza</option>
                   <option value="PERSONAL">Personal / Honorarios</option>
                   <option value="EQUIPAMIENTO">Equipamiento / Repuestos</option>
@@ -275,8 +275,8 @@
                 <thead class="table-light small text-uppercase text-muted">
                   <tr>
                     <th>Fecha</th>
-                    <th>Descripción</th>
-                    <th>Categoría</th>
+                    <th>Descripcion</th>
+                    <th>Categoria</th>
                     <th>Registrado Por</th>
                     <th class="text-end">Monto</th>
                   </tr>

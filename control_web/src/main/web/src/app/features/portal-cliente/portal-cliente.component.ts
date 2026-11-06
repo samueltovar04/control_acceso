@@ -18,7 +18,8 @@ import { WebSocketService } from '../../core/services/websocket.service';
   styleUrls: ['./portal-cliente.component.css']
 })
 export class PortalClienteComponent implements OnInit, OnDestroy {
-  clienteId: number = 1; // ID de sesión del cliente
+  clienteId: number = 0;
+  enviandoPago: boolean = false;
   clienteData: any;
   suscripcionActiva: any;
   misPagos: Pago[] = [];
@@ -57,13 +58,13 @@ export class PortalClienteComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.currentUserValue;
-    if (user && user.clienteId) {
-      this.clienteId = user.clienteId;
+    const authCid = this.authService.getAuthenticatedClienteId();
+    if (authCid) {
+      this.clienteId = authCid;
     } else {
-      const storedId = localStorage.getItem('cliente_id');
-      if (storedId) {
-        this.clienteId = Number(storedId);
+      const user = this.authService.currentUserValue;
+      if (user && user.clienteId) {
+        this.clienteId = user.clienteId;
       }
     }
     this.cargarDatosPortal();
@@ -72,14 +73,29 @@ export class PortalClienteComponent implements OnInit, OnDestroy {
 
   cargarDatosPortal(): void {
     if (!this.clienteId) return;
-    this.http.get(`/api/v1/clientes/${this.clienteId}`).subscribe(c => {
-      this.clienteData = c;
-      this.consultarUltimaTelemetria();
+    this.http.get(`/api/v1/clientes/${this.clienteId}`).subscribe({
+      next: (c) => {
+        this.clienteData = c;
+        this.consultarUltimaTelemetria();
+      },
+      error: (err) => {
+        if (err && err.status === 403) {
+          this.alertModal.error('Acceso denegado: No tiene autorizacion para consultar estos datos.', 'Error de Acceso');
+        }
+      }
     });
-    this.http.get(`/api/v1/membresias/suscripciones/cliente/${this.clienteId}`).subscribe(s => this.suscripcionActiva = s);
-    this.finanzasService.getPagosPorCliente(this.clienteId).subscribe(p => this.misPagos = p);
-    this.http.get<any[]>(`/api/v1/notificaciones/cliente/${this.clienteId}`).subscribe(n => this.notificaciones = n);
-    this.consultarUltimaTelemetria();
+    this.http.get(`/api/v1/membresias/suscripciones/cliente/${this.clienteId}`).subscribe({
+      next: (s) => this.suscripcionActiva = s,
+      error: () => {}
+    });
+    this.finanzasService.getPagosPorCliente(this.clienteId).subscribe({
+      next: (p) => this.misPagos = p,
+      error: () => {}
+    });
+    this.http.get<any[]>(`/api/v1/notificaciones/cliente/${this.clienteId}`).subscribe({
+      next: (n) => this.notificaciones = n,
+      error: () => {}
+    });
     this.cargarBancosReceptores();
   }
 
@@ -213,6 +229,20 @@ export class PortalClienteComponent implements OnInit, OnDestroy {
   }
 
   realizarPagoWeb(): void {
+    if (this.enviandoPago) return;
+    if (!this.clienteId) {
+      this.alertModal.warning('No se encontro una sesion de cliente activa para registrar el pago.', 'Sesion Requerida');
+      return;
+    }
+    if (!this.nuevoPagoCliente.monto || this.nuevoPagoCliente.monto <= 0) {
+      this.alertModal.warning('Por favor ingrese un monto valido mayor a cero.', 'Monto Invalido');
+      return;
+    }
+    if (!this.nuevoPagoCliente.numeroReferencia || !this.nuevoPagoCliente.numeroReferencia.trim()) {
+      this.alertModal.warning('Por favor ingrese el numero de referencia del comprobante bancario.', 'Referencia Requerida');
+      return;
+    }
+
     let registrado = 'Cliente Web';
     if (this.cuponInfo) {
       registrado += ` | Cupon: ${this.cuponInfo.codigo} (-$${this.cuponInfo.descuentoMonto})`;
@@ -224,14 +254,24 @@ export class PortalClienteComponent implements OnInit, OnDestroy {
       metodoPago: this.nuevoPagoCliente.metodoPago as any,
       origenPago: 'WEB_CLIENTE',
       registradoPor: registrado,
-      numeroReferencia: this.nuevoPagoCliente.numeroReferencia,
+      numeroReferencia: this.nuevoPagoCliente.numeroReferencia.trim(),
       estadoPago: 'PENDIENTE_CONCILIACION'
     };
 
-    this.finanzasService.registrarPago(pago).subscribe(() => {
-      this.alertModal.success('Pago o comprobante registrado con exito. Pendiente de verificacion por caja.', 'Pago Enviado');
-      this.removerCupon();
-      this.cargarDatosPortal();
+    this.enviandoPago = true;
+    this.finanzasService.registrarPago(pago).subscribe({
+      next: () => {
+        this.enviandoPago = false;
+        this.nuevoPagoCliente.numeroReferencia = '';
+        this.alertModal.success('Pago o comprobante registrado con exito. Pendiente de verificacion por caja.', 'Pago Enviado');
+        this.removerCupon();
+        this.cargarDatosPortal();
+      },
+      error: (err) => {
+        this.enviandoPago = false;
+        console.error('Error registrando pago web:', err);
+        this.alertModal.error('No se pudo registrar el pago. Verifique la referencia e intente nuevamente.', 'Error al Registrar Pago');
+      }
     });
   }
 

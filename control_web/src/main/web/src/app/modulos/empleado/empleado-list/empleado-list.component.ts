@@ -130,8 +130,14 @@ export class EmpleadoListComponent implements OnInit, OnDestroy {
     );
     if (confirmado) {
       this.empleService.deleteEmployee(id).subscribe({
-        next: () => this.reloadData(),
-        error: (err) => console.log(err)
+        next: () => {
+          this.reloadData();
+          this.alertModal.success('Empleado eliminado correctamente.', 'Empleado Eliminado');
+        },
+        error: (err) => {
+          console.log(err);
+          this.alertModal.error('No se pudo eliminar el empleado.', 'Error al Eliminar');
+        }
       });
     }
   }

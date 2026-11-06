@@ -126,6 +126,7 @@ export class EditarEmpleadoComponent implements OnInit {
   }
 
   save(): void {
+    if (this.guardando) return;
     this.guardando = true;
     this.empleService.updateEmployee(this.id, this.employee).subscribe({
       next: async () => {
@@ -135,18 +136,22 @@ export class EditarEmpleadoComponent implements OnInit {
       },
       error: async (err) => {
         this.guardando = false;
-        await this.alertModal.info('Cambios guardados localmente.', 'Modo Local');
-        this.router.navigate(['/home/empleados']);
+        console.error('Error al actualizar empleado:', err);
+        const msg = err?.error?.error || err?.error?.message || 'No se pudieron guardar los cambios del empleado.';
+        await this.alertModal.error(msg, 'Error al Actualizar');
       }
     });
   }
 
   onSubmit(): void {
+    if (this.guardando) return;
     this.submitted = true;
-    if (!this.employee.nombre || !this.employee.documento) {
+    if (!this.employee.nombre || !this.employee.nombre.trim() || !this.employee.documento || !this.employee.documento.toString().trim()) {
       this.alertModal.warning('Por favor ingrese el nombre y documento del empleado.', 'Campos Requeridos');
       return;
     }
+    this.employee.nombre = this.employee.nombre.trim();
+    this.employee.documento = this.employee.documento.toString().trim();
     this.save();
   }
 }

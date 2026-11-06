@@ -118,7 +118,7 @@ public class AuthResource {
             UsuarioEntity usuario = new UsuarioEntity();
             usuario.correo = request.correo.trim().toLowerCase();
             usuario.claveEncriptada = BCrypt.hashpw("123456", BCrypt.gensalt(10));
-            usuario.rol = (request.rol != null && !request.rol.trim().isEmpty()) ? request.rol.toUpperCase() : "CLIENTE";
+            usuario.rol = "CLIENTE"; // Seguridad RBAC: Autoregistro publico siempre es CLIENTE
             usuario.primerIngreso = true;
             usuario.tipoMembresia = (request.tipoMembresia != null) ? request.tipoMembresia : "ESTANDAR";
             usuario.estadoPago = (request.estadoPago != null) ? request.estadoPago : "PENDIENTE";
@@ -236,12 +236,14 @@ public class AuthResource {
                     }
                 }
 
-                // Token SmallRye JWT
+                // Token SmallRye JWT con claims inmutables para RBAC y Anti-IDOR
                 String token = Jwt.issuer("https://controlacceso.api/issuer")
                         .upn(pgUser.getUsername())
                         .subject(pgUser.getId() != null ? pgUser.getId().toString() : pgUser.getUsername())
                         .groups(rolesList)
                         .claim("username", pgUser.getUsername())
+                        .claim("userId", pgUser.getId() != null ? pgUser.getId() : 0L)
+                        .claim("clienteId", clienteAsociado != null ? clienteAsociado.getId() : 0L)
                         .claim("email", pgUser.getEmail() != null ? pgUser.getEmail() : "")
                         .expiresIn(Duration.ofHours(24))
                         .sign();
@@ -318,12 +320,22 @@ public class AuthResource {
                 )).build();
             }
 
-            // Emision de Token JWT SmallRye
+            Long resolvedClienteId = null;
+            if (clienteRepository != null) {
+                com.access.control.model.Cliente c = clienteRepository.findByEmail(usuario.correo);
+                if (c != null) {
+                    resolvedClienteId = c.getId();
+                }
+            }
+
+            // Emision de Token JWT SmallRye con claims inmutables
             String token = Jwt.issuer("https://controlacceso.api/issuer")
                     .upn(usuario.correo)
                     .subject(usuario.id != null ? usuario.id.toString() : usuario.correo)
                     .groups(new HashSet<>(Collections.singletonList(usuario.rol != null ? usuario.rol : "CLIENTE")))
                     .claim("correo", usuario.correo)
+                    .claim("username", usuario.correo)
+                    .claim("clienteId", resolvedClienteId != null ? resolvedClienteId : 0L)
                     .claim("idPulseraAsignada", usuario.idPulseraAsignada != null ? usuario.idPulseraAsignada : "")
                     .claim("tipoMembresia", usuario.tipoMembresia != null ? usuario.tipoMembresia : "")
                     .expiresIn(Duration.ofHours(24))
@@ -331,17 +343,6 @@ public class AuthResource {
 
             usuarioService.registrarAuditoria(usuario.correo, null, null, null,
                     ip, userAgent, "LOGIN", "EXITO", "Inicio de sesion MongoDB exitoso");
-
-            Long resolvedClienteId = null;
-            if (clienteRepository != null) {
-                com.access.control.model.Cliente c = clienteRepository.findByEmail(usuario.correo);
-                if (c == null) {
-                    c = clienteRepository.findPrimerCliente();
-                }
-                if (c != null) {
-                    resolvedClienteId = c.getId();
-                }
-            }
 
             Map<String, Object> respMap = new HashMap<>();
             respMap.put("primerIngreso", false);
@@ -397,6 +398,10 @@ public class AuthResource {
                             "requiresPasswordReset", false,
                             "username", pgUser.getUsername()
                     )).build();
+                } else {
+                    return Response.status(Response.Status.UNAUTHORIZED)
+                            .entity(Map.of("error", "La clave actual ingresada es incorrecta."))
+                            .build();
                 }
             }
 
@@ -406,6 +411,25 @@ public class AuthResource {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity(Map.of("error", "Usuario no encontrado."))
                         .build();
+            }
+
+            if (!usuario.primerIngreso) {
+                if (request.claveActual == null || request.claveActual.trim().isEmpty()) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("error", "La clave actual es obligatoria para cambiar la clave."))
+                            .build();
+                }
+                boolean pwMatch = false;
+                try {
+                    pwMatch = BCrypt.checkpw(request.claveActual, usuario.claveEncriptada);
+                } catch (Exception e) {
+                    pwMatch = request.claveActual.equals(usuario.claveEncriptada);
+                }
+                if (!pwMatch) {
+                    return Response.status(Response.Status.UNAUTHORIZED)
+                            .entity(Map.of("error", "La clave actual ingresada es incorrecta."))
+                            .build();
+                }
             }
 
             usuario.claveEncriptada = BCrypt.hashpw(request.nuevaClave, BCrypt.gensalt(10));

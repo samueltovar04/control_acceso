@@ -152,7 +152,7 @@ interface VitalData {
                     <button
                       class="btn btn-sm btn-outline-warning d-inline-flex align-items-center px-2 py-1"
                       (click)="cerrarSesionMovil(c)"
-                      [title]="c.sesionMovilActiva !== false ? 'Cerrar Sesión Móvil del Cliente' : 'Sesión Móvil Inactiva'"
+                      [title]="c.sesionMovilActiva !== false ? 'Cerrar Sesion Movil del Cliente' : 'Sesion Movil Inactiva'"
                     >
                       <i class="bi bi-phone-vibrate me-1"></i>
                       <span>{{ c.sesionMovilActiva !== false ? 'Cerrar App' : 'App Inactiva' }}</span>
@@ -234,7 +234,7 @@ interface VitalData {
               </span>
             </div>
             <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-white">
-              <span class="text-muted">Membresía:</span>
+              <span class="text-muted">Membresia:</span>
               <span
                 class="badge"
                 [ngClass]="{
@@ -248,7 +248,7 @@ interface VitalData {
               </span>
             </div>
             <div class="d-flex justify-content-between align-items-center pt-1">
-              <span class="text-muted">Biometría:</span>
+              <span class="text-muted">Biometria:</span>
               <div>
                 <span class="badge me-1" [ngClass]="c.huella1 ? 'bg-primary' : 'bg-light text-muted border'">
                   <i class="bi bi-fingerprint me-1"></i>Huella
@@ -260,7 +260,7 @@ interface VitalData {
             </div>
           </div>
 
-          <!-- BOTONES DE ACCION MÓVIL FULL-WIDTH -->
+          <!-- BOTONES DE ACCION MOVIL FULL-WIDTH -->
           <div class="d-flex flex-wrap gap-1">
             <button
               class="btn btn-sm btn-outline-success flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
@@ -268,7 +268,7 @@ interface VitalData {
               title="Activar o Cambiar Membresia"
             >
               <i class="bi bi-credit-card-2-front me-1"></i>
-              <span>Membresía</span>
+              <span>Membresia</span>
             </button>
             <button
               class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1 px-2"
@@ -314,7 +314,7 @@ interface VitalData {
       <!-- PAGINACION COMPARTIDA -->
       <div class="card shadow-sm border-0 mt-3" *ngIf="clientesFiltrados.length > pageSize">
         <div class="card-body p-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <span class="small text-muted">Página {{ page }} de {{ totalPaginas }}</span>
+          <span class="small text-muted">Pagina {{ page }} de {{ totalPaginas }}</span>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item" [class.disabled]="page === 1">
               <button class="page-link" (click)="cambiarPagina(page - 1)">Ant</button>
@@ -351,7 +351,7 @@ interface VitalData {
               <select class="form-select border-primary" [(ngModel)]="membresiaModalId" (ngModelChange)="onMembresiaModalChange()">
                 <option [ngValue]="null">Sin Membresia Asignada</option>
                 <option *ngFor="let m of catalogoMembresias" [value]="m.id">
-                  {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }} • {{ m.duracionDias || m.duracionesDias }} dias)
+                  {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }}  {{ m.duracionDias || m.duracionesDias }} dias)
                 </option>
               </select>
               <div *ngIf="membresiaModalSeleccionada" class="form-text text-success fw-semibold small mt-1">
@@ -367,7 +367,7 @@ interface VitalData {
               <select class="form-select border-success" [(ngModel)]="cuponSeleccionadoCodigo">
                 <option value="">Sin promocion / Precio Regular</option>
                 <option *ngFor="let promo of promocionesFiltradas" [value]="promo.codigo">
-                  {{ promo.nombre }} [Codigo: {{ promo.codigo }}] — {{ promo.tipoDescuento }}: {{ promo.valorDescuento }}{{ promo.tipoDescuento === 'PORCENTAJE' ? '%' : (promo.tipoDescuento === 'MONTO_FIJO' ? '$' : '') }}
+                  {{ promo.nombre }} [Codigo: {{ promo.codigo }}] - {{ promo.tipoDescuento }}: {{ promo.valorDescuento }}{{ promo.tipoDescuento === 'PORCENTAJE' ? '%' : (promo.tipoDescuento === 'MONTO_FIJO' ? '$' : '') }}
                 </option>
               </select>
               <div *ngIf="promocionModalSeleccionada" class="form-text text-primary small fw-semibold mt-1">
@@ -512,7 +512,7 @@ interface VitalData {
                 <!-- RITMO CARDIACO -->
                 <div class="col-4 border-end">
                   <div class="text-secondary fw-semibold small mb-1" style="color: #475569 !important; font-size: 0.85rem;">
-                    Ritmo Cardíaco
+                    Ritmo Cardiaco
                   </div>
                   <div class="fw-bold display-6" style="color: #dc2626; font-size: 2.1rem; line-height: 1.1;">
                     {{ vitalData.bpm > 0 ? vitalData.bpm + ' BPM' : '-- BPM' }}
@@ -522,7 +522,7 @@ interface VitalData {
                 <!-- OXIGENO SPO2 -->
                 <div class="col-4 border-end">
                   <div class="text-secondary fw-semibold small mb-1" style="color: #475569 !important; font-size: 0.85rem;">
-                    Oxígeno SpO2
+                    Oxigeno SpO2
                   </div>
                   <div class="fw-bold display-6" style="color: #2563eb; font-size: 2.1rem; line-height: 1.1;">
                     {{ vitalData.spo2 > 0 ? vitalData.spo2 + '%' : '--%' }}
@@ -535,7 +535,7 @@ interface VitalData {
                     Temperatura
                   </div>
                   <div class="fw-bold display-6" style="color: #f59e0b; font-size: 2.1rem; line-height: 1.1;">
-                    {{ vitalData.temp > 0 ? (vitalData.temp | number:'1.1-2') + ' °C' : '°C' }}
+                    {{ vitalData.temp > 0 ? (vitalData.temp | number:'1.1-2') + ' CC' : 'CC' }}
                   </div>
                 </div>
               </div>
@@ -703,20 +703,20 @@ export class ClienteListComponent implements OnInit, OnDestroy {
   cerrarSesionMovil(cliente: Cliente): void {
     if (!cliente || !cliente.id) return;
     this.alertModal.confirm(
-      `¿Está seguro de cerrar de forma remota la sesión móvil de ${cliente.nombre} ${cliente.apellido}? La aplicación del usuario retornará al inicio de sesión.`,
-      '¿Cerrar Sesión Móvil?',
-      'Sí, Cerrar Sesión App',
+      `Esta seguro de cerrar de forma remota la sesion movil de ${cliente.nombre} ${cliente.apellido}? La aplicacion del usuario retornara al inicio de sesion.`,
+      'Cerrar Sesion Movil?',
+      'Si, Cerrar Sesion App',
       'Cancelar'
     ).then((confirmado) => {
       if (confirmado) {
         this.clienteService.cerrarSesionMovil(cliente.id!).subscribe({
           next: (res) => {
             cliente.sesionMovilActiva = false;
-            this.alertModal.success(`La sesión móvil de ${cliente.nombre} ${cliente.apellido} ha sido invalidada con éxito.`, 'Sesión Móvil Cerrada');
+            this.alertModal.success(`La sesion movil de ${cliente.nombre} ${cliente.apellido} ha sido invalidada con exito.`, 'Sesion Movil Cerrada');
           },
           error: (err) => {
-            console.error('Error al cerrar sesión móvil:', err);
-            this.alertModal.error('No se pudo cerrar la sesión móvil del cliente.', 'Error');
+            console.error('Error al cerrar sesion movil:', err);
+            this.alertModal.error('No se pudo cerrar la sesion movil del cliente.', 'Error');
           }
         });
       }
@@ -788,8 +788,12 @@ export class ClienteListComponent implements OnInit, OnDestroy {
         next: () => {
           this.clientes = this.clientes.filter((c) => c.id !== id);
           this.filtrarClientes();
+          this.alertModal.success('Cliente eliminado exitosamente.', 'Cliente Eliminado');
         },
-        error: (err) => console.error('Error al eliminar cliente:', err)
+        error: (err) => {
+          console.error('Error al eliminar cliente:', err);
+          this.alertModal.error('No se pudo eliminar el cliente.', 'Error al Eliminar');
+        }
       });
     }
   }
@@ -847,10 +851,12 @@ export class ClienteListComponent implements OnInit, OnDestroy {
           this.guardando = false;
           this.cerrarModalMembresia();
           this.cargarClientes();
+          this.alertModal.success('Membresia asignada exitosamente al cliente.', 'Membresia Actualizada');
         },
         error: (err) => {
           console.error('Error al asignar membresia:', err);
           this.guardando = false;
+          this.alertModal.error('No se pudo asignar la membresia al cliente.', 'Error');
         }
       });
     } else {
@@ -860,10 +866,12 @@ export class ClienteListComponent implements OnInit, OnDestroy {
           this.guardando = false;
           this.cerrarModalMembresia();
           this.cargarClientes();
+          this.alertModal.success('Estado de membresia actualizado.', 'Membresia Actualizada');
         },
         error: (err) => {
           console.error('Error al actualizar membresia:', err);
           this.guardando = false;
+          this.alertModal.error('No se pudo actualizar el estado de membresia.', 'Error');
         }
       });
     }
@@ -899,10 +907,13 @@ export class ClienteListComponent implements OnInit, OnDestroy {
         }
         this.guardando = false;
         this.cargarClientes();
+        this.alertModal.success(`Pulsera ${pulsera || 'desvinculada'} asignada exitosamente.`, 'Pulsera Enlazada');
+        this.cerrarModalPulsera();
       },
       error: (err) => {
         console.error('Error al asignar pulsera:', err);
         this.guardando = false;
+        this.alertModal.error('No se pudo asignar la pulsera.', 'Error');
       }
     });
   }

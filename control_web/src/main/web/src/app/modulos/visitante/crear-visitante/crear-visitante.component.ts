@@ -161,8 +161,9 @@ export class CrearVisitanteComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    const doc = this.visita.documento || this.visita.document;
-    const nom = this.visita.nombre || this.visita.name;
+    if (this.guardando) return;
+    const doc = (this.visita.documento || this.visita.document || '').toString().trim();
+    const nom = (this.visita.nombre || this.visita.name || '').toString().trim();
 
     if (!doc || !nom) {
       this.alertModal.warning('Por favor ingrese el documento y nombre del visitante.', 'Campos Requeridos');
@@ -171,7 +172,6 @@ export class CrearVisitanteComponent implements OnInit {
 
     this.guardando = true;
 
-    // Normalizar payload compatible con VisitaDto y entidad backend
     const payload: any = {
       documento: doc,
       document: doc,
@@ -201,8 +201,8 @@ export class CrearVisitanteComponent implements OnInit {
       error: async (err) => {
         this.guardando = false;
         console.error('Error al registrar visitante:', err);
-        await this.alertModal.info('Visitante guardado en el sistema local.', 'Modo Local');
-        this.router.navigate(['/home/visitantes']);
+        const msg = err?.error?.error || err?.error?.message || 'No se pudo registrar el visitante en el servidor.';
+        await this.alertModal.error(msg, 'Error al Registrar');
       }
     });
   }

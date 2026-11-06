@@ -1,11 +1,11 @@
 <div class="container-fluid p-4 position-relative">
   <div class="row g-4">
-    <!-- PANEL PRINCIPAL DE CÁMARA Y RECONOCIMIENTO -->
+    <!-- PANEL PRINCIPAL DE CAMARA Y RECONOCIMIENTO -->
     <div class="col-lg-7">
       <div class="card shadow-sm border-0 rounded-3 p-4 bg-white h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="fw-bold text-dark m-0">
-            <i class="bi bi-camera-video-fill text-primary me-2"></i>Terminal de Visión y Torniquetes en Vivo
+            <i class="bi bi-camera-video-fill text-primary me-2"></i>Terminal de Vision y Torniquetes en Vivo
           </h4>
           <span class="badge" [ngClass]="estadoTorniquete === 'ABIERTO' ? 'bg-success' : 'bg-secondary'">
             {{ estadoTorniquete === 'ABIERTO' ? 'PASO ABIERTO (' + tiempoPulsoRestante + 's)' : 'TORNIQUETE BLOQUEADO' }}
@@ -22,7 +22,7 @@
               </span>
               <select class="form-select fw-bold" [(ngModel)]="dispositivoSeleccionadoId">
                 <option *ngFor="let dispo of torniquetesDisponibles" [value]="dispo.id">
-                  {{ dispo.nombre }} — IP: {{ dispo.ip }} ({{ dispo.tipo }})
+                  {{ dispo.nombre }}  IP: {{ dispo.ip }} ({{ dispo.tipo }})
                 </option>
               </select>
               <button class="btn btn-warning text-dark fw-bold px-3" (click)="enviarPulsoApertura('Apertura Manual')">
@@ -63,11 +63,11 @@
               <input class="form-check-input fs-5 m-0" type="checkbox" id="checkAutoFacial" [(ngModel)]="autoIdentificacionFacialActiva">
               <label class="form-check-label fw-bold text-dark small cursor-pointer" for="checkAutoFacial">
                 <i class="bi" [ngClass]="autoIdentificacionFacialActiva ? 'bi-lightning-charge-fill text-warning' : 'bi-hand-index-thumb text-secondary'"></i>
-                {{ autoIdentificacionFacialActiva ? 'Auto-identificación en vivo activa (Dispara al detectar rostro)' : 'Modo Manual (Presione el botón "Identificar Rostro" para buscar)' }}
+                {{ autoIdentificacionFacialActiva ? 'Auto-identificacion en vivo activa (Dispara al detectar rostro)' : 'Modo Manual (Presione el boton "Identificar Rostro" para buscar)' }}
               </label>
             </div>
             <span class="badge" [ngClass]="autoIdentificacionFacialActiva ? 'bg-success-subtle text-success border border-success' : 'bg-secondary-subtle text-secondary border'">
-              {{ autoIdentificacionFacialActiva ? 'AUTOMÁTICO' : 'MANUAL' }}
+              {{ autoIdentificacionFacialActiva ? 'AUTOMATICO' : 'MANUAL' }}
             </span>
           </div>
         </div>
@@ -81,13 +81,14 @@
                                  [autoEnfoqueDinamico]="true"
                                  [alturaCamaraPx]="300"
                                  [titulo]="''"
+                                 (faceDetected)="onRostroDetectadoDinamico($event)"
                                  (fotogramaCapturado)="onFotogramaCapturado($event)">
           </app-biometric-capture>
 
           <!-- OVERLAY DE APERTURA -->
           <div *ngIf="estadoTorniquete === 'ABIERTO'" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-success bg-opacity-75 text-white rounded-3" style="z-index: 10;">
             <i class="bi bi-check-circle-fill display-3 mb-2 animate__animated animate__bounceIn"></i>
-            <h2 class="fw-bold">¡PASO CONCEDIDO!</h2>
+            <h2 class="fw-bold">PASO CONCEDIDO!</h2>
             <p class="fs-5 m-0">{{ mensajeTorniquete }}</p>
             <span class="badge bg-light text-success fs-6 mt-2">Cierre automatico en {{ tiempoPulsoRestante }}s</span>
           </div>
@@ -104,7 +105,7 @@
           <div class="col-md-6">
             <button class="btn btn-dark btn-lg w-100 fw-bold shadow-sm border-secondary d-flex align-items-center justify-content-center" (click)="capturarHuellaTerminal(1)" [disabled]="escaneandoHuella || procesando">
               <i class="bi bi-fingerprint text-info me-2 fs-5"></i>
-              <span>{{ escaneandoHuella ? 'Leyendo sensor...' : 'Escanear Índice (Dedo 1)' }}</span>
+              <span>{{ escaneandoHuella ? 'Leyendo sensor...' : 'Escanear Indice (Dedo 1)' }}</span>
             </button>
           </div>
           <div class="col-md-6">
@@ -121,14 +122,14 @@
           <span class="fw-semibold">{{ mensajeHuella }}</span>
         </div>
 
-        <!-- RESULTADO DE LA VERIFICACIÓN (DESAPARECE EN 40 SEGUNDOS) -->
+        <!-- RESULTADO DE LA VERIFICACION (DESAPARECE EN 40 SEGUNDOS) -->
         <div *ngIf="resultadoVerificacion" class="mt-2" [class.shake-error]="!resultadoVerificacion.match">
           <div *ngIf="resultadoVerificacion.match" class="alert alert-success d-flex justify-content-between align-items-center mb-0 shadow-sm">
             <div class="d-flex align-items-center">
               <i class="bi bi-check-circle-fill fs-3 me-3 text-success"></i>
               <div>
                 <div class="fw-bold fs-5">ACCESO AUTORIZADO</div>
-                <div>{{ resultadoVerificacion.persona?.nombre || resultadoVerificacion.persona?.name }} {{ resultadoVerificacion.persona?.apellido || resultadoVerificacion.persona?.lastName }} — Tipo: {{ resultadoVerificacion.tipo }}</div>
+                <div>{{ resultadoVerificacion.persona?.nombre || resultadoVerificacion.persona?.name }} {{ resultadoVerificacion.persona?.apellido || resultadoVerificacion.persona?.lastName }}  Tipo: {{ resultadoVerificacion.tipo }}</div>
                 <small class="text-muted">Similitud Vectorial: {{ (resultadoVerificacion.similitud * 100) | number:'1.2-2' }}%</small>
               </div>
             </div>
@@ -142,7 +143,7 @@
               <i class="bi bi-x-circle-fill fs-3 me-3 text-danger"></i>
               <div>
                 <div class="fw-bold fs-5">ACCESO DENEGADO</div>
-                <div>Rostro no identificado o sin registro biométrico previo.</div>
+                <div>Rostro no identificado o sin registro biometrico previo.</div>
               </div>
             </div>
             <span class="badge bg-danger bg-opacity-25 text-danger border border-danger small" *ngIf="segundosRestantesResultado > 0">
@@ -153,7 +154,7 @@
       </div>
     </div>
 
-    <!-- PANEL LATERAL: DISPOSITIVOS Y BITÁCORA -->
+    <!-- PANEL LATERAL: DISPOSITIVOS Y BITACORA -->
     <div class="col-lg-5">
       <!-- TARJETA DISPOSITIVOS / TORNIQUETES EN RED -->
       <div class="card shadow-sm border-0 rounded-3 p-3 bg-white mb-3">
@@ -163,7 +164,7 @@
           </h5>
           <span class="badge bg-light text-primary border">{{ dispositivosRedFiltrados.length }} Filtrados</span>
         </div>
-        <p class="text-muted small mb-2">Vista exclusiva de torniquetes, lectores biométricos y captahuellas.</p>
+        <p class="text-muted small mb-2">Vista exclusiva de torniquetes, lectores biometricos y captahuellas.</p>
         <div class="list-group list-group-flush small" style="max-height: 250px; overflow-y: auto;">
           <div *ngFor="let dispo of dispositivosRedFiltrados" class="list-group-item d-flex justify-content-between align-items-center px-2 py-2 border-bottom">
             <div>
@@ -171,7 +172,7 @@
                 <i [ngClass]="dispo.tipo.toLowerCase().includes('torniquete') ? 'bi-shield-check text-success' : 'bi-fingerprint text-info'" class="bi me-2"></i>
                 {{ dispo.nombre }}
               </div>
-              <span class="text-muted font-monospace small">{{ dispo.ip }} · {{ dispo.tipo }}</span>
+              <span class="text-muted font-monospace small">{{ dispo.ip }}  {{ dispo.tipo }}</span>
             </div>
             <span class="badge" [ngClass]="dispo.id === dispositivoSeleccionadoId ? 'bg-primary' : (dispo.estadoConexion ? 'bg-success bg-opacity-75' : 'bg-light text-secondary border')">
               {{ dispo.id === dispositivoSeleccionadoId ? 'ASIGNADO' : (dispo.estadoConexion ? 'EN RED' : 'LISTO') }}
@@ -180,23 +181,23 @@
         </div>
       </div>
 
-      <!-- BITÁCORA DE APERTURAS EN TIEMPO REAL (ÚLTIMO EVENTO ARRIBA) -->
+      <!-- BITACORA DE APERTURAS EN TIEMPO REAL (ULTIMO EVENTO ARRIBA) -->
       <div class="card shadow-sm border-0 rounded-3 p-3 bg-white" [class.shake-error]="hayErrorActivo">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold text-dark m-0">
-            <i class="bi bi-clock-history text-secondary me-2"></i>Bitácora de Eventos de Paso
+            <i class="bi bi-clock-history text-secondary me-2"></i>Bitacora de Eventos de Paso
           </h5>
           <span class="badge bg-light text-dark border small" *ngIf="logEventos.length > 0">
-            Último: {{ logEventos[0]?.hora }}
+            Ultimo: {{ logEventos[0]?.hora }}
           </span>
         </div>
         <div class="log-container" style="max-height: 220px; overflow-y: auto;">
           <div *ngIf="logEventos.length === 0" class="text-center text-muted py-4 small">
-            Esperando detección de rostros o lecturas de huella...
+            Esperando deteccion de rostros o lecturas de huella...
           </div>
           <div *ngFor="let log of logEventos; let i = index" class="alert py-2 px-3 mb-2 small d-flex justify-content-between align-items-center" [ngClass]="['alert-' + log.tipo, (i === 0 && log.tipo === 'danger') ? 'shake-error border border-danger fw-bold' : '']">
             <div class="d-flex align-items-center">
-              <span *ngIf="i === 0" class="badge bg-dark me-2">ÚLTIMO</span>
+              <span *ngIf="i === 0" class="badge bg-dark me-2">ULTIMO</span>
               <span>{{ log.mensaje }}</span>
             </div>
             <span class="badge bg-secondary font-monospace ms-2">{{ log.hora }}</span>
@@ -214,7 +215,7 @@
         <div class="d-flex align-items-center">
           <i class="bi bi-person-check-fill fs-3 me-2 text-warning"></i>
           <div>
-            <h5 class="m-0 fw-bold">Persona Identificada con Éxito</h5>
+            <h5 class="m-0 fw-bold">Persona Identificada con Exito</h5>
             <small class="text-white-50">{{ datosPersonaIdentificada.metodoValidacion }}</small>
           </div>
         </div>
@@ -247,15 +248,15 @@
 
             <h4 class="fw-bold text-dark mb-1">{{ datosPersonaIdentificada.nombreCompleto || 'Usuario Autorizado' }}</h4>
             <div class="text-muted small mb-3">
-              <div><strong>Cédula/Doc:</strong> <span class="font-monospace text-dark">{{ datosPersonaIdentificada.documentoCompleto }}</span></div>
+              <div><strong>Cedula/Doc:</strong> <span class="font-monospace text-dark">{{ datosPersonaIdentificada.documentoCompleto }}</span></div>
               <div *ngIf="datosPersonaIdentificada.email"><strong>Email:</strong> {{ datosPersonaIdentificada.email }}</div>
-              <div *ngIf="datosPersonaIdentificada.telefono"><strong>Teléfono:</strong> {{ datosPersonaIdentificada.telefono }}</div>
+              <div *ngIf="datosPersonaIdentificada.telefono"><strong>Telefono:</strong> {{ datosPersonaIdentificada.telefono }}</div>
               
               <!-- INFORMACION DE MEMBRESIA Y ESTADO PARA CLIENTES -->
               <div *ngIf="datosPersonaIdentificada.tipoPersona === 'CLIENTE'" class="mt-1 p-2 bg-white rounded border">
-                <div><strong>Membresía:</strong> <span class="badge bg-primary ms-1">{{ datosPersonaIdentificada.membresiaNombre || 'Plan General / Acceso Total' }}</span></div>
+                <div><strong>Membresia:</strong> <span class="badge bg-primary ms-1">{{ datosPersonaIdentificada.membresiaNombre || 'Plan General / Acceso Total' }}</span></div>
                 <div class="mt-1">
-                  <strong>Estado Membresía:</strong> 
+                  <strong>Estado Membresia:</strong> 
                   <span class="badge ms-1" [ngClass]="datosPersonaIdentificada.membresiaEstado === 'ACTIVA' ? 'bg-success' : (datosPersonaIdentificada.membresiaEstado === 'POR_VENCER' ? 'bg-warning text-dark' : 'bg-danger')">
                     {{ datosPersonaIdentificada.membresiaEstado || 'ACTIVA' }}
                   </span>
@@ -267,7 +268,7 @@
 
             <div class="alert alert-success py-1 px-2 small mb-0 d-flex align-items-center">
               <i class="bi bi-unlock-fill me-2 text-success"></i>
-              <span>Relé activado. Paso autorizado por torniquete.</span>
+              <span>Rele activado. Paso autorizado por torniquete.</span>
             </div>
           </div>
         </div>

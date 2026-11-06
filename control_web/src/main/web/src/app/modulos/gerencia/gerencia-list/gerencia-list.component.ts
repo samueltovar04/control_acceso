@@ -174,6 +174,7 @@ export class GerenciaListComponent implements OnInit {
 
   mostrarModal: boolean = false;
   editando: boolean = false;
+  guardando: boolean = false;
   gerenciaActual: Gerencia = { gerencia: '' };
   constructor(
     private gerenciaService: GerenciaService,
@@ -240,22 +241,40 @@ export class GerenciaListComponent implements OnInit {
   }
 
   guardarGerencia(): void {
-    if (!this.gerenciaActual.gerencia) return;
+    if (this.guardando) return;
+    if (!this.gerenciaActual.gerencia || !this.gerenciaActual.gerencia.trim()) {
+      this.alertModal.warning('Por favor ingresa el nombre de la gerencia antes de guardar.', 'Campo Requerido');
+      return;
+    }
+    this.gerenciaActual.gerencia = this.gerenciaActual.gerencia.trim();
+    this.guardando = true;
     if (this.editando && this.gerenciaActual.id) {
       this.gerenciaService.updateGerencia(this.gerenciaActual.id, this.gerenciaActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarGerencias();
+          this.alertModal.success('Gerencia actualizada exitosamente.', 'Gerencia Actualizada');
         },
-        error: (err) => console.error('Error al actualizar gerencia:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al actualizar gerencia:', err);
+          this.alertModal.error('No se pudo actualizar la gerencia.', 'Error al Actualizar');
+        }
       });
     } else {
       this.gerenciaService.createGerencia(this.gerenciaActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarGerencias();
+          this.alertModal.success('Gerencia registrada exitosamente.', 'Registro Exitoso');
         },
-        error: (err) => console.error('Error al crear gerencia:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al crear gerencia:', err);
+          this.alertModal.error('No se pudo registrar la nueva gerencia.', 'Error al Crear');
+        }
       });
     }
   }
@@ -270,8 +289,14 @@ export class GerenciaListComponent implements OnInit {
     );
     if (confirmado) {
       this.gerenciaService.deleteGerencia(g.id).subscribe({
-        next: () => this.cargarGerencias(),
-        error: (err) => console.error('Error al eliminar gerencia:', err)
+        next: () => {
+          this.cargarGerencias();
+          this.alertModal.success(`La gerencia "${g.gerencia}" fue eliminada correctamente.`, 'Gerencia Eliminada');
+        },
+        error: (err) => {
+          console.error('Error al eliminar gerencia:', err);
+          this.alertModal.error('No se pudo eliminar la gerencia porque tiene empleados asociados.', 'Error al Eliminar');
+        }
       });
     }
   }

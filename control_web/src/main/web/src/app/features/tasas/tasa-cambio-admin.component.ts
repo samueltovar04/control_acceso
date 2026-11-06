@@ -48,7 +48,7 @@ export class TasaCambioAdminComponent implements OnInit {
 
   registrarManual(): void {
     if (!this.nuevaTasa.tasa || this.nuevaTasa.tasa <= 0) {
-      this.alertModal.warning('Ingrese un valor de tasa valido.', 'Tasa Invalida');
+      this.alertModal.warning('Ingrese un valor de tasa valido y mayor a 0.', 'Tasa Invalida');
       return;
     }
 
@@ -61,18 +61,28 @@ export class TasaCambioAdminComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.guardandoManual = false;
+        this.alertModal.success(`Tasa oficial de ${this.nuevaTasa.tasa} ${this.nuevaTasa.moneda} registrada con exito.`, 'Tasa Publicada');
         this.nuevaTasa.tasa = null;
         this.cargarHistorico();
       },
-      error: () => {
+      error: (err) => {
         this.guardandoManual = false;
+        console.error('Error registrando tasa manual:', err);
+        this.alertModal.error('No se pudo registrar la tasa de cambio manual.', 'Error');
       }
     });
   }
 
   sincronizarDolarApi(moneda: 'USD' | 'EUR'): void {
-    this.tasaService.sincronizarMoneda(moneda).subscribe(() => {
-      this.cargarHistorico();
+    this.tasaService.sincronizarMoneda(moneda).subscribe({
+      next: (resp) => {
+        this.cargarHistorico();
+        this.alertModal.success(`Tasas de ${moneda} sincronizadas con exito desde el Banco Central.`, 'Sincronizacion BCV');
+      },
+      error: (err) => {
+        console.error('Error sincronizando tasa:', err);
+        this.alertModal.error(`Error al conectar con la API de tasas para ${moneda}.`, 'Error de Sincronizacion');
+      }
     });
   }
 }

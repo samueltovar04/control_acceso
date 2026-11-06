@@ -15,7 +15,7 @@
               <i class="bi bi-symmetry-vertical me-1"></i>{{ esModoEspejo ? 'Espejo ON' : 'Espejo OFF' }}
             </button>
             <button *ngIf="dispositivosCamara.length > 1" type="button" class="btn btn-outline-primary btn-xs py-0 px-2"
-              (click)="rotarSiguienteCamara()" title="Cambiar dispositivo de cámara">
+              (click)="rotarSiguienteCamara()" title="Cambiar dispositivo de camara">
               <i class="bi bi-camera-reels me-1"></i>Cambiar
             </button>
           </div>
@@ -24,15 +24,18 @@
         <!-- SELECTOR DE FUENTE DE VIDEO: CAMARA WEB / CAMARA IP (SOLO SI NO ESTA EN MODO IDENTIFICACION DONDE YA EXISTE EL SELECTOR PRINCIPAL DE CAMARA) -->
         <div *ngIf="!modoIdentificacion" class="mb-2">
           <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light fw-semibold text-secondary" title="Fuente de video para captura facial">
+            <span class="input-group-text bg-light fw-semibold text-secondary"
+              title="Fuente de video para captura facial">
               <i class="bi bi-camera-video me-1 text-info"></i> Fuente:
             </span>
-            <select class="form-select form-select-sm" [ngModel]="camaraSeleccionadaId" (ngModelChange)="onCamaraSelect($event)">
+            <select class="form-select form-select-sm" [ngModel]="camaraSeleccionadaId"
+              (ngModelChange)="onCamaraSelect($event)">
               <option *ngFor="let c of listaCamaras" [value]="c.id">
                 {{ c.nombre }}
               </option>
             </select>
-            <button *ngIf="esCamaraIpActiva" type="button" class="btn btn-outline-info btn-xs px-2" (click)="refrescarSnapshotCamaraIp()" title="Refrescar captura IP">
+            <button *ngIf="esCamaraIpActiva" type="button" class="btn btn-outline-info btn-xs px-2"
+              (click)="refrescarSnapshotCamaraIp()" title="Refrescar captura IP">
               <i class="bi bi-arrow-clockwise"></i>
             </button>
           </div>
@@ -49,19 +52,21 @@
 
         <div
           class="camera-box border rounded bg-dark mb-2 position-relative d-flex justify-content-center align-items-center"
-          [class.mirrored]="esModoEspejo && !esCamaraIpActiva" [style.height.px]="alturaCamaraPx" style="overflow: hidden;">
-          
+          [class.mirrored]="esModoEspejo && !esCamaraIpActiva" [style.height.px]="alturaCamaraPx"
+          style="overflow: hidden;">
+
           <!-- CONTENEDOR STREAMING / SNAPSHOT SI ES CAMARA IP -->
-          <div *ngIf="esCamaraIpActiva" class="w-100 h-100 position-relative d-flex justify-content-center align-items-center">
+          <div *ngIf="esCamaraIpActiva"
+            class="w-100 h-100 position-relative d-flex justify-content-center align-items-center">
             <!-- REPRODUCTOR WEBRTC DIRECTO PARA MEDIAMTX (HTTP://IP:8889/CAM1/) -->
-            <iframe *ngIf="esStreamWebRtc && urlCamaraStreamWebRTC"
-                    [src]="safeStreamUrl"
-                    style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none;"
-                    allow="autoplay">
+            <iframe *ngIf="esStreamWebRtc && urlCamaraStreamWebRTC" [src]="safeStreamUrl"
+              style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: none;"
+              allow="autoplay">
             </iframe>
 
             <!-- IMAGEN SNAPSHOT HTTP SI NO ES WEBRTC O FALLBACK -->
-            <img *ngIf="!esStreamWebRtc && urlCamaraIpSnapshot" [src]="urlCamaraIpSnapshot" style="width: 100%; height: 100%; object-fit: cover;" (error)="urlCamaraIpSnapshot=''" />
+            <img *ngIf="!esStreamWebRtc && urlCamaraIpSnapshot" [src]="urlCamaraIpSnapshot"
+              style="width: 100%; height: 100%; object-fit: cover;" (error)="urlCamaraIpSnapshot=''" />
             <div *ngIf="!esStreamWebRtc && !urlCamaraIpSnapshot" class="text-warning small text-center p-3">
               <i class="bi bi-broadcast fs-3 d-block mb-1"></i>
               Conectando a Camara IP en red...
@@ -69,8 +74,9 @@
           </div>
 
           <!-- CONTENEDOR WEBCAM LOCAL (POR DEFECTO) -->
-          <webcam *ngIf="!esCamaraIpActiva" [trigger]="triggerObservable" [switchCamera]="nextWebcamObservable" [videoOptions]="videoOptions"
-            [allowCameraSwitch]="true" (cameraSwitched)="cameraSwitched($event)" (imageCapture)="handleImage($event)">
+          <webcam *ngIf="!esCamaraIpActiva" [trigger]="triggerObservable" [switchCamera]="nextWebcamObservable"
+            [videoOptions]="videoOptions" [allowCameraSwitch]="true" (cameraSwitched)="cameraSwitched($event)"
+            (imageCapture)="handleImage($event)">
           </webcam>
 
           <!-- RETICULA GUIA DE CENTRADO (SOLO VISIBLE CUANDO NO SE HA DETECTADO ROSTRO) -->
@@ -80,14 +86,14 @@
           </div>
 
           <!-- RECUADRO DINAMICO DE BUSQUEDA Y ENFOQUE FACIAL (BOUNDING BOX ACTIVO) -->
-          <div *ngIf="faceBox"
-               class="position-absolute border border-3 border-success rounded-3 shadow face-bounding-box"
-               [style.top.%]="faceBox.top"
-               [style.left.%]="faceBox.left"
-               [style.width.%]="faceBox.width"
-               [style.height.%]="faceBox.height"
-               style="pointer-events: none; z-index: 12; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 0 20px rgba(0, 230, 118, 0.75) !important;">
-            <div class="position-absolute top-0 start-0 translate-middle-y bg-success text-white px-2 py-0 small rounded-1 fw-bold shadow-sm d-flex align-items-center" style="font-size: 11px;">
+          <div *ngIf="faceDetectado && faceBox"
+            class="position-absolute border border-3 border-success rounded-3 shadow face-bounding-box"
+            [style.top.%]="faceBox.top" [style.left.%]="faceBox.left" [style.width.%]="faceBox.width"
+            [style.height.%]="faceBox.height"
+            style="pointer-events: none; z-index: 12; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 0 20px rgba(0, 230, 118, 0.75) !important;">
+            <div
+              class="position-absolute top-0 start-0 translate-middle-y bg-success text-white px-2 py-0 small rounded-1 fw-bold shadow-sm d-flex align-items-center"
+              style="font-size: 11px;">
               <i class="bi bi-person-bounding-box me-1"></i>Rostro Detectado
             </div>
           </div>
@@ -138,7 +144,7 @@
           </div>
         </div>
 
-        <!-- BOTONES DE CAPTURA INDIVIDUAL Y ASISTENTE MULTI-ÁNGULO -->
+        <!-- BOTONES DE CAPTURA INDIVIDUAL Y ASISTENTE MULTI-ANGULO -->
         <div *ngIf="mostrarBotonCaptura" class="d-flex flex-column gap-2 mb-2">
           <div class="d-flex gap-2">
             <button type="button" class="btn btn-primary btn-sm flex-grow-1 fw-bold"
@@ -190,25 +196,30 @@
         </div>
 
         <!-- INDICADOR DE DETECCION EN TIEMPO REAL CONTRA BASE DE DATOS (SOLO EN ENROLAMIENTO PARA EVITAR DUPLICIDAD; EN IDENTIFICACION SE USA LA BITACORA Y MODAL) -->
-        <div *ngIf="!modoIdentificacion && verificandoPersonaBD" class="alert alert-info py-1 px-2 small mb-0 d-flex align-items-center justify-content-center">
+        <div *ngIf="!modoIdentificacion && verificandoPersonaBD"
+          class="alert alert-info py-1 px-2 small mb-0 d-flex align-items-center justify-content-center">
           <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-          <span>Consultando base de datos biométrica...</span>
+          <span>Consultando base de datos biometrica...</span>
         </div>
 
-        <div *ngIf="!modoIdentificacion && !verificandoPersonaBD && personaDetectadaBD" class="alert alert-warning py-2 px-2 small mb-0 shadow-sm border border-warning text-start">
+        <div *ngIf="!modoIdentificacion && !verificandoPersonaBD && personaDetectadaBD"
+          class="alert alert-warning py-2 px-2 small mb-0 shadow-sm border border-warning text-start">
           <div class="d-flex align-items-center mb-1">
             <i class="bi bi-exclamation-triangle-fill text-warning me-2 fs-5"></i>
-            <span class="fw-bold text-dark">¡Persona ya registrada en Base de Datos!</span>
+            <span class="fw-bold text-dark">Persona ya registrada en Base de Datos!</span>
           </div>
           <div class="small text-muted ms-4">
             <strong>Nombre:</strong> {{ personaDetectadaBD.nombre }} ({{ personaDetectadaBD.tipo }})<br>
-            <span *ngIf="personaDetectadaBD.documento"><strong>Doc:</strong> {{ personaDetectadaBD.documento }} | </span>
+            <span *ngIf="personaDetectadaBD.documento"><strong>Doc:</strong> {{ personaDetectadaBD.documento }} |
+            </span>
             <strong>Coincidencia:</strong> {{ (personaDetectadaBD.similitud * 100) | number:'1.1-1' }}%
             <span class="badge bg-secondary ms-1 font-monospace">{{ personaDetectadaBD.metodo }}</span>
           </div>
         </div>
 
-        <div *ngIf="!modoIdentificacion && !verificandoPersonaBD && !personaDetectadaBD && faceVectorGenerado && mostrarBotonCaptura" class="alert alert-light border py-1 px-2 small mb-0 text-muted">
+        <div
+          *ngIf="!modoIdentificacion && !verificandoPersonaBD && !personaDetectadaBD && faceVectorGenerado && mostrarBotonCaptura"
+          class="alert alert-light border py-1 px-2 small mb-0 text-muted">
           <i class="bi bi-person-plus text-success me-1"></i> Nuevo sujeto (Sin duplicado en BD)
         </div>
       </div>
@@ -276,10 +287,12 @@
         <!-- SELECTOR DE CAPTAHUELLAS ASIGNADO -->
         <div class="mb-2">
           <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light fw-semibold text-secondary" title="Dispositivo captahuellas USB o de red">
+            <span class="input-group-text bg-light fw-semibold text-secondary"
+              title="Dispositivo captahuellas USB o de red">
               <i class="bi bi-fingerprint me-1 text-primary"></i> Lector:
             </span>
-            <select class="form-select form-select-sm" [ngModel]="captahuellasSeleccionadoId" (ngModelChange)="onCaptahuellasSelect($event)">
+            <select class="form-select form-select-sm" [ngModel]="captahuellasSeleccionadoId"
+              (ngModelChange)="onCaptahuellasSelect($event)">
               <option *ngFor="let cap of listaCaptahuellas" [value]="cap.id">
                 {{ cap.nombre }}
               </option>
@@ -313,7 +326,7 @@
             <div class="text-muted" *ngIf="!sensorConectado">
               Conecte el captahuellas en el puerto USB
             </div>
-            <span class="text-muted small">Coloque el dedo en la ventana óptica y presione capturar</span>
+            <span class="text-muted small">Coloque el dedo en la ventana optica y presione capturar</span>
           </div>
 
           <!-- ALERTA DE ERROR DE HUELLA -->
@@ -327,13 +340,13 @@
               <!-- HUELLA 1 -->
               <div *ngIf="huella1Generada"
                 class="badge bg-success-subtle text-success border border-success-subtle p-1 d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-fingerprint me-1"></i>Índice (Nueva): Nativo (384B / {{ totalMinucias1 }})</span>
+                <span><i class="bi bi-fingerprint me-1"></i>Indice (Nueva): Nativo (384B / {{ totalMinucias1 }})</span>
                 <span class="text-secondary font-monospace" style="font-size: 0.65rem;">{{ huella1Generada.substring(0,
                   4) }}...</span>
               </div>
               <div *ngIf="!huella1Generada && huella1Existente"
                 class="badge bg-info-subtle text-info-emphasis border border-info-subtle p-1 d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-fingerprint me-1 text-primary"></i>Índice: Registrada en BD (384B)</span>
+                <span><i class="bi bi-fingerprint me-1 text-primary"></i>Indice: Registrada en BD (384B)</span>
                 <span class="text-muted font-monospace" style="font-size: 0.65rem;">{{ huella1Existente.substring(0, 4)
                   }}...</span>
               </div>
@@ -360,7 +373,7 @@
             [ngClass]="huella1Generada ? 'btn-success text-white' : (huella1Existente ? 'btn-outline-info' : 'btn-outline-primary')"
             (click)="iniciarEscaneoHuella(1)" [disabled]="escaneandoHuella || !sensorConectado">
             <i class="bi bi-check-lg" *ngIf="huella1Generada"></i>
-            {{ huella1Generada ? 'Índice Actualizado' : (huella1Existente ? 'Re-escanear Índice' : 'Capturar Índice') }}
+            {{ huella1Generada ? 'Indice Actualizado' : (huella1Existente ? 'Re-escanear Indice' : 'Capturar Indice') }}
           </button>
           <button type="button" class="btn btn-sm"
             [ngClass]="huella2Generada ? 'btn-success text-white' : (huella2Existente ? 'btn-outline-info' : 'btn-outline-primary')"

@@ -6,6 +6,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MultiCurrencyFormatPipe } from '../../shared/pipes/multi-currency-format.pipe';
 import { BcvConvertPipe } from '../../shared/pipes/bcv-convert.pipe';
 import { TasaCambioService } from '../../core/services/tasa-cambio.service';
+import { AlertModalService } from '../../shared/services/alert-modal.service';
 
 export interface Membresia {
   id?: number;
@@ -44,6 +45,7 @@ export class MembresiaCatalogoComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
+  private alertModal = inject(AlertModalService);
   tasaService = inject(TasaCambioService);
 
   seccionActiva = signal<'planes' | 'promociones'>('planes');
@@ -56,6 +58,7 @@ export class MembresiaCatalogoComponent implements OnInit {
   mostrarModal = signal<boolean>(false);
   mostrarModalPromo = signal<boolean>(false);
   mostrarModalConfirmacion = signal<boolean>(false);
+  guardando = signal<boolean>(false);
   promoSeleccionadaConfirmacion = signal<Promocion | null>(null);
   accionConfirmacion = signal<'inactivar' | 'activar'>('inactivar');
 
@@ -160,8 +163,10 @@ export class MembresiaCatalogoComponent implements OnInit {
   }
 
   guardar(): void {
+    if (this.guardando()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.alertModal.warning('Por favor completa todos los campos requeridos del plan (nombre y precio).', 'Formulario Incompleto');
       return;
     }
 
@@ -175,23 +180,36 @@ export class MembresiaCatalogoComponent implements OnInit {
       activo: fv.activa
     };
 
+    this.guardando.set(true);
     if (this.editandoId) {
       this.http.put(`/api/v1/membresias/${this.editandoId}`, payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.snackBar.open('Membresia actualizada', 'OK', { duration: 3000 });
+          this.alertModal.success('Plan de membresia actualizado exitosamente.', 'Plan Actualizado');
           this.mostrarModal.set(false);
           this.cargarMembresias();
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 4000 })
+        error: () => {
+          this.guardando.set(false);
+          this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 4000 });
+          this.alertModal.error('No se pudo actualizar el plan de membresia.', 'Error');
+        }
       });
     } else {
       this.http.post('/api/v1/membresias', payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.snackBar.open('Membresia creada con exito', 'OK', { duration: 3000 });
+          this.alertModal.success('Plan de membresia creado exitosamente.', 'Plan Registrado');
           this.mostrarModal.set(false);
           this.cargarMembresias();
         },
-        error: () => this.snackBar.open('Error al crear membresia', 'Cerrar', { duration: 4000 })
+        error: () => {
+          this.guardando.set(false);
+          this.snackBar.open('Error al crear membresia', 'Cerrar', { duration: 4000 });
+          this.alertModal.error('No se pudo registrar el plan de membresia.', 'Error');
+        }
       });
     }
   }
@@ -228,8 +246,10 @@ export class MembresiaCatalogoComponent implements OnInit {
   }
 
   guardarPromo(): void {
+    if (this.guardando()) return;
     if (this.promoForm.invalid) {
       this.promoForm.markAllAsTouched();
+      this.alertModal.warning('Por favor completa todos los campos requeridos de la promocion (nombre, codigo y valor).', 'Formulario Incompleto');
       return;
     }
 
@@ -245,23 +265,36 @@ export class MembresiaCatalogoComponent implements OnInit {
       membresiaAplica: v.membresiaAplicaId ? { id: v.membresiaAplicaId } : null
     };
 
+    this.guardando.set(true);
     if (this.editandoPromoId) {
       this.http.put(`/api/v1/membresias/promociones/${this.editandoPromoId}`, payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.snackBar.open('Promocion actualizada', 'OK', { duration: 3000 });
+          this.alertModal.success('Promocion actualizada exitosamente.', 'Promocion Actualizada');
           this.mostrarModalPromo.set(false);
           this.cargarPromociones();
         },
-        error: () => this.snackBar.open('Error al actualizar promocion', 'Cerrar', { duration: 4000 })
+        error: () => {
+          this.guardando.set(false);
+          this.snackBar.open('Error al actualizar promocion', 'Cerrar', { duration: 4000 });
+          this.alertModal.error('No se pudo actualizar la promocion.', 'Error');
+        }
       });
     } else {
       this.http.post('/api/v1/membresias/promociones', payload).subscribe({
         next: () => {
+          this.guardando.set(false);
           this.snackBar.open('Promocion creada con exito', 'OK', { duration: 3000 });
+          this.alertModal.success('Promocion creada exitosamente.', 'Promocion Registrada');
           this.mostrarModalPromo.set(false);
           this.cargarPromociones();
         },
-        error: () => this.snackBar.open('Error al crear promocion', 'Cerrar', { duration: 4000 })
+        error: () => {
+          this.guardando.set(false);
+          this.snackBar.open('Error al crear promocion', 'Cerrar', { duration: 4000 });
+          this.alertModal.error('No se pudo crear la promocion.', 'Error');
+        }
       });
     }
   }

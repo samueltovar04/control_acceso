@@ -120,15 +120,18 @@ export class PisoListComponent implements OnInit {
   }
 
   guardarPiso(): void {
+    if (this.guardandoPiso) return;
     this.errorModal = '';
     this.mensajeExito = '';
 
     if (!this.pisoForm.piso || !this.pisoForm.piso.trim()) {
       this.errorModal = 'El numero o nombre de piso es requerido.';
+      this.alertModal.warning(this.errorModal, 'Campo Requerido');
       return;
     }
     if (!this.pisoForm.descripcion || !this.pisoForm.descripcion.trim()) {
       this.errorModal = 'La descripcion del piso es requerida.';
+      this.alertModal.warning(this.errorModal, 'Campo Requerido');
       return;
     }
 
@@ -142,12 +145,14 @@ export class PisoListComponent implements OnInit {
         next: () => {
           this.mensajeExito = 'Piso actualizado exitosamente.';
           this.guardandoPiso = false;
+          this.cerrarModal();
           this.reloadData();
-          setTimeout(() => this.cerrarModal(), 900);
+          this.alertModal.success('Piso actualizado exitosamente.', 'Piso Actualizado');
         },
         error: (err) => {
           this.errorModal = 'Error al actualizar el piso.';
           this.guardandoPiso = false;
+          this.alertModal.error('No se pudo actualizar el piso.', 'Error al Actualizar');
         }
       });
     } else {
@@ -155,12 +160,14 @@ export class PisoListComponent implements OnInit {
         next: () => {
           this.mensajeExito = 'Piso registrado exitosamente.';
           this.guardandoPiso = false;
+          this.cerrarModal();
           this.reloadData();
-          setTimeout(() => this.cerrarModal(), 900);
+          this.alertModal.success('Piso registrado exitosamente.', 'Registro Exitoso');
         },
         error: (err) => {
           this.errorModal = 'Error al registrar el piso.';
           this.guardandoPiso = false;
+          this.alertModal.error('No se pudo registrar el piso.', 'Error al Crear');
         }
       });
     }
@@ -175,8 +182,14 @@ export class PisoListComponent implements OnInit {
     );
     if (confirmado) {
       this.pisoService.deletePiso(id).subscribe({
-        next: () => this.reloadData(),
-        error: (err) => console.log(err)
+        next: () => {
+          this.reloadData();
+          this.alertModal.success('El piso fue eliminado correctamente.', 'Piso Eliminado');
+        },
+        error: (err) => {
+          console.log(err);
+          this.alertModal.error('No se pudo eliminar el piso porque tiene dispositivos o accesos asociados.', 'Error al Eliminar');
+        }
       });
     }
   }

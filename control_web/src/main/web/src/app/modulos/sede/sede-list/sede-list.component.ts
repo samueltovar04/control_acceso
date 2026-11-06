@@ -175,6 +175,7 @@ export class SedeListComponent implements OnInit {
 
   mostrarModal: boolean = false;
   editando: boolean = false;
+  guardando: boolean = false;
   sedeActual: Sede = { sede: '' };
 
   constructor(
@@ -244,22 +245,41 @@ export class SedeListComponent implements OnInit {
   }
 
   guardarSede(): void {
-    if (!this.sedeActual.sede) return;
+    if (this.guardando) return;
+    if (!this.sedeActual.sede || !this.sedeActual.sede.trim()) {
+      this.alertModal.warning('Por favor ingresa el nombre de la sede antes de guardar.', 'Campo Requerido');
+      return;
+    }
+    this.sedeActual.sede = this.sedeActual.sede.trim();
+    this.guardando = true;
+
     if (this.editando && this.sedeActual.id) {
       this.sedeService.updateSede(this.sedeActual.id, this.sedeActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarSedes();
+          this.alertModal.success('Sede actualizada exitosamente.', 'Sede Actualizada');
         },
-        error: (err) => console.error('Error al actualizar sede:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al actualizar sede:', err);
+          this.alertModal.error('No se pudo actualizar la sede. Verifique los datos e intente nuevamente.', 'Error al Actualizar');
+        }
       });
     } else {
       this.sedeService.createSede(this.sedeActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarSedes();
+          this.alertModal.success('Sede registrada exitosamente.', 'Registro Exitoso');
         },
-        error: (err) => console.error('Error al crear sede:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al crear sede:', err);
+          this.alertModal.error('No se pudo registrar la nueva sede.', 'Error al Crear');
+        }
       });
     }
   }
@@ -274,8 +294,14 @@ export class SedeListComponent implements OnInit {
     );
     if (confirmado) {
       this.sedeService.deleteSede(s.id).subscribe({
-        next: () => this.cargarSedes(),
-        error: (err) => console.error('Error al eliminar sede:', err)
+        next: () => {
+          this.cargarSedes();
+          this.alertModal.success(`La sede "${s.sede}" fue eliminada correctamente.`, 'Sede Eliminada');
+        },
+        error: (err) => {
+          console.error('Error al eliminar sede:', err);
+          this.alertModal.error('No se pudo eliminar la sede porque tiene registros asociados.', 'Error al Eliminar');
+        }
       });
     }
   }

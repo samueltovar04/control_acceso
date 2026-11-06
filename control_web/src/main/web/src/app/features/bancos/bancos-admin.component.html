@@ -33,7 +33,7 @@
       [ngClass]="filtroTipo() === 'PAGO_MOVIL' ? 'btn-primary' : 'btn-outline-primary'"
       (click)="cambiarFiltro('PAGO_MOVIL')"
     >
-      <i class="bi bi-phone me-1"></i>Pago Móvil
+      <i class="bi bi-phone me-1"></i>Pago Movil
     </button>
     <button
       class="btn btn-sm"
@@ -136,7 +136,7 @@
               </div>
             </div>
             <div *ngIf="b.telefono" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
-              <span>Teléfono Pago Móvil:</span>
+              <span>Telefono Pago Movil:</span>
               <div>
                 <strong class="text-dark me-1">{{ b.telefono }}</strong>
                 <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.telefono)" title="Copiar telefono">
@@ -145,7 +145,7 @@
               </div>
             </div>
             <div *ngIf="b.documentoTitular" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
-              <span>RIF / Cédula:</span>
+              <span>RIF / Cedula:</span>
               <div>
                 <strong class="text-dark me-1">{{ b.documentoTitular }}</strong>
                 <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.documentoTitular)" title="Copiar documento">
@@ -171,7 +171,7 @@
               </div>
             </div>
             <div *ngIf="b.telefono" class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
-              <span>Teléfono Zelle:</span>
+              <span>Telefono Zelle:</span>
               <div>
                 <strong class="text-dark me-1">{{ b.telefono }}</strong>
                 <button class="btn btn-sm btn-link p-0 text-muted" (click)="copiarAlPortapapeles(b.telefono)">
@@ -206,11 +206,11 @@
               </div>
             </div>
             <div *ngIf="b.red" class="d-flex justify-content-between py-1 border-bottom border-light">
-              <span>Red de Envío:</span>
+              <span>Red de Envio:</span>
               <span class="badge bg-dark">{{ b.red }}</span>
             </div>
             <div *ngIf="b.direccionBilletera" class="py-1 border-bottom border-light">
-              <span class="d-block text-muted" style="font-size: 0.72rem;">Dirección Wallet:</span>
+              <span class="d-block text-muted" style="font-size: 0.72rem;">Direccion Wallet:</span>
               <div class="d-flex justify-content-between align-items-center">
                 <code class="text-break text-dark fw-bold" style="font-size: 0.75rem;">{{ b.direccionBilletera }}</code>
                 <button class="btn btn-sm btn-link p-0 text-muted ms-1" (click)="copiarAlPortapapeles(b.direccionBilletera)">
@@ -231,9 +231,14 @@
             <i class="bi me-1" [ngClass]="b.activo ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
             {{ b.activo ? 'Activa en App' : 'Inactiva' }}
           </span>
-          <button class="btn btn-sm btn-outline-primary" (click)="abrirModalEditar(b)">
-            <i class="bi bi-pencil me-1"></i>Editar
-          </button>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-primary" (click)="abrirModalEditar(b)">
+              <i class="bi bi-pencil me-1"></i>Editar
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="eliminarBanco(b)" title="Eliminar Cuenta">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -259,7 +264,7 @@
             <div class="col-md-6">
               <label class="form-label small fw-bold text-primary">Tipo de Metodo / Pasarela *</label>
               <select class="form-select border-primary" formControlName="tipo">
-                <option value="PAGO_MOVIL">Pago Móvil (VES)</option>
+                <option value="PAGO_MOVIL">Pago Movil (VES)</option>
                 <option value="TRANSFERENCIA">Transferencia Bancaria (VES/USD)</option>
                 <option value="ZELLE">Zelle (USD)</option>
                 <option value="BINANCE">Binance Pay / Crypto (USDT)</option>
@@ -270,8 +275,8 @@
             <div class="col-md-6">
               <label class="form-label small fw-bold">Moneda Aceptada *</label>
               <select class="form-select" formControlName="moneda">
-                <option value="VES">Bolívares (VES)</option>
-                <option value="USD">Dólares (USD)</option>
+                <option value="VES">Bolivares (VES)</option>
+                <option value="USD">Dolares (USD)</option>
                 <option value="USDT">Tether (USDT)</option>
                 <option value="EUR">Euros (EUR)</option>
               </select>
@@ -285,7 +290,7 @@
 
             <!-- CODIGO BANCO (VES) -->
             <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'TRANSFERENCIA'">
-              <label class="form-label small fw-bold">Código Bancario (4 dígitos)</label>
+              <label class="form-label small fw-bold">Codigo Bancario (4 digitos)</label>
               <input type="text" class="form-control" formControlName="codigo" placeholder="Ej: 0134, 0105, 0102">
             </div>
 
@@ -297,25 +302,25 @@
 
             <!-- DOCUMENTO / RIF -->
             <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'TRANSFERENCIA'">
-              <label class="form-label small fw-bold">Cédula / RIF Titular</label>
+              <label class="form-label small fw-bold">Cedula / RIF Titular</label>
               <input type="text" class="form-control" formControlName="documentoTitular" placeholder="Ej: J-12345678-9 o V-12345678">
             </div>
 
             <!-- TELEFONO -->
             <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'PAGO_MOVIL' || form.get('tipo')?.value === 'ZELLE'">
-              <label class="form-label small fw-bold">Teléfono Asociado</label>
+              <label class="form-label small fw-bold">Telefono Asociado</label>
               <input type="text" class="form-control" formControlName="telefono" placeholder="Ej: 04141234567">
             </div>
 
             <!-- NUMERO DE CUENTA -->
             <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'TRANSFERENCIA' || form.get('tipo')?.value === 'PAGO_MOVIL'">
-              <label class="form-label small fw-bold">Número de Cuenta (20 dígitos)</label>
+              <label class="form-label small fw-bold">Numero de Cuenta (20 digitos)</label>
               <input type="text" class="form-control" formControlName="numeroCuenta" placeholder="01340000000000000000">
             </div>
 
             <!-- EMAIL -->
             <div class="col-md-6" *ngIf="form.get('tipo')?.value === 'ZELLE' || form.get('tipo')?.value === 'BINANCE' || form.get('tipo')?.value === 'TRANSFERENCIA'">
-              <label class="form-label small fw-bold">Correo Electrónico</label>
+              <label class="form-label small fw-bold">Correo Electronico</label>
               <input type="email" class="form-control" formControlName="email" placeholder="pagos@empresa.com">
             </div>
 
@@ -331,7 +336,7 @@
             </div>
 
             <div class="col-md-12" *ngIf="form.get('tipo')?.value === 'BINANCE'">
-              <label class="form-label small fw-bold">Dirección de Billetera (Wallet Address)</label>
+              <label class="form-label small fw-bold">Direccion de Billetera (Wallet Address)</label>
               <input type="text" class="form-control" formControlName="direccionBilletera" placeholder="Ej: TXyZ9876543210ABCDEF1234567890USDT">
             </div>
 
@@ -344,7 +349,7 @@
             <div class="col-12">
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" formControlName="activo" id="checkActivo">
-                <label class="form-check-label small fw-semibold" for="checkActivo">Mostrar y habilitar para recepción de pagos en la App</label>
+                <label class="form-check-label small fw-semibold" for="checkActivo">Mostrar y habilitar para recepcion de pagos en la App</label>
               </div>
             </div>
           </div>

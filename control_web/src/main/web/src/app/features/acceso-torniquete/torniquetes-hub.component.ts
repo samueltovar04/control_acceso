@@ -19,7 +19,7 @@ import { Subscription } from 'rxjs';
           <h3 class="fw-bold text-dark m-0">
             <i class="bi bi-door-open-fill text-primary me-2"></i>Control de Torniquetes y Accesos
           </h3>
-          <p class="text-muted small m-0">Terminal biométrico de paso y monitoreo de eventos en tiempo real</p>
+          <p class="text-muted small m-0">Terminal biometrico de paso y monitoreo de eventos en tiempo real</p>
         </div>
 
         <div class="d-flex align-items-center gap-3 flex-wrap">

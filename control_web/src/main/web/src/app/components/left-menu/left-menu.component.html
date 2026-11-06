@@ -1,5 +1,5 @@
 <div class="sidebar-wrapper d-flex flex-column h-100 w-100" style="min-height: 100vh;">
-  <!-- BRAND / HEADER (LOGO ÚNICO EN SIDEBAR) -->
+  <!-- BRAND / HEADER (LOGO UNICO EN SIDEBAR) -->
   <div class="sidebar-header p-3 border-bottom d-flex align-items-center justify-content-between">
     <div class="d-flex align-items-center">
       <img src="assets/images/logo-andes.png" alt="Andes Sistemas" style="height: 38px; width: auto; object-fit: contain;" class="me-2 rounded-3" />
@@ -12,13 +12,13 @@
       type="button"
       class="btn btn-sm btn-link text-secondary d-md-none p-1"
       (click)="sidebarService.close()"
-      title="Cerrar Menú"
-      aria-label="Cerrar Menú">
+      title="Cerrar Menu"
+      aria-label="Cerrar Menu">
       <i class="bi bi-x-lg fs-5"></i>
     </button>
   </div>
 
-  <!-- NAVEGACIÓN -->
+  <!-- NAVEGACION -->
   <div class="sidebar-menu flex-grow-1 py-3 px-2 overflow-auto">
 
     <!-- MI CUENTA -->
@@ -35,9 +35,9 @@
       </li>
     </ul>
 
-    <!-- PANEL & VISIÓN -->
+    <!-- PANEL & VISION -->
     <div *ngIf="canViewPanelVision()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
-      PANEL & VISIÓN
+      PANEL & VISION
     </div>
     <ul *ngIf="canViewPanelVision()" class="nav flex-column mb-3">
       <li class="nav-item">
@@ -65,16 +65,16 @@
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center"
           href="/dashboard-dinamico.html" target="_blank"
           (click)="onNavClick()">
-          <i class="bi bi-activity me-3 fs-5 text-peach"></i> Telemetría Dinámica
+          <i class="bi bi-activity me-3 fs-5 text-peach"></i> Telemetria Dinamica
         </a>
       </li>
     </ul>
 
-    <!-- GESTIÓN DE PAGOS -->
+    <!-- GESTION DE PAGOS -->
     <div *ngIf="canViewPagos()"
       class="menu-section small text-uppercase fw-bold px-3 mb-2 d-flex justify-content-between align-items-center"
       style="cursor: pointer;" (click)="menuPagosAbierto = !menuPagosAbierto">
-      <span><i class="bi bi-cash-coin me-2 text-leaf"></i>GESTIÓN DE PAGOS</span>
+      <span><i class="bi bi-cash-coin me-2 text-leaf"></i>GESTION DE PAGOS</span>
       <i class="bi" [ngClass]="menuPagosAbierto ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
     </div>
     <ul class="nav flex-column mb-3" *ngIf="canViewPagos() && menuPagosAbierto">
@@ -96,7 +96,7 @@
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/conciliacion"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-wallet2 me-3 fs-5 text-peach"></i> Conciliación Pagos
+          <i class="bi bi-wallet2 me-3 fs-5 text-peach"></i> Conciliacion Pagos
         </a>
       </li>
       <li class="nav-item">
@@ -115,26 +115,26 @@
       </li>
     </ul>
 
-    <!-- GESTIÓN DE ACCESO -->
+    <!-- GESTION DE ACCESO -->
     <div *ngIf="canViewGestionAcceso()" class="menu-section small text-uppercase fw-bold px-3 mb-2">
-      GESTIÓN DE ACCESO
+      GESTION DE ACCESO
     </div>
     <ul *ngIf="canViewGestionAcceso()" class="nav flex-column mb-3">
       <li class="nav-item">
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/clientes"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Clientes & Membresías
+          <i class="bi bi-people-fill me-3 fs-5 text-peach"></i> Clientes & Membresias
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" *ngIf="!isContable() || isAdminOrSuperAdmin()">
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/empleados"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
           <i class="bi bi-person-badge-fill me-3 fs-5 text-peach"></i> Empleados
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" *ngIf="!isContable() || isAdminOrSuperAdmin()">
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/visitantes"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
@@ -145,7 +145,7 @@
         <a class="nav-link py-2 px-3 rounded-3 d-flex align-items-center" routerLink="/home/membresias"
           routerLinkActive="active-clean-health"
           (click)="onNavClick()">
-          <i class="bi bi-card-checklist me-3 fs-5 text-peach"></i> Catálogo Membresías
+          <i class="bi bi-card-checklist me-3 fs-5 text-peach"></i> Catalogo Membresias
         </a>
       </li>
     </ul>
@@ -221,7 +221,7 @@
     </ul>
   </div>
 
-  <!-- FOOTER LATERAL CON SWITCH MODO CLARO/OSCURO Y BOTÓN CERRAR SESIÓN -->
+  <!-- FOOTER LATERAL CON SWITCH MODO CLARO/OSCURO Y BOTON CERRAR SESION -->
   <div class="sidebar-footer p-3 border-top text-secondary small">
     <!-- SYSTEM STATUS PILL (IMAGEN 3) -->
     <div class="d-flex justify-content-center mb-2.5">
@@ -251,9 +251,9 @@
 
     <button class="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 fw-bold py-1.5 rounded-3 btn-logout-side"
             (click)="cerrarSesion()"
-            title="Cerrar Sesión del Sistema">
+            title="Cerrar Sesion del Sistema">
       <i class="bi bi-box-arrow-right fs-6"></i>
-      <span>Cerrar Sesión</span>
+      <span>Cerrar Sesion</span>
     </button>
   </div>
 </div>

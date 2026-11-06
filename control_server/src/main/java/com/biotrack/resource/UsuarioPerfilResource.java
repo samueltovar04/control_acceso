@@ -37,17 +37,31 @@ public class UsuarioPerfilResource {
     @NonBlocking
     public Uni<Response> getPerfil(@Context SecurityContext ctx, @QueryParam("id") String queryId) {
         return Uni.createFrom().item(() -> {
-            // Extraer identificador: primero desde Claims JWT, luego desde SecurityContext Principal o query param de respaldo
+            // Extraer identificador: primero desde Claims JWT o SecurityContext Principal
             String userIdOrEmail = null;
 
-            if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().trim().isEmpty()) {
+            boolean isPrivileged = false;
+            if (jwt != null && jwt.getGroups() != null) {
+                for (String g : jwt.getGroups()) {
+                    if (g != null) {
+                        String up = g.toUpperCase();
+                        if (up.contains("ADMIN") || up.contains("ANALISTA") || up.contains("CONTABLE") || up.contains("SUPER_ADMIN")) {
+                            isPrivileged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (queryId != null && !queryId.trim().isEmpty() && isPrivileged) {
+                // Solo roles privilegiados (ADMIN, ANALISTA, CONTABLE) pueden consultar perfiles ajenos con queryId
+                userIdOrEmail = queryId.trim();
+            } else if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().trim().isEmpty()) {
                 userIdOrEmail = jwt.getSubject();
             } else if (jwt != null && jwt.getName() != null && !jwt.getName().trim().isEmpty()) {
                 userIdOrEmail = jwt.getName();
             } else if (ctx != null && ctx.getUserPrincipal() != null) {
                 userIdOrEmail = ctx.getUserPrincipal().getName();
-            } else if (queryId != null && !queryId.trim().isEmpty()) {
-                userIdOrEmail = queryId.trim();
             }
 
             if (userIdOrEmail == null) {

@@ -128,11 +128,14 @@ export class CrearEmpleadoComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.guardando) return;
     this.submitted = true;
-    if (!this.employee.nombre || !this.employee.documento) {
+    if (!this.employee.nombre || !this.employee.nombre.trim() || !this.employee.documento || !this.employee.documento.toString().trim()) {
       this.alertModal.warning('Por favor ingrese el nombre y documento del empleado.', 'Campos Requeridos');
       return;
     }
+    this.employee.nombre = this.employee.nombre.trim();
+    this.employee.documento = this.employee.documento.toString().trim();
     this.save();
   }
 }

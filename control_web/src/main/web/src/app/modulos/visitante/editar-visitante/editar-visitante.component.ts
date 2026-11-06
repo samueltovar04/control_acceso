@@ -191,8 +191,9 @@ export class EditarVisitanteComponent implements OnInit, OnDestroy {
   }
 
   async save(): Promise<void> {
-    const doc = this.visita.documento || this.visita.document;
-    const nom = this.visita.nombre || this.visita.name;
+    if (this.guardando) return;
+    const doc = (this.visita.documento || this.visita.document || '').toString().trim();
+    const nom = (this.visita.nombre || this.visita.name || '').toString().trim();
 
     if (!doc || !nom) {
       this.alertModal.warning('Por favor complete al menos la cedula y el nombre del visitante.', 'Datos Requeridos');
@@ -203,7 +204,7 @@ export class EditarVisitanteComponent implements OnInit, OnDestroy {
 
     const payload: any = {
       id: this.id,
-      documento: doc.toString(),
+      documento: doc,
       nombre: nom,
       apellido: this.visita.apellido || this.visita.lastName || '',
       email: this.visita.email || '',
@@ -227,8 +228,8 @@ export class EditarVisitanteComponent implements OnInit, OnDestroy {
       error: async (err) => {
         this.guardando = false;
         console.error('Error al actualizar visitante:', err);
-        await this.alertModal.info('Visitante guardado.', 'Guardado');
-        this.router.navigate(['/home/visitantes']);
+        const msg = err?.error?.error || err?.error?.message || 'No se pudieron actualizar los datos del visitante.';
+        await this.alertModal.error(msg, 'Error al Actualizar');
       }
     });
   }

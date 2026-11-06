@@ -26,7 +26,7 @@ import { AlertModalService } from '../../../shared/services/alert-modal.service'
         </div>
       </div>
 
-      <!-- PESTAÑAS DE TIPOS DE USUARIO -->
+      <!-- PESTANAS DE TIPOS DE USUARIO -->
       <ul class="nav nav-pills mb-4 bg-white p-2 rounded-3 shadow-sm border">
         <li class="nav-item">
           <button
@@ -399,10 +399,7 @@ export class PermisosPisosComponent implements OnInit {
       error: (err) => {
         this.guardando = false;
         console.error('Error al guardar permisos:', err);
-        // Actualizar referencia local
-        this.personaActual.pisosPermitidos = this.pisosTotales.filter((p) => p.id && this.pisosSeleccionadosIds.has(p.id));
-        this.cerrarModal();
-        this.alertModal.info('Permisos asignados localmente.', 'Modo Local');
+        this.alertModal.error('No se pudieron guardar los permisos de pisos en el servidor. Intente nuevamente.', 'Error al Guardar');
       }
     });
   }

@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanzasService, Pago, Conciliacion, BalanceFinanciero, Gasto } from '../../core/services/finanzas.service';
+import { AlertModalService } from '../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -12,6 +13,7 @@ import { FinanzasService, Pago, Conciliacion, BalanceFinanciero, Gasto } from '.
 })
 export class AdminDashboardComponent implements OnInit {
   private finanzasService = inject(FinanzasService);
+  private alertModal = inject(AlertModalService);
 
   balance?: BalanceFinanciero;
   pagos: Pago[] = [];
@@ -135,17 +137,38 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   registrarPago(): void {
+    if (!this.nuevoPago.monto || this.nuevoPago.monto <= 0) {
+      this.alertModal.warning('Por favor ingrese un monto valido mayor a cero para el pago.', 'Monto Invalido');
+      return;
+    }
+
     if (this.clienteIdSeleccionado) {
       this.nuevoPago.cliente = { id: this.clienteIdSeleccionado };
     }
-    this.finanzasService.registrarPago(this.nuevoPago).subscribe(() => {
-      this.cargarDatos();
-      this.nuevoPago.monto = 0;
-      this.nuevoPago.numeroReferencia = '';
+    this.finanzasService.registrarPago(this.nuevoPago).subscribe({
+      next: () => {
+        this.cargarDatos();
+        this.alertModal.success(`Pago de $${this.nuevoPago.monto} registrado exitosamente.`, 'Pago Registrado');
+        this.nuevoPago.monto = 0;
+        this.nuevoPago.numeroReferencia = '';
+      },
+      error: (err) => {
+        console.error('Error registrando pago:', err);
+        this.alertModal.error('No se pudo registrar el pago.', 'Error');
+      }
     });
   }
 
-  conciliar(pago: Pago, estado: 'CONCILIADO' | 'DISCREPANCIA'): void {
+  async conciliar(pago: Pago, estado: 'CONCILIADO' | 'DISCREPANCIA'): Promise<void> {
+    const accionTexto = estado === 'CONCILIADO' ? 'conciliar' : 'marcar discrepancia en';
+    const confirmado = await this.alertModal.confirm(
+      `Desea ${accionTexto} el pago #${pago.id || ''} por monto $${pago.monto}?`,
+      'Confirmar Conciliacion',
+      'Confirmar',
+      'Cancelar'
+    );
+    if (!confirmado) return;
+
     const conc: Conciliacion = {
       pago: pago,
       montoExtractoBancario: pago.monto,
@@ -153,8 +176,15 @@ export class AdminDashboardComponent implements OnInit {
       estado: estado,
       conciliadoPorUser: 'Admin Finance'
     };
-    this.finanzasService.conciliarPago(conc).subscribe(() => {
-      this.cargarDatos();
+    this.finanzasService.conciliarPago(conc).subscribe({
+      next: () => {
+        this.cargarDatos();
+        this.alertModal.success(`Pago marcado como ${estado} correctamente.`, 'Conciliacion Exitosa');
+      },
+      error: (err) => {
+        console.error('Error conciliando pago:', err);
+        this.alertModal.error('No se pudo completar la conciliacion bancaria.', 'Error');
+      }
     });
   }
 }

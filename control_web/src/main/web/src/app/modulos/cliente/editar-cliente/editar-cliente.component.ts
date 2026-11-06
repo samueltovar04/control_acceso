@@ -67,7 +67,7 @@ import { BiometricCaptureComponent } from '../../../shared/components/biometric-
                   <select class="form-select border-primary" [(ngModel)]="membresiaSeleccionadaId" name="membresiaId">
                     <option [ngValue]="null">Sin Membresia Asignada</option>
                     <option *ngFor="let m of membresiasList" [value]="m.id">
-                      {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }} • {{ m.duracionDias || m.duracionesDias }} dias)
+                      {{ m.nombre }} - $ {{ m.precio }} / {{ m.precio | bcvConvert:'USD' }} ({{ m.ciclo || m.periodicidad }}  {{ m.duracionDias || m.duracionesDias }} dias)
                     </option>
                   </select>
                   <div *ngIf="membresiaSeleccionada" class="form-text text-success fw-semibold small mt-1">
@@ -79,7 +79,7 @@ import { BiometricCaptureComponent } from '../../../shared/components/biometric-
                   <select class="form-select border-success" [(ngModel)]="cuponSeleccionadoCodigo" name="cuponCodigo">
                     <option value="">Sin Promocion / Tarifa Regular</option>
                     <option *ngFor="let p of promocionesFiltradas" [value]="p.codigo">
-                      {{ p.nombre }} [{{ p.codigo }}] — {{ p.tipoDescuento }}: {{ p.valorDescuento }}
+                      {{ p.nombre }} [{{ p.codigo }}]  {{ p.tipoDescuento }}: {{ p.valorDescuento }}
                     </option>
                   </select>
                 </div>
@@ -131,7 +131,7 @@ import { BiometricCaptureComponent } from '../../../shared/components/biometric-
                         <div class="d-flex align-items-center">
                           <i class="bi bi-fingerprint fs-4 me-2" [ngClass]="cliente.huella1 ? 'text-success' : 'text-muted'"></i>
                           <div>
-                            <span class="fw-bold small d-block">Dedo Índice</span>
+                            <span class="fw-bold small d-block">Dedo Indice</span>
                             <span class="small text-muted" *ngIf="cliente.huella1">Suprema 384B Registrada</span>
                             <span class="small text-danger" *ngIf="!cliente.huella1">No registrado</span>
                           </div>
@@ -304,7 +304,13 @@ export class EditarClienteComponent implements OnInit {
   }
 
   guardarCambios(): void {
-    if (!this.cliente || !this.cliente.id) return;
+    if (this.guardando || !this.cliente || !this.cliente.id) return;
+    if (!this.cliente.documento || !this.cliente.documento.trim() || !this.cliente.nombre || !this.cliente.nombre.trim()) {
+      this.alertModal.warning('El documento y el nombre del cliente son obligatorios.', 'Campos Requeridos');
+      return;
+    }
+    this.cliente.documento = this.cliente.documento.trim();
+    this.cliente.nombre = this.cliente.nombre.trim();
     this.guardando = true;
 
     if (this.membresiaSeleccionadaId) {
@@ -319,7 +325,6 @@ export class EditarClienteComponent implements OnInit {
 
     this.clienteService.updateCliente(this.cliente.id, this.cliente).subscribe({
       next: async () => {
-        // Si tiene membresia asignada, registrar la asignacion formal con cupon y pago generado
         if (this.membresiaSeleccionadaId && this.cliente.id) {
           this.clienteService.asignarMembresiaAlCliente(
             this.cliente.id,
@@ -332,10 +337,10 @@ export class EditarClienteComponent implements OnInit {
               await this.alertModal.success('Cliente y membresia actualizados con pago generado correctamente.', 'Actualizacion Exitosa');
               this.router.navigate(['/home/clientes']);
             },
-            error: async () => {
+            error: async (errMem) => {
               this.guardando = false;
-              await this.alertModal.info('Cliente guardado.', 'Guardado');
-              this.router.navigate(['/home/clientes']);
+              console.error('Error al asignar membresia en edicion:', errMem);
+              await this.alertModal.error('Los datos del cliente se guardaron, pero ocurrio un error al procesar la membresia.', 'Advertencia en Membresia');
             }
           });
         } else {
@@ -347,8 +352,8 @@ export class EditarClienteComponent implements OnInit {
       error: async (err) => {
         this.guardando = false;
         console.error('Error al actualizar cliente:', err);
-        await this.alertModal.info('Cambios guardados.', 'Guardado');
-        this.router.navigate(['/home/clientes']);
+        const msg = err?.error?.error || err?.error?.message || 'No se pudieron guardar los cambios del cliente. Verifique que la cedula no este duplicada.';
+        await this.alertModal.error(msg, 'Error al Actualizar');
       }
     });
   }

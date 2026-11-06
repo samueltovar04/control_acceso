@@ -6,6 +6,7 @@ import { UsuarioService, UserDTO, AuditoriaAcceso, SesionActiva } from '../../..
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
 import { EmpleadoService } from '../../../shared/empleado/empleado.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-usuario-list',
@@ -66,7 +67,8 @@ export class UsuarioListComponent implements OnInit {
     private usuarioService: UsuarioService,
     private sedeService: SedeService,
     private empleadoService: EmpleadoService,
-    private authService: AuthService
+    private authService: AuthService,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -345,26 +347,31 @@ export class UsuarioListComponent implements OnInit {
 
     if (!this.esEdicion && !esCliente && (!this.empleadoSeleccionado || !this.usuarioForm.empleadoId)) {
       this.mensajeError = 'Debe seleccionar obligatoriamente un empleado para crear el usuario.';
+      this.alertModal.warning(this.mensajeError, 'Empleado Requerido');
       return;
     }
 
     if (!this.usuarioForm.username || !this.usuarioForm.username.trim()) {
       this.mensajeError = 'El nombre de usuario es obligatorio.';
+      this.alertModal.warning(this.mensajeError, 'Usuario Requerido');
       return;
     }
 
     if (!this.esEdicion) {
       if (!this.usuarioForm.password) {
         this.mensajeError = 'La contrasena es obligatoria.';
+        this.alertModal.warning(this.mensajeError, 'Contrasena Requerida');
         return;
       }
       const val = this.validarPasswordSegura(this.usuarioForm.password);
       if (!val.valida) {
         this.mensajeError = val.mensaje;
+        this.alertModal.warning(val.mensaje, 'Seguridad de Contrasena');
         return;
       }
       if (this.usuarioForm.password !== this.passwordConfirm) {
         this.mensajeError = 'Las contrasenas no coinciden.';
+        this.alertModal.warning(this.mensajeError, 'Verificacion de Contrasena');
         return;
       }
     } else {
@@ -373,10 +380,12 @@ export class UsuarioListComponent implements OnInit {
         const val = this.validarPasswordSegura(this.usuarioForm.password);
         if (!val.valida) {
           this.mensajeError = val.mensaje;
+          this.alertModal.warning(val.mensaje, 'Seguridad de Contrasena');
           return;
         }
         if (this.usuarioForm.password !== this.passwordConfirm) {
           this.mensajeError = 'Las contrasenas no coinciden.';
+          this.alertModal.warning(this.mensajeError, 'Verificacion de Contrasena');
           return;
         }
       }
@@ -391,11 +400,13 @@ export class UsuarioListComponent implements OnInit {
           this.cargando = false;
           this.mostrarModalUsuario = false;
           this.mensajeExito = 'Usuario actualizado exitosamente.';
+          this.alertModal.success('Usuario actualizado exitosamente.', 'Usuario Actualizado');
           this.cargarUsuarios();
         },
         error: (err) => {
           this.cargando = false;
           this.mensajeError = this.limpiarMensajeError(err, 'No fue posible actualizar el usuario.');
+          this.alertModal.error(this.mensajeError, 'Error al Actualizar');
         }
       });
     } else {
@@ -404,11 +415,13 @@ export class UsuarioListComponent implements OnInit {
           this.cargando = false;
           this.mostrarModalUsuario = false;
           this.mensajeExito = 'Usuario creado exitosamente.';
+          this.alertModal.success('Usuario creado exitosamente.', 'Usuario Creado');
           this.cargarUsuarios();
         },
         error: (err) => {
           this.cargando = false;
           this.mensajeError = this.limpiarMensajeError(err, 'No fue posible registrar el nuevo usuario.');
+          this.alertModal.error(this.mensajeError, 'Error al Registrar');
         }
       });
     }
@@ -432,47 +445,78 @@ export class UsuarioListComponent implements OnInit {
     return raw;
   }
 
-  toggleEstado(u: UserDTO): void {
+  async toggleEstado(u: UserDTO): Promise<void> {
     if (!u.id) return;
     const nuevoEstado = !u.enabled;
+    const accion = nuevoEstado ? 'activar' : 'bloquear o inactivar';
+    const confirmado = await this.alertModal.confirm(
+      `Desea ${accion} el acceso al usuario "${u.username}"?`,
+      'Cambiar Estado de Usuario',
+      nuevoEstado ? 'Activar' : 'Inactivar',
+      'Cancelar'
+    );
+    if (!confirmado) return;
+
     this.usuarioService.cambiarEstado(u.id, nuevoEstado).subscribe({
       next: () => {
         u.enabled = nuevoEstado;
         this.mensajeExito = `Usuario ${u.username} ${nuevoEstado ? 'activado' : 'inactivado'} correctamente.`;
+        this.alertModal.success(this.mensajeExito, 'Estado Actualizado');
         this.aplicarFiltros();
       },
       error: () => {
         this.mensajeError = `Error al cambiar estado del usuario ${u.username}.`;
+        this.alertModal.error(this.mensajeError, 'Error');
       }
     });
   }
 
-  forzarReseteo(u: UserDTO): void {
+  async forzarReseteo(u: UserDTO): Promise<void> {
     if (!u.id) return;
+    const confirmado = await this.alertModal.confirm(
+      `Desea forzar el reseteo obligatorio de clave para "${u.username}" en su proximo inicio de sesion?`,
+      'Forzar Reseteo',
+      'Forzar Reseteo',
+      'Cancelar'
+    );
+    if (!confirmado) return;
+
     this.usuarioService.forzarReseteoPassword(u.id).subscribe({
       next: () => {
         u.requiresPasswordReset = true;
         this.mensajeExito = `Usuario ${u.username} puesto en estado de reseteo obligatorio de clave.`;
+        this.alertModal.success(this.mensajeExito, 'Reseteo Configurado');
         this.aplicarFiltros();
       },
       error: () => {
         this.mensajeError = `Error al forzar reseteo para ${u.username}.`;
+        this.alertModal.error(this.mensajeError, 'Error');
       }
     });
   }
 
-  revocarSesion(s: SesionActiva): void {
+  async revocarSesion(s: SesionActiva): Promise<void> {
     const sesionId = s.idString || s.id;
     if (!sesionId) return;
+    const confirmado = await this.alertModal.confirm(
+      `Desea revocar y cerrar inmediatamente la sesion activa de "${s.username}"?`,
+      'Revocar Sesion',
+      'Revocar',
+      'Cancelar'
+    );
+    if (!confirmado) return;
+
     this.usuarioService.revocarSesion(sesionId).subscribe({
       next: () => {
         s.activa = false;
         this.sesiones = this.sesiones.filter(item => (item.idString || item.id) !== sesionId);
         this.totalSesiones = Math.max(0, this.totalSesiones - 1);
         this.mensajeExito = `Sesion de ${s.username} revocada y cerrada con exito.`;
+        this.alertModal.success(this.mensajeExito, 'Sesion Revocada');
       },
       error: () => {
         this.mensajeError = `Error al revocar sesion de ${s.username}.`;
+        this.alertModal.error(this.mensajeError, 'Error');
       }
     });
   }

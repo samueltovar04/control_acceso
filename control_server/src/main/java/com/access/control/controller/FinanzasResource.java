@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -45,6 +46,9 @@ public class FinanzasResource {
 
     @Inject
     PromocionRepository promocionRepository;
+
+    @Inject
+    JsonWebToken jwt;
 
     @GET
     @Path("/cotizacion-actual")
@@ -89,6 +93,39 @@ public class FinanzasResource {
     public Response reportarPagoMultimoneda(com.access.control.dto.ReportePagoMultimonedaDTO dto) {
         if (dto == null || dto.getClienteId() == null || dto.getNumeroReferencia() == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Datos de pago incompletos")).build();
+        }
+
+        // Validacion RBAC y Anti-IDOR: Si es CLIENTE, solo puede reportar para su propio clienteId
+        if (jwt != null && jwt.getName() != null && !jwt.getName().isBlank()) {
+            boolean isPrivileged = false;
+            if (jwt.getGroups() != null) {
+                for (String g : jwt.getGroups()) {
+                    if (g != null) {
+                        String up = g.toUpperCase();
+                        if (up.contains("ADMIN") || up.contains("CONTABLE") || up.contains("ANALISTA") || up.contains("RECEPCION")) {
+                            isPrivileged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!isPrivileged) {
+                Long callerClienteId = null;
+                Object cidClaim = jwt.getClaim("clienteId");
+                if (cidClaim instanceof Number) {
+                    callerClienteId = ((Number) cidClaim).longValue();
+                }
+                if (callerClienteId == null || callerClienteId <= 0) {
+                    Cliente callerCli = clienteRepository.findByEmail(jwt.getName().trim().toLowerCase());
+                    if (callerCli != null) {
+                        callerClienteId = callerCli.getId();
+                    }
+                }
+                if (callerClienteId != null && !callerClienteId.equals(dto.getClienteId())) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity(Map.of("error", "Acceso denegado: No puede reportar pagos para otro cliente.")).build();
+                }
+            }
         }
 
         // Validacion antifraude: Unicidad de referencia bancaria por metodo
@@ -196,7 +233,39 @@ public class FinanzasResource {
     @Transactional
     public Response notificarPago(com.access.control.dto.NotificacionPagoDTO dto) {
         if (dto == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Payload inválido").build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("Payload invalido").build();
+        }
+
+        if (jwt != null && jwt.getName() != null && !jwt.getName().isBlank() && dto.getClienteId() != null) {
+            boolean isPrivileged = false;
+            if (jwt.getGroups() != null) {
+                for (String g : jwt.getGroups()) {
+                    if (g != null) {
+                        String up = g.toUpperCase();
+                        if (up.contains("ADMIN") || up.contains("CONTABLE") || up.contains("ANALISTA") || up.contains("RECEPCION")) {
+                            isPrivileged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!isPrivileged) {
+                Long callerClienteId = null;
+                Object cidClaim = jwt.getClaim("clienteId");
+                if (cidClaim instanceof Number) {
+                    callerClienteId = ((Number) cidClaim).longValue();
+                }
+                if (callerClienteId == null || callerClienteId <= 0) {
+                    Cliente callerCli = clienteRepository.findByEmail(jwt.getName().trim().toLowerCase());
+                    if (callerCli != null) {
+                        callerClienteId = callerCli.getId();
+                    }
+                }
+                if (callerClienteId != null && !callerClienteId.equals(dto.getClienteId())) {
+                    return Response.status(Response.Status.FORBIDDEN)
+                            .entity(Map.of("error", "Acceso denegado: No puede notificar pagos para otro cliente.")).build();
+                }
+            }
         }
 
         Pago pago = new Pago();
@@ -222,8 +291,8 @@ public class FinanzasResource {
 
         com.access.control.model.NotificacionPago notif = new com.access.control.model.NotificacionPago();
         notif.setCliente(pago.getCliente());
-        notif.setTitulo("Notificación de Pago Recibido");
-        notif.setMensaje("Pago enviado por " + dto.getMonto() + " desde " + dto.getBanco() + " (Ref: " + dto.getNumeroReferencia() + ", Cédula: " + dto.getCedula() + ", Celular: " + dto.getCelular() + ")");
+        notif.setTitulo("Notificacion de Pago Recibido");
+        notif.setMensaje("Pago enviado por " + dto.getMonto() + " desde " + dto.getBanco() + " (Ref: " + dto.getNumeroReferencia() + ", Cedula: " + dto.getCedula() + ", Celular: " + dto.getCelular() + ")");
         notif.setTipo("CONFIRMACION_PAGO");
         notif.setFechaEnvio(new Date());
         notificacionPagoRepository.persist(notif);

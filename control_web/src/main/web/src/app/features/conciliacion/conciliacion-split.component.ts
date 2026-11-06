@@ -39,6 +39,7 @@ export class ConciliacionSplitComponent implements OnInit {
   pagos = signal<PagoPendiente[]>([]);
   pagoSeleccionado = signal<PagoPendiente | null>(null);
   cargando = signal<boolean>(false);
+  procesandoAccion = signal<boolean>(false);
 
   zoomLevel = 1.0;
   rotation = 0;
@@ -123,6 +124,7 @@ export class ConciliacionSplitComponent implements OnInit {
   }
 
   async aprobarPago(): Promise<void> {
+    if (this.procesandoAccion()) return;
     const pago = this.pagoSeleccionado();
     if (!pago) return;
 
@@ -134,12 +136,17 @@ export class ConciliacionSplitComponent implements OnInit {
     );
     if (!confirmado) return;
 
+    this.procesandoAccion.set(true);
     this.http.put(`/api/admin/pagos/${pago.id}/conciliar`, { usuarioConciliaId: 1 }).subscribe({
       next: () => {
-        this.snackBar.open('Pago conciliado exitosamente. Membresia activada.', 'OK', { duration: 3000 });
+        this.procesandoAccion.set(false);
+        this.alertModal.success('Pago conciliado exitosamente. Membresia activada.', 'Conciliado');
         this.removerPagoDeLista(pago.id);
       },
-      error: () => this.snackBar.open('Error al conciliar el pago.', 'Cerrar', { duration: 4000 })
+      error: () => {
+        this.procesandoAccion.set(false);
+        this.alertModal.error('Error al conciliar el pago.', 'Error de Conciliacion');
+      }
     });
   }
 
@@ -149,19 +156,25 @@ export class ConciliacionSplitComponent implements OnInit {
   }
 
   confirmarRechazo(): void {
+    if (this.procesandoAccion()) return;
     const pago = this.pagoSeleccionado();
     if (!pago || !this.motivoRechazo.trim()) {
       this.alertModal.warning('Debe especificar un motivo de rechazo.', 'Motivo Requerido');
       return;
     }
 
-    this.http.put(`/api/admin/pagos/${pago.id}/rechazar`, { motivo: this.motivoRechazo }).subscribe({
+    this.procesandoAccion.set(true);
+    this.http.put(`/api/admin/pagos/${pago.id}/rechazar`, { motivo: this.motivoRechazo.trim() }).subscribe({
       next: () => {
-        this.snackBar.open('Pago rechazado. Acceso a torniquetes revocado.', 'Aviso', { duration: 3000 });
+        this.procesandoAccion.set(false);
+        this.alertModal.success('Pago rechazado. Acceso a torniquetes revocado.', 'Pago Rechazado');
         this.mostrarModalRechazo = false;
         this.removerPagoDeLista(pago.id);
       },
-      error: () => this.snackBar.open('Error al rechazar el pago.', 'Cerrar', { duration: 4000 })
+      error: () => {
+        this.procesandoAccion.set(false);
+        this.alertModal.error('Error al rechazar el pago.', 'Error al Rechazar');
+      }
     });
   }
 

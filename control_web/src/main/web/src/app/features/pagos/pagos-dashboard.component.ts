@@ -244,6 +244,7 @@ export class PagosDashboardComponent implements OnInit {
 
   exportarExcel(): void {
     if (!this.transaccionesFiltradas || this.transaccionesFiltradas.length === 0) {
+      this.alertModal.warning('No hay transacciones para exportar.', 'Sin Datos');
       return;
     }
 
@@ -263,13 +264,13 @@ export class PagosDashboardComponent implements OnInit {
       filasHtml += `
         <tr>
           <td style="text-align: center; border: 1px solid #dee2e6;">#${t.pagoId || ''}</td>
-          <td style="border: 1px solid #dee2e6; font-weight: bold;">${t.cliente || ''}</td>
-          <td style="text-align: center; border: 1px solid #dee2e6;">${t.cedula || ''}</td>
+          <td style="border: 1px solid #dee2e6; font-weight: bold;">${this.sanitizarTextoExcel(t.cliente)}</td>
+          <td style="text-align: center; border: 1px solid #dee2e6;">${this.sanitizarTextoExcel(t.cedula)}</td>
           <td style="text-align: right; border: 1px solid #dee2e6; color: #198754; font-weight: bold;">$ ${(Number(t.montoUSD) || 0).toFixed(2)}</td>
           <td style="text-align: right; border: 1px solid #dee2e6;">Bs. ${(Number(t.montoVES) || 0).toFixed(2)}</td>
           <td style="text-align: right; border: 1px solid #dee2e6;">${t.tasa ? Number(t.tasa).toFixed(4) : '---'}</td>
-          <td style="text-align: center; border: 1px solid #dee2e6;">${t.metodo || ''}</td>
-          <td style="border: 1px solid #dee2e6;">${t.referencia || 'N/A'}</td>
+          <td style="text-align: center; border: 1px solid #dee2e6;">${this.sanitizarTextoExcel(t.metodo)}</td>
+          <td style="border: 1px solid #dee2e6;">${this.sanitizarTextoExcel(t.referencia || 'N/A')}</td>
           <td style="text-align: center; border: 1px solid #dee2e6; color: ${estadoColor}; font-weight: bold;">${t.estado || ''}</td>
           <td style="text-align: center; border: 1px solid #dee2e6;">${fechaFmt}</td>
         </tr>
@@ -380,6 +381,19 @@ export class PagosDashboardComponent implements OnInit {
     a.download = `Reporte_Pagos_${this.periodoSeleccionado}_${timestamp}.xls`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  private sanitizarTextoExcel(val: any): string {
+    if (val === null || val === undefined) return '';
+    let str = String(val).trim();
+    if (/^[=\+\-\@\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   // --- LOGICA DE CLIENTES Y REGISTRO ---
@@ -584,16 +598,19 @@ export class PagosDashboardComponent implements OnInit {
 
     if (!this.clienteSeleccionado || !this.clienteSeleccionado.id) {
       this.errorFormulario = 'Debe buscar y seleccionar un cliente de la lista.';
+      this.alertModal.warning(this.errorFormulario, 'Cliente Requerido');
       return;
     }
 
     if (!this.nuevoPago.monto || this.nuevoPago.monto <= 0) {
       this.errorFormulario = 'Debe seleccionar al menos un pago pendiente o una membresia activa.';
+      this.alertModal.warning(this.errorFormulario, 'Monto Requerido');
       return;
     }
 
     if (!this.nuevoPago.numeroReferencia || !this.nuevoPago.numeroReferencia.trim()) {
-      this.errorReferencia = 'El número de referencia es obligatorio.';
+      this.errorReferencia = 'El numero de referencia es obligatorio.';
+      this.alertModal.warning(this.errorReferencia, 'Referencia Requerida');
       return;
     }
 
@@ -619,6 +636,7 @@ export class PagosDashboardComponent implements OnInit {
         }
 
         this.mensajeExito = 'Cobro / Pago registrado exitosamente.';
+        this.alertModal.success(this.mensajeExito, 'Registro Exitoso');
         this.guardandoPago = false;
         this.nuevoPago.monto = 0;
         this.nuevoPago.numeroReferencia = '';
@@ -632,6 +650,7 @@ export class PagosDashboardComponent implements OnInit {
       },
       error: () => {
         this.errorFormulario = 'Error al registrar el cobro del cliente.';
+        this.alertModal.error(this.errorFormulario, 'Error de Registro');
         this.guardandoPago = false;
       }
     });
@@ -651,7 +670,14 @@ export class PagosDashboardComponent implements OnInit {
     });
   }
 
-  conciliar(pago: Pago, estado: 'CONCILIADO' | 'DISCREPANCIA'): void {
+  async conciliar(pago: Pago, estado: 'CONCILIADO' | 'DISCREPANCIA'): Promise<void> {
+    const accion = estado === 'CONCILIADO' ? 'conciliar y aprobar' : 'marcar con discrepancia';
+    const confirmado = await this.alertModal.confirm(
+      `Esta seguro de ${accion} este pago de $${(Number(pago.monto) || 0).toFixed(2)}?`,
+      'Confirmar Accion'
+    );
+    if (!confirmado) return;
+
     const conc: Conciliacion = {
       pago: pago,
       montoExtractoBancario: pago.monto,

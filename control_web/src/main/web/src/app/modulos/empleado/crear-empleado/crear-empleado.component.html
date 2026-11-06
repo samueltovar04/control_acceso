@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h3 class="fw-bold text-dark m-0"><i class="bi bi-person-plus-fill text-primary me-2"></i>Registrar Nuevo Empleado</h3>
-      <p class="text-muted small m-0">Alta de personal con enrolamiento facial y digitalización de huellas</p>
+      <p class="text-muted small m-0">Alta de personal con enrolamiento facial y digitalizacion de huellas</p>
     </div>
     <a routerLink="/home/empleados" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-arrow-left me-1"></i> Volver al listado
@@ -14,15 +14,15 @@
       <!-- DATOS GENERALES -->
       <div class="col-lg-6">
         <div class="card p-4 border-0 shadow-sm rounded-3 bg-white h-100">
-          <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-card-heading me-2"></i>Información Personal y Laboral</h5>
+          <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-card-heading me-2"></i>Informacion Personal y Laboral</h5>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Documento / Cédula</label>
+              <label class="form-label small fw-bold">Documento / Cedula</label>
               <input type="text" class="form-control" [(ngModel)]="employee.documento" name="documento" required placeholder="V-12345678">
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Código Insignia / RFID</label>
+              <label class="form-label small fw-bold">Codigo Insignia / RFID</label>
               <input type="text" class="form-control" [(ngModel)]="employee.codigoInsignia" name="codigoInsignia" placeholder="TAG-889021">
             </div>
             <div class="col-md-6">
@@ -34,11 +34,11 @@
               <input type="text" class="form-control" [(ngModel)]="employee.apellido" name="apellido" required placeholder="Apellido">
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Correo Electrónico</label>
+              <label class="form-label small fw-bold">Correo Electronico</label>
               <input type="email" class="form-control" [(ngModel)]="employee.email" name="email" placeholder="empleado@empresa.com">
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-bold">Teléfono de Contacto</label>
+              <label class="form-label small fw-bold">Telefono de Contacto</label>
               <input type="text" class="form-control" [(ngModel)]="employee.telefono" name="telefono" placeholder="+58 412 0000000">
             </div>
               <div class="col-md-6">
@@ -63,7 +63,7 @@
                   </div>
                   <div *ngIf="!employee.foto" class="text-muted small py-3">
                     <i class="bi bi-person-bounding-box fs-1 d-block mb-1 text-secondary opacity-50"></i>
-                    <span>Sin fotograma facial capturado. Use el módulo de enrolamiento de la derecha.</span>
+                    <span>Sin fotograma facial capturado. Use el modulo de enrolamiento de la derecha.</span>
                   </div>
                 </div>
               </div>
@@ -95,10 +95,10 @@
           </div>
         </div>
 
-      <!-- COMPONENTE BIOMÉTRICO (FACIAL + HUELLAS) -->
+      <!-- COMPONENTE BIOMETRICO (FACIAL + HUELLAS) -->
       <div class="col-lg-6">
         <app-biometric-capture
-          titulo="Enrolamiento Biométrico del Empleado"
+          titulo="Enrolamiento Biometrico del Empleado"
           (biometricDataChange)="onBiometricData($event)">
         </app-biometric-capture>
 

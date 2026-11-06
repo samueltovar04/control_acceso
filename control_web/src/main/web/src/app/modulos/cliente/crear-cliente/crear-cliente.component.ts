@@ -68,10 +68,13 @@ export class CrearClienteComponent implements OnInit {
   }
 
   async save(): Promise<void> {
-    if (!this.cliente.documento || !this.cliente.nombre) {
+    if (this.guardando) return;
+    if (!this.cliente.documento || !this.cliente.documento.trim() || !this.cliente.nombre || !this.cliente.nombre.trim()) {
       this.alertModal.warning('Por favor complete el documento y nombre del cliente.', 'Campos Requeridos');
       return;
     }
+    this.cliente.documento = this.cliente.documento.trim();
+    this.cliente.nombre = this.cliente.nombre.trim();
 
     if (this.membresiaSeleccionadaId) {
       const mem = this.membresiasList.find(m => m.id === Number(this.membresiaSeleccionadaId));

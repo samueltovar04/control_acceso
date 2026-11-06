@@ -1,6 +1,8 @@
 package com.access.control.model;
 
 import com.access.control.model.generic.AbstractEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.json.bind.annotation.JsonbTransient;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.HashSet;
@@ -13,6 +15,8 @@ public class User extends AbstractEntity {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @JsonIgnore
+    @JsonbTransient
     private String password;
 
     private Boolean enabled = true;
@@ -50,6 +54,8 @@ public class User extends AbstractEntity {
         this.username = username;
     }
 
+    @JsonIgnore
+    @JsonbTransient
     public String getPassword() {
         return password;
     }
@@ -139,5 +145,41 @@ public class User extends AbstractEntity {
             }
         }
         return false;
+    }
+
+    public boolean hasAuthority(String roleName) {
+        if (authorities == null || roleName == null) return false;
+        String target = roleName.trim().toUpperCase();
+        for (Authority auth : authorities) {
+            if (auth != null && auth.getName() != null) {
+                String name = auth.getName().trim().toUpperCase();
+                if (name.equals(target) || name.equals("ROLE_" + target)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isContable() {
+        return hasAuthority("CONTABLE") || hasAuthority("CONTADOR") || hasAuthority("ROLE_CONTABLE");
+    }
+
+    public boolean isAnalista() {
+        return hasAuthority("ANALISTA") || hasAuthority("ROLE_ANALISTA");
+    }
+
+    public boolean isRecepcionOrOperacion() {
+        return hasAuthority("RECEPCION") || hasAuthority("ROLE_RECEPCION") ||
+               hasAuthority("OPERACION") || hasAuthority("ROLE_OPERACION") ||
+               hasAuthority("SEGURIDAD") || hasAuthority("ROLE_SEGURIDAD");
+    }
+
+    public boolean isCliente() {
+        return hasAuthority("CLIENTE") || hasAuthority("ROLE_CLIENTE");
+    }
+
+    public boolean canViewCrossUserData() {
+        return isAdminOrSuperAdmin() || isContable() || isAnalista() || isRecepcionOrOperacion();
     }
 }

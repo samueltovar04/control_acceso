@@ -105,8 +105,14 @@ export class VisitanteListComponent implements OnInit, OnDestroy {
     );
     if (confirmado) {
       this.visiService.deleteVisitante(id).subscribe({
-        next: () => this.reloadData(),
-        error: (err) => console.log(err)
+        next: () => {
+          this.reloadData();
+          this.alertModal.success('Visitante eliminado correctamente.', 'Visitante Eliminado');
+        },
+        error: (err) => {
+          console.log(err);
+          this.alertModal.error('No se pudo eliminar el visitante.', 'Error al Eliminar');
+        }
       });
     }
   }

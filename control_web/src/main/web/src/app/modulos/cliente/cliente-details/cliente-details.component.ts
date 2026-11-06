@@ -46,14 +46,14 @@ import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
                 'bg-warning text-dark': cliente.estadoSuscripcion === 'POR_VENCER' || cliente.estadoSuscripcion === 'PENDIENTE_CONCILIAR',
                 'bg-secondary': !cliente.estadoSuscripcion || cliente.estadoSuscripcion === 'SIN_MEMBRESIA'
               }">
-                {{ cliente.estadoSuscripcion === 'ACTIVA' ? 'Suscripción Activa' : (cliente.estadoSuscripcion || 'SIN MEMBRESIA') }}
+                {{ cliente.estadoSuscripcion === 'ACTIVA' ? 'Suscripcion Activa' : (cliente.estadoSuscripcion || 'SIN MEMBRESIA') }}
               </span>
             </div>
 
             <!-- BANNER DE ACCESO TEMPORAL SI ESTA EN CONCILIACION -->
             <div class="alert alert-warning text-start small mb-3 p-2" *ngIf="cliente.estadoSuscripcion === 'PENDIENTE_CONCILIAR'">
               <i class="bi bi-clock-history me-1 fw-bold"></i>
-              <strong>En conciliación:</strong> Pase de gracia activo en torniquetes.
+              <strong>En conciliacion:</strong> Pase de gracia activo en torniquetes.
             </div>
 
             <hr>
@@ -67,7 +67,7 @@ import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
                      class="img-fluid" 
                      style="width: 150px; height: 150px; object-fit: contain;">
               </div>
-              <div class="small fw-bold text-truncate text-dark">Cédula: {{ cliente.documento }}</div>
+              <div class="small fw-bold text-truncate text-dark">Cedula: {{ cliente.documento }}</div>
               <small class="text-muted d-block mt-1">Presente este codigo QR en los lectores de los torniquetes para validar su paso.</small>
             </div>
           </div>
@@ -92,7 +92,7 @@ import { BcvConvertPipe } from '../../../shared/pipes/bcv-convert.pipe';
             </div>
           </div>
 
-          <!-- 2. PAGAR / RENOVAR MEMBRESÍA -->
+          <!-- 2. PAGAR / RENOVAR MEMBRESIA -->
           <div class="card shadow-sm border-0 p-3 bg-white mb-4">
             <h5 class="fw-bold text-success mb-3"><i class="bi bi-credit-card-fill me-1"></i> Pagar / Renovar Membresia</h5>
 

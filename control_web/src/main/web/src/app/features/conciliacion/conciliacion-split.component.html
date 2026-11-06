@@ -37,7 +37,7 @@
           </div>
           <div class="d-flex justify-content-between align-items-center">
             <small [class.text-white-50]="pagoSeleccionado()?.id === p.id" class="text-muted">
-              {{ p.metodoPago }} • CI: {{ p.cliente?.documento }}
+              {{ p.metodoPago }}  CI: {{ p.cliente?.documento }}
             </small>
             <span class="fw-bold" [class.text-white]="pagoSeleccionado()?.id === p.id" class="text-primary font-monospace">
               {{ p.monto | multiCurrency:p.monedaDeclarada:(p.tasaBcvAplicada && p.tasaBcvAplicada > 1 ? p.tasaBcvAplicada : (tasaService.tasaUsdSignal() || p.tasaBcvAplicada)) }}

@@ -78,7 +78,7 @@
             </td>
             <td>
               <div><small class="fw-semibold text-dark">{{ employee.email || 'N/A' }}</small></div>
-              <div class="text-muted small"><i class="bi bi-telephone me-1"></i>{{ employee.telephone || employee.telefono || 'Sin teléfono' }}</div>
+              <div class="text-muted small"><i class="bi bi-telephone me-1"></i>{{ employee.telephone || employee.telefono || 'Sin telefono' }}</div>
             </td>
             <td>
               <div><span class="badge badge-gerencia">{{ employee.gerencia?.gerencia || 'General' }}</span></div>
@@ -105,7 +105,7 @@
             <td colspan="7" class="text-center py-5 text-muted">
               <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
               <div class="fw-semibold">No se encontraron empleados</div>
-              <small class="text-muted">Intente ajustando el término de búsqueda o cambiando los filtros.</small>
+              <small class="text-muted">Intente ajustando el termino de busqueda o cambiando los filtros.</small>
             </td>
           </tr>
         </tbody>
@@ -143,7 +143,7 @@
           </div>
         </div>
 
-        <!-- ACCIONES MÓVIL -->
+        <!-- ACCIONES MOVIL -->
         <div class="d-flex flex-wrap gap-2">
           <a [routerLink]="['/home/empleado', employee.id]" class="btn btn-sm btn-outline-info flex-fill d-inline-flex align-items-center justify-content-center py-1" title="Detalle y QR">
             <i class="bi bi-qr-code me-1"></i>QR

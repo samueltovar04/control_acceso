@@ -1,5 +1,81 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Auditoria de Seguridad por Modulos, Reles Fisicos, GraphQL y Blindaje RBAC (06-Nov-2026)**:
+  - **Patron de Defensa en Profundidad y Principio de Menor Privilegio**:
+    - `RbacDataProtectionFilter.java`:
+      - Implementado rechazo por defecto con `401 UNAUTHORIZED` para cualquier peticion sin token valido en rutas no publicas (Whitelisted: auth, swagger, metrics, tasas publicas).
+      - Bloqueada la activacion fisica de reles y torniquetes (`/abrir`, `DISPOSITIVO_ABRIR_PATH_PATTERN`) para clientes y roles externos, restringiendola estrictamente a `ADMIN`, `SUPER_ADMIN`, `OPERACION`, `RECEPCION` y `SEGURIDAD`.
+      - Protegida la asignacion de membresias (`/api/clientes/{id}/asignar-membresia`) para evitar auto-adjudicacion por parte de `CLIENTE`.
+      - Restringido el acceso a alertas de telemetria IoT y suscripciones globales de membresia para usuarios finales.
+      - Blindada la mutacion en catalogo de membresias a personal administrativo/contable y permisos a `ADMIN`/`SUPER_ADMIN`.
+    - `ControlAccesoGraphQLApi.java`:
+      - Inyectado `JsonWebToken` y validacion de pertenencia en `getClienteDetalleCompleto()` contra ataques BOLA/IDOR sobre el schema de GraphQL.
+      - Bloqueadas consultas de infraestructura de red (`getPisosConDispositivos`) y fichas de personal (`getEmpleadoDetalleCompleto`) para rol `CLIENTE`.
+    - `NotificacionResource.java`:
+      - Restringida la creacion libre de notificaciones arbitrarias en `crearNotificacion()` a personal autorizado (`isStaffCaller()`).
+      - Validada la pertenencia del titular en `marcarLeida()` impidiendo que clientes modifiquen notificaciones ajenas.
+    - `Frontend (Angular)`:
+      - `auth.service.ts`: Habilitado `canViewGestionAcceso()` para rol `CONTABLE` para auditoria de clientes y suscripciones.
+      - `left-menu.component.html` & `.ts`: Ocultados los enlaces de "Empleados" y "Visitantes" para rol `CONTABLE`, exponiendo unicamente "Clientes & Membresias" y "Catalogo Membresias".
+  - **Bateria de Pruebas Automatizadas de Seguridad**:
+    - Actualizada suite `tests/run_security_rbac_tests.js` con 46 validaciones integrales (401 default, activacion fisica de reles, anti-IDOR en GraphQL, ownership en notificaciones, segregacion de navegacion y codificacion ASCII estricta).
+    - Resultado: **PASSED=46 | FAILED=0**.
+    - Re-ejecucion de suite `tests/run_frontend_tests.js`: **PASSED=65 | FAILED=0**.
+
+
+- **DevOps y QA: Proteccion de Datos, RBAC y Anti-Suplantacion (BOLA/IDOR) (06-Nov-2026)**:
+  - **Patron de Seguridad PEP (Policy Enforcement Point) y RBAC Estricto**:
+    - `User.java`: Protegido el campo `password` con `@JsonIgnore` y `@JsonbTransient` para evitar fugas de hashes BCrypt en endpoints de Clientes/Empleados; implementados metodos de autorizacion jerarquica `canViewCrossUserData()`, `isContable()`, `isAnalista()`.
+    - `RbacDataProtectionFilter.java`: Creado filtro global `@Provider` con `@Priority(Priorities.AUTHORIZATION)`. Bloquea consultas masivas y rutas administrativas a usuarios con rol `CLIENTE`. Valida que en URLs parametrizadas (`/clientes/{id}`, `/pagos/cliente/{id}`, `/telemetria/cliente/{id}`, etc.) el ID coincida estrictamente con el `clienteId` del token JWT, abortando con `403 FORBIDDEN` y registrando el evento en `AuditoriaAcceso`.
+    - `AuthResource.java`: Eliminado el fallback inseguro `findPrimerCliente()`; inyectados claims inmutables `clienteId` y `userId` en los tokens JWT; blindado el autoregistro para forzar rol `CLIENTE` y exigida validacion de `claveActual` en `/cambiar-clave`.
+    - `ClienteResource.java`: Eliminadas las 4 redirecciones vulnerables a `listAll().get(0)` en `cancelarRenovacion`, `cerrarSesionMovil`, `iniciarSesionMovil` y `reactivarRenovacion`, retornando `404 NOT_FOUND` legitimo.
+    - `FinanzasResource.java`: Verificacion de identidad del titular en `reportarPagoMultimoneda` y `notificarPago`.
+    - `UsuarioPerfilResource.java`: Restringido el uso de `?id=` exclusivamente a roles con privilegios `canViewCrossUserData()`.
+    - `Frontend (Angular)`:
+      - `auth.service.ts`: Parseo autoritativo de claims JWT; implementado `getAuthenticatedClienteId()` inmune a tampering de `localStorage`; eliminado `ROLE_ADMIN` arbitrario en login biometrico.
+      - `auth.guard.ts`: Segregacion de rutas estricta: confina a `CLIENTE` unicamente a `/home/portal-cliente`, a `CONTABLE` a rutas financieras y consulta de clientes, y a `ANALISTA`/`OPERACION` fuera de configuracion de usuarios y cuentas bancarias.
+      - `portal-cliente.component.ts`: Sincronizacion directa con el token firmado y captura visual con `AlertModalService` ante `403 FORBIDDEN`.
+  - **Pruebas Automatizadas de Seguridad y Contratos**:
+    - Creada suite `tests/run_security_rbac_tests.js` con 32 validaciones automatizadas de RBAC, serializacion, IDOR y codificacion ASCII.
+    - Resultado: **PASSED=32 | FAILED=0**.
+    - Re-ejecucion de suite `tests/run_frontend_tests.js`: **PASSED=65 | FAILED=0**.
+
+
+- **Auditoria de Vulnerabilidades, UX y QA en Frontend Angular (05-Nov-2026)**:
+  - **Patron y Mitigaciones de Seguridad Implementadas**:
+    - `Login`: Eliminado bypass con token simulado `JWT_MOCK_TOKEN_ADMIN`, forzando comunicacion con backend Quarkus; fortalecida la validacion de cambio de clave con politica de complejidad (8+ caracteres, mayusculas, minusculas, digitos y caracteres especiales).
+    - `Portal Cliente`: Eliminado clienteId quemado (`1`) que habilitaba IDOR; implementada validacion de monto mayor a cero, referencia obligatoria y semaforo `enviandoPago` contra doble envio.
+    - `Dashboard de Pagos`: Incorporada proteccion contra inyeccion de formulas CSV/Excel (prefijando `'` en caracteres `=,+,-,@,\t,\r`) y sanitizacion de entidades HTML en la exportacion; modales de confirmacion interactiva previa en `conciliar()` y alertas de validacion en cobro.
+    - `Conciliacion Split`: Sustituido `MatSnackBar` por modales visibles de `AlertModalService`; integrado semaforo reactivo `procesandoAccion` para evitar envios duplicados al aprobar o rechazar pagos.
+    - `Falsos Positivos en Errores HTTP`: Corregidos handlers de error en `editar-cliente`, `editar-empleado`, `crear-visitante`, `editar-visitante` y `permisos-pisos`, eliminando mensajes de "guardado localmente" ante caidas del servidor y reteniendo al usuario en el formulario con `alertModal.error()`.
+    - `Semaforos de Concurrencia`: Agregados flags en `bancos-admin`, `membresia-catalogo`, `sede-list`, `gerencia-list`, `tipo-contrato-list` y `piso-list` para deshabilitar botones durante peticiones en curso.
+    - `Validacion Estricta de Strings`: Anadido `.trim()` a documentos y nombres en creacion y edicion de clientes, empleados y visitantes.
+    - `Validacion de Red en Dispositivos`: Regex de IPv4/localhost y rango de puertos TCP (1-65535) en creacion y edicion de dispositivos.
+    - `Codificacion Estricta ASCII`: Sanitizados todos los archivos `.ts` y `.html` en `control_web/src/main/web/src/app` eliminando tildes, eñes y caracteres no ASCII para maxima compatibilidad legacy.
+  - **Bateria de Pruebas Automatizadas QA**:
+    - Actualizada suite `tests/run_frontend_tests.js` con 16 suites que auditan contratos de AlertModalService, ausencia de mocks, semaforos contra doble click, sanitizacion de formulas Excel y codificacion ASCII.
+    - Resultado de ejecucion: **PASSED=65 | FAILED=0**.
+
+
+- **Estandarizacion Integral QA/PO de Modulos CRUD y Feedback Visual (05-Nov-2026)**:
+  - **Patron de Diseno Aplicado**: Se unifico el patron Mediator + Strategy para retroalimentacion de usuario en los 14 modulos CRUD a traves de `AlertModalService` (`success`, `warning`, `error`, `confirm`).
+  - **Modulos Auditados y Estandarizados**:
+    - `Sedes`: Validacion preventiva con `alertModal.warning()` y notificaciones `success()`/`error()` en creacion, edicion y eliminacion.
+    - `Pisos`: Integracion de `AlertModalService` en `crear-piso`, `editar-piso` y `piso-list` con confirmacion y feedback visual.
+    - `Gerencias`: Validacion obligatoria de nombre/descripcion con `warning()` y notificacion en listado/modal.
+    - `Tipos de Contrato`: Validacion previa amigable y notificaciones visibles en `tipo-contrato-list`.
+    - `Dispositivos`: Validacion preventiva de campos e IP en `crear-dispositivo` y `editar-dispositivo`; notificaciones de exito y confirmacion en `dispositivo-list`.
+    - `Clientes`: Modales de confirmacion y notificaciones de exito agregadas en eliminacion, asignacion de membresia y enlace de pulsera IoT.
+    - `Empleados` y `Visitantes`: Notificaciones de exito/error tras confirmacion de eliminacion y validacion previa en formularios.
+    - `Usuarios y Roles`: Confirmaciones previas con `confirm()` y feedback modal `success()` en bloqueo/activacion de cuenta, reseteo obligatorio de clave y revocacion de sesiones activas.
+    - `Catalogo de Membresias y Promociones`: Sustituido `MatSnackBar` aislado por modales visibles de `AlertModalService` en planes y cupones.
+    - `Bancos y Cuentas Receptoras`: Validacion preventiva en formularios, `success()` en cambio de estado activo/inactivo y accion `eliminarBanco()` con confirmacion.
+    - `Tasas BCV`: Notificacion de valor publicado y confirmacion de sincronizacion con el Banco Central.
+    - `Finanzas y Dashboard Admin`: Validacion de monto en registro de pago y confirmacion modal en conciliacion bancaria.
+  - **Pruebas y Verificacion Automatizada**:
+    - Actualizada la suite `tests/run_frontend_tests.js` auditando contratos de feedback modal y existencia en 47 componentes. Resultado: PASSED=47 | FAILED=0.
+    - Sanitizados caracteres no ASCII a codificacion estricta compatible con parsers legacy.
+
 - **Visualizacion de Pisos por Sede en Monitor de Salud IoT (27-Oct-2026)**:
   - **Problema**: En `monitor-salud.component.html`, el select de pisos mostraba `{{ p.piso }}`, pero en la base de datos el campo `piso` suele estar vacio mientras que el nombre real reside en `descripcion` ("Planta Baja") o `numeroPiso`, provocando que las opciones se renderizaran vacias al filtrar por sede.
   - **Solucion**: Se ajusto la plantilla para renderizar `{{ p.numeroPiso || p.descripcion || p.piso || ('Piso ' + p.id) }}`. Desplegado y verificado en `https://acceso.andessistemas.com`.
@@ -697,3 +773,19 @@
 
 - **Panel de Alertas Telemetricas (`monitor-salud.component.*`)**: Se acoto la pila de alertas para mostrar estrictamente las ultimas 3 tarjetas de alertas fisiologicas (`alertsList.slice(0, 3)`).
 - **Sidebar Estilo Clean Health (`left-menu.component.*`, `styles.css`)**: Se elimino el fondo gris de cabecera y pie. Se configuro ViewEncapsulation.None para habilitar fondo crema uniforme (`#fff8f3`), texto carbon de alto contraste (`#292524`), pastilla activa melocoton (`#ffe8d6` / `#b85d2a`) y badge de estado `System: Online` segun especificacion visual.
+
+
+## Tarea: Depuracion de Elementos Estaticos y Optimizacion de Deteccion Facial Dinamica (2026-10-30)
+
+- **Eliminacion de Overlays Estaticos y Botones (`biometria-facial.*`, `biometric-capture.*`)**:
+  - Se eliminaron recuadros verdes artificiales fijos (`facial-box-target`, esquinas fijas, circulo estatico y badges fijos de estado).
+  - Se removieron los selectores adicionales `Capture Mode` y `Override` junto con el boton extra `Open Gate / Abrir Manual`, preservando exclusivamente los controles y botones originales de operacion.
+  - Se corrigio el fallo de compilacion en produccion `Property 'boxStyle' does not exist on type 'BiometricCaptureComponent'` eliminando referencias obsoletas del template.
+- **Deteccion Facial Dinamica Real**:
+  - Deteccion continua activa con `FaceDetector` nativo del navegador y fallback adaptativo en canvas con calculo de centroide y dispersion normalizada (StdDev) en lugar de umbrales globales de densidad que se saturaban con fondos claros.
+  - Filtro estricto de cromaticidad que descarta fondos neutros y paredes, aislando la masa facial humana y calculando su centro exacto `(centerX, centerY)`.
+  - Suavizado temporal continuo (Lerp) para evitar parpadeos y desplazamiento fluido del bounding box verde (`faceBox`).
+  - Emision reactiva del evento `(faceDetected)` hacia `biometria-facial.component.ts` para disparar la verificacion y apertura de torniquete sin latencia.
+- **Resolucion de Servicio Docker Suprema (`docker-compose.yml`, `Makefile`, `scripts/suprema_usb_bridge.py`)**:
+  - Se definio formalmente el servicio `suprema_usb_bridge` en `docker-compose.yml` para resolver el error `no such service: suprema_usb_bridge`.
+  - Se restauro `scripts/suprema_usb_bridge.py` y se alinearon las directivas `suprema-up` y `suprema-down` del `Makefile`.

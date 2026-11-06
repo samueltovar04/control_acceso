@@ -50,7 +50,7 @@ export class MultiCurrencyFormatPipe implements PipeTransform {
       case 'USD':
         return `$ ${this.formatNumber(rounded, ',', '.')}`;
       case 'EUR':
-        return `€ ${this.formatNumber(rounded, '.', ',')}`;
+        return `EUR ${this.formatNumber(rounded, '.', ',')}`;
       case 'VES':
         return `Bs. ${this.formatNumber(rounded, '.', ',')}`;
       default:

@@ -102,7 +102,7 @@ export class BiometricDeviceStateService {
         const filtradas: DispositivoBiometrico[] = [{ ...this.CAMARA_DEFAULT }];
         const items = (dispositivos || []).filter(d => {
           const tipo = `${d.tipoDispositivo || ''} ${d.tipo || ''} ${d.nombre || ''} ${d.descripcion || ''}`.toLowerCase();
-          const esCamara = tipo.includes('camara') || tipo.includes('cámara');
+          const esCamara = tipo.includes('camara') || tipo.includes('camara');
           if (!esCamara) return false;
           if (sedeId === null || sedeId === undefined) return true;
           const sId = d.piso?.sede?.id || d.piso?.sede_id || d.piso?.sedeId;

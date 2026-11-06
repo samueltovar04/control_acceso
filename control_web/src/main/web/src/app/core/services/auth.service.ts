@@ -26,14 +26,43 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  private parseJwtPayload(token: string): any {
+    if (!token || !token.includes('.')) return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  }
+
   private getUserFromStorage(): UserAuth | null {
     const saved = localStorage.getItem('currentUser');
     if (!saved) {
       return null;
     }
     try {
-      const parsed = JSON.parse(saved);
+      const parsed: UserAuth = JSON.parse(saved);
       if (parsed && parsed.token) {
+        // Sincronizar e hidratar claims autoritativos desde la firma del JWT
+        const claims = this.parseJwtPayload(parsed.token);
+        if (claims) {
+          if (claims.groups && Array.isArray(claims.groups)) {
+            parsed.roles = claims.groups;
+            parsed.role = claims.groups[0] || parsed.role;
+          }
+          if (claims.clienteId !== undefined && claims.clienteId !== null) {
+            parsed.clienteId = Number(claims.clienteId) > 0 ? Number(claims.clienteId) : undefined;
+          }
+        }
         return parsed;
       }
       return null;
@@ -50,12 +79,17 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/auth/login`, credentials).pipe(
       tap(res => {
         if (res && res.token) {
+          const claims = this.parseJwtPayload(res.token);
+          const resolvedClienteId = (claims && claims.clienteId && Number(claims.clienteId) > 0)
+            ? Number(claims.clienteId)
+            : (res.clienteId ? Number(res.clienteId) : undefined);
+
           const user: UserAuth = {
             token: res.token,
             username: res.username || res.correo || 'Usuario',
             role: res.role || 'ROLE_EMPLEADO',
             roles: res.roles || [res.role || 'ROLE_EMPLEADO'],
-            clienteId: res.clienteId ? Number(res.clienteId) : undefined,
+            clienteId: resolvedClienteId,
             sedeId: res.sedeId ? Number(res.sedeId) : undefined,
             sedeNombre: res.sedeNombre,
             nombreCompleto: res.nombreCompleto,
@@ -75,11 +109,12 @@ export class AuthService {
 
   setSessionFromBiometric(res: any, fallbackName: string = 'Usuario'): void {
     if (!res) return;
+    const assignedRole = res.role || res.persona?.rol || 'ROLE_EMPLEADO';
     const user: UserAuth = {
       token: res.token || 'JWT_BIOMETRIC_TOKEN_' + Date.now(),
-      username: res.username || res.persona?.documento || res.persona?.document || 'superadmin',
-      role: res.role || 'ROLE_ADMIN',
-      roles: res.roles || [res.role || 'ROLE_ADMIN'],
+      username: res.username || res.persona?.documento || res.persona?.document || 'usuario',
+      role: assignedRole,
+      roles: res.roles || [assignedRole],
       sedeId: res.sedeId ? Number(res.sedeId) : undefined,
       sedeNombre: res.sedeNombre,
       nombreCompleto: res.nombreCompleto || res.persona?.nombre || fallbackName,
@@ -188,7 +223,7 @@ export class AuthService {
   // Modulo Gestion de Acceso (Clientes, Empleados, Visitantes, Membresias)
   canViewGestionAcceso(): boolean {
     if (this.isAdminOrSuperAdmin()) return true;
-    if (this.isRecepcion() || this.isOperacion()) return true;
+    if (this.isRecepcion() || this.isOperacion() || this.isContable()) return true;
     return false;
   }
 
@@ -206,5 +241,21 @@ export class AuthService {
 
   canManageUsers(): boolean {
     return this.isAdminOrSuperAdmin();
+  }
+
+  getAuthenticatedClienteId(): number | null {
+    const user = this.currentUserValue;
+    if (!user) return null;
+    if (user.token) {
+      const claims = this.parseJwtPayload(user.token);
+      if (claims && claims.clienteId && Number(claims.clienteId) > 0) {
+        return Number(claims.clienteId);
+      }
+    }
+    return user.clienteId || null;
+  }
+
+  canViewCrossUserData(): boolean {
+    return this.isAdminOrSuperAdmin() || this.isContable() || this.isAnalista() || this.isOperacion();
   }
 }

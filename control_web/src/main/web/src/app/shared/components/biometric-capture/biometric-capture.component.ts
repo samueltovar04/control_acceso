@@ -37,7 +37,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }>();
   @Output() faceDetected = new EventEmitter<{ faceBox: any }>();
 
-  // Estado de Facial y Multi-Ángulo
+  // Estado de Facial y Multi-Angulo
   public webcamImage: WebcamImage | null = null;
   private trigger: Subject<void> = new Subject<void>();
   private nextWebcam: Subject<boolean | string> = new Subject<boolean | string>();
@@ -52,7 +52,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     aspectRatio: { ideal: 1.777777 }
   };
 
-  // Asistente Multi-Ángulo / Movimiento de Cabeza
+  // Asistente Multi-Angulo / Movimiento de Cabeza
   public poses: Array<{ clave: string; label: string; icono: string; instruccion: string }> = [
     { clave: 'FRONTAL', label: 'Frontal', icono: 'bi-person-badge', instruccion: 'Mire directamente al centro' },
     { clave: 'IZQUIERDA', label: 'Perfil Izq.', icono: 'bi-arrow-left-circle', instruccion: 'Gire suavemente hacia la izquierda' },
@@ -203,19 +203,67 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
 
     this.faceTrackerSub = setInterval(() => {
-      // 1. Si es webcam local nativa
       if (!this.esCamaraIpActiva) {
-        const videoEl = (this.elRef?.nativeElement?.querySelector('video') || document.querySelector('webcam video') || document.querySelector('video')) as HTMLVideoElement;
+        const videoEl = (
+          this.elRef?.nativeElement?.querySelector('webcam video') ||
+          this.elRef?.nativeElement?.querySelector('video') ||
+          document.querySelector('webcam video') ||
+          document.querySelector('video')
+        ) as HTMLVideoElement;
+
         if (videoEl && videoEl.videoWidth > 0) {
-          canvas.width = 160;
-          canvas.height = 120;
-          if (ctx) {
-            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-            this.analizarRostroEnCanvas(canvas, ctx);
+          if ('FaceDetector' in window) {
+            try {
+              const detector = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+              detector.detect(videoEl).then((faces: any[]) => {
+                if (faces && faces.length > 0) {
+                  const f = faces[0].boundingBox;
+                  const vw = videoEl.videoWidth || 640;
+                  const vh = videoEl.videoHeight || 480;
+                  let leftPercent = (f.x / vw) * 100;
+                  let topPercent = (f.y / vh) * 100;
+                  let widthPercent = (f.width / vw) * 100;
+                  let heightPercent = (f.height / vh) * 100;
+
+                  if (this.esModoEspejo && !this.esCamaraIpActiva) {
+                    leftPercent = 100 - (leftPercent + widthPercent);
+                  }
+
+                  const targetTop = Math.max(2, Math.min(80, Math.round(topPercent)));
+                  const targetLeft = Math.max(2, Math.min(80, Math.round(leftPercent)));
+                  const targetWidth = Math.max(16, Math.min(75, Math.round(widthPercent)));
+                  const targetHeight = Math.max(20, Math.min(80, Math.round(heightPercent)));
+
+                  if (this.faceBox) {
+                    this.faceBox = {
+                      top: Math.round(this.faceBox.top * 0.35 + targetTop * 0.65),
+                      left: Math.round(this.faceBox.left * 0.35 + targetLeft * 0.65),
+                      width: Math.round(this.faceBox.width * 0.35 + targetWidth * 0.65),
+                      height: Math.round(this.faceBox.height * 0.35 + targetHeight * 0.65)
+                    };
+                  } else {
+                    this.faceBox = { top: targetTop, left: targetLeft, width: targetWidth, height: targetHeight };
+                  }
+
+                  this.faceDetectado = true;
+                  this.cuadrosConRostroConsecutivos++;
+                  this.cuadrosSinRostro = 0;
+                  this.faceDetected.emit({ faceBox: this.faceBox });
+                  return;
+                }
+                this.ejecutarAnalisisCanvas(canvas, ctx, videoEl);
+              }).catch(() => {
+                this.ejecutarAnalisisCanvas(canvas, ctx, videoEl);
+              });
+              return;
+            } catch (e) {
+              this.ejecutarAnalisisCanvas(canvas, ctx, videoEl);
+            }
+          } else {
+            this.ejecutarAnalisisCanvas(canvas, ctx, videoEl);
           }
         }
       } else {
-        // 2. Si es Camara IP en vivo, intentar extraer cuadro desde snapshot para analizar presencia de rostro real
         const cam = this.biometricDeviceState.getCamaraActual();
         if (cam && cam.ip && ctx && !this.cargandoSnapshotTracker) {
           this.cargandoSnapshotTracker = true;
@@ -232,14 +280,25 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
           };
           img.onerror = () => {
             this.cargandoSnapshotTracker = false;
-            this.faceDetectado = false;
-            this.faceBox = null;
+            this.cuadrosSinRostro++;
+            if (this.cuadrosSinRostro >= 4) {
+              this.faceDetectado = false;
+              this.faceBox = null;
+            }
           };
           img.src = url;
           return;
         }
       }
-    }, 300);
+    }, 280);
+  }
+
+  private ejecutarAnalisisCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D | null, videoEl: HTMLVideoElement): void {
+    if (!ctx) return;
+    canvas.width = 160;
+    canvas.height = 120;
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    this.analizarRostroEnCanvas(canvas, ctx);
   }
 
   private cuadrosSinRostro: number = 0;
@@ -248,87 +307,102 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   private analizarRostroEnCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
     try {
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-      let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
-      let countSkinPixels = 0;
+      let sumX = 0;
+      let sumY = 0;
+      let skinCount = 0;
+      const skinPoints: { x: number; y: number }[] = [];
 
-      // Escaneo en resolucion del canvas con discriminador YCbCr + RGB adaptado a webcams
-      for (let y = 0; y < canvas.height; y += 2) {
-        for (let x = 0; x < canvas.width; x += 2) {
+      for (let y = 6; y < canvas.height - 6; y += 2) {
+        for (let x = 6; x < canvas.width - 6; x += 2) {
           const idx = (y * canvas.width + x) * 4;
           const r = imgData[idx];
           const g = imgData[idx + 1];
           const b = imgData[idx + 2];
 
-          // Conversion YCbCr
+          const maxVal = Math.max(r, g, b);
+          const minVal = Math.min(r, g, b);
+          if (maxVal - minVal < 8) continue;
+
           const yVal = 0.299 * r + 0.587 * g + 0.114 * b;
           const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
           const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
 
-          // Discriminador adaptativo de tonalidad de piel facial en diversas condiciones de luz
-          const esPielYCbCr = (cr >= 130 && cr <= 180 && cb >= 75 && cb <= 135 && yVal >= 35 && yVal <= 245);
-          const esPielRGB = (r > 50 && g > 30 && b > 15 && r > g && (r - b) > 10);
+          const esPielYCbCr = (cr >= 130 && cr <= 180 && cb >= 75 && cb <= 135 && yVal >= 25 && yVal <= 245);
+          const esPielRGB = (r > 45 && g > 25 && b > 15 && (r - g) >= 5 && (r - b) >= 6 && Math.abs(r - g) < 100);
 
-          if (esPielYCbCr && esPielRGB) {
-            countSkinPixels++;
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
+          if (esPielYCbCr || esPielRGB) {
+            skinCount++;
+            sumX += x;
+            sumY += y;
+            skinPoints.push({ x, y });
           }
         }
       }
 
-      const totalPixelsEvaluados = (canvas.width / 2) * (canvas.height / 2);
-      const density = countSkinPixels / totalPixelsEvaluados;
+      if (skinCount >= 20) {
+        const centerX = sumX / skinCount;
+        const centerY = sumY / skinCount;
 
-      // Filtro de presencia: requiere masa facial coherente (densidad de piel entre 2.5% y 75%)
-      if (countSkinPixels >= 35 && density >= 0.025 && density <= 0.75 && maxX > minX && maxY > minY) {
-        let rawWidth = ((maxX - minX) / canvas.width) * 100;
-        let rawHeight = ((maxY - minY) / canvas.height) * 100;
-        let rawLeft = (minX / canvas.width) * 100;
-        let rawTop = (minY / canvas.height) * 100;
+        let varX = 0;
+        let varY = 0;
+        for (let i = 0; i < skinPoints.length; i++) {
+          const dx = skinPoints[i].x - centerX;
+          const dy = skinPoints[i].y - centerY;
+          varX += dx * dx;
+          varY += dy * dy;
+        }
+        const stdX = Math.sqrt(varX / skinCount);
+        const stdY = Math.sqrt(varY / skinCount);
 
-        // Proporcion antropometrica facial: alto/ancho entre 0.85 y 1.90
-        const ratioAspecto = (maxY - minY) / Math.max(1, (maxX - minX));
+        let boxW = Math.max(20, Math.min(60, Math.round((stdX * 2.8 / canvas.width) * 100)));
+        let boxH = Math.max(25, Math.min(75, Math.round((stdY * 3.2 / canvas.height) * 100)));
 
-        if (rawWidth >= 10 && rawWidth <= 85 && rawHeight >= 12 && rawHeight <= 90 && ratioAspecto >= 0.85 && ratioAspecto <= 1.90) {
-          const faceWidth = Math.min(Math.max(rawWidth, 18), 75);
-          const faceHeight = Math.min(faceWidth * 1.25, 80);
+        let boxLeft = Math.round((centerX / canvas.width) * 100 - (boxW / 2));
+        let boxTop = Math.round((centerY / canvas.height) * 100 - (boxH / 2) - 2);
 
-          let centerX = rawLeft + (rawWidth / 2);
-          let calculatedLeft = centerX - (faceWidth / 2);
-          let calculatedTop = Math.max(2, rawTop);
+        if (this.esModoEspejo && !this.esCamaraIpActiva) {
+          boxLeft = 100 - (boxLeft + boxW);
+        }
 
-          if (this.esModoEspejo && !this.esCamaraIpActiva) {
-            calculatedLeft = 100 - (calculatedLeft + faceWidth);
-          }
+        boxLeft = Math.max(2, Math.min(95 - boxW, boxLeft));
+        boxTop = Math.max(2, Math.min(95 - boxH, boxTop));
 
-          this.cuadrosConRostroConsecutivos++;
-          this.cuadrosSinRostro = 0;
+        this.cuadrosConRostroConsecutivos++;
+        this.cuadrosSinRostro = 0;
 
-          // Activacion dinamica del recuadro de rostro
+        if (this.faceBox) {
           this.faceBox = {
-            top: Math.max(2, Math.min(85, Math.round(calculatedTop))),
-            left: Math.max(2, Math.min(88, Math.round(calculatedLeft))),
-            width: Math.round(faceWidth),
-            height: Math.round(faceHeight)
+            top: Math.round(this.faceBox.top * 0.35 + boxTop * 0.65),
+            left: Math.round(this.faceBox.left * 0.35 + boxLeft * 0.65),
+            width: Math.round(this.faceBox.width * 0.35 + boxW * 0.65),
+            height: Math.round(this.faceBox.height * 0.35 + boxH * 0.65)
           };
-          this.faceDetectado = true;
-          this.faceDetected.emit({ faceBox: this.faceBox });
-          return;
+        } else {
+          this.faceBox = {
+            top: boxTop,
+            left: boxLeft,
+            width: boxW,
+            height: boxH
+          };
         }
+
+        this.faceDetectado = true;
+        this.faceDetected.emit({ faceBox: this.faceBox });
+        return;
       }
 
-      // Si no hay rostro, retirar tras tolerancia
       this.cuadrosSinRostro++;
       this.cuadrosConRostroConsecutivos = Math.max(0, this.cuadrosConRostroConsecutivos - 1);
-      if (this.cuadrosSinRostro >= 2) {
+      if (this.cuadrosSinRostro >= 4) {
         this.faceDetectado = false;
         this.faceBox = null;
       }
     } catch (e) {
-      this.faceDetectado = false;
-      this.faceBox = null;
+      this.cuadrosSinRostro++;
+      if (this.cuadrosSinRostro >= 4) {
+        this.faceDetectado = false;
+        this.faceBox = null;
+      }
       this.cuadrosConRostroConsecutivos = 0;
     }
   }
@@ -483,7 +557,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Inicia el Asistente Interactivo de Captura Multi-Ángulo (Movimiento de cabeza)
+   * Inicia el Asistente Interactivo de Captura Multi-Angulo (Movimiento de cabeza)
    */
   public iniciarAsistenteMultiAngulo(): void {
     this.fotogramasColeccion = [];
@@ -515,14 +589,14 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
       this.cuentaRegresivaSegundos--;
       if (this.cuentaRegresivaSegundos <= 0) {
         clearInterval(this.autoCapturaTimer);
-        // Disparar captura para el ángulo actual
+        // Disparar captura para el angulo actual
         this.capturarFotograma();
       }
     }, 1000);
   }
 
   private registrarPoseEnColeccion(fotoUrl: string, vector: string): void {
-    const poseActual = this.poses[this.pasoPoseActualIndex] || { clave: `POSE_${this.fotogramasColeccion.length + 1}`, label: `Ángulo ${this.fotogramasColeccion.length + 1}` };
+    const poseActual = this.poses[this.pasoPoseActualIndex] || { clave: `POSE_${this.fotogramasColeccion.length + 1}`, label: `Angulo ${this.fotogramasColeccion.length + 1}` };
     
     // Si ya existe la pose, actualizarla, sino agregarla
     const idx = this.fotogramasColeccion.findIndex(p => p.pose === poseActual.clave);
@@ -777,7 +851,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Sonido de obturador de cámara (fotograma facial)
+   * Sonido de obturador de camara (fotograma facial)
    */
   private reproducirSonidoCamara(): void {
     try {
@@ -803,7 +877,7 @@ export class BiometricCaptureComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Sonido de confirmación biométrica de alta frecuencia (beep de sensor Suprema)
+   * Sonido de confirmacion biometrica de alta frecuencia (beep de sensor Suprema)
    */
   private reproducirSonidoHuella(): void {
     try {

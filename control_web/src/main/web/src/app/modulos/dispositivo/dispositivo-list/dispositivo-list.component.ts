@@ -268,8 +268,14 @@ export class DispositivoListComponent implements OnInit, OnDestroy {
     );
     if (confirmado) {
       this.dispositivoService.deleteDispositivo(id).subscribe({
-        next: () => this.reloadData(),
-        error: (err) => console.error('Error al eliminar dispositivo:', err)
+        next: () => {
+          this.reloadData();
+          this.alertModal.success('Dispositivo eliminado exitosamente.', 'Dispositivo Eliminado');
+        },
+        error: (err) => {
+          console.error('Error al eliminar dispositivo:', err);
+          this.alertModal.error('No se pudo eliminar el dispositivo.', 'Error al Eliminar');
+        }
       });
     }
   }

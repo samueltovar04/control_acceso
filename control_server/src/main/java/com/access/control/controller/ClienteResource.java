@@ -232,9 +232,6 @@ public class ClienteResource {
     @Transactional
     public Response cancelarRenovacion(@PathParam("id") Long id) {
         Cliente cliente = clienteRepository.findById(id);
-        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
-            cliente = clienteRepository.listAll().get(0);
-        }
         if (cliente == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
         }
@@ -247,7 +244,7 @@ public class ClienteResource {
         res.put("estadoSuscripcion", "CANCELACION_PROGRAMADA");
         res.put("autoRenovar", false);
         res.put("fechaVencimientoMembresia", cliente.getFechaVencimientoMembresia());
-        res.put("mensaje", "Renovación automática desactivada. Acceso garantizado hasta la fecha de vencimiento.");
+        res.put("mensaje", "Renovacion automatica desactivada. Acceso garantizado hasta la fecha de vencimiento.");
         return Response.ok(res).build();
     }
 
@@ -256,9 +253,6 @@ public class ClienteResource {
     @Transactional
     public Response cerrarSesionMovil(@PathParam("id") Long id) {
         Cliente cliente = clienteRepository.findById(id);
-        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
-            cliente = clienteRepository.listAll().get(0);
-        }
         if (cliente == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
         }
@@ -280,7 +274,7 @@ public class ClienteResource {
         Map<String, Object> res = new HashMap<>();
         res.put("clienteId", cliente.getId());
         res.put("sesionMovilActiva", false);
-        res.put("mensaje", "Sesión móvil cerrada exitosamente por el administrador.");
+        res.put("mensaje", "Sesion movil cerrada exitosamente por el administrador.");
         return Response.ok(res).build();
     }
 
@@ -289,9 +283,6 @@ public class ClienteResource {
     @Transactional
     public Response iniciarSesionMovil(@PathParam("id") Long id) {
         Cliente cliente = clienteRepository.findById(id);
-        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
-            cliente = clienteRepository.listAll().get(0);
-        }
         if (cliente == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
         }
@@ -313,7 +304,7 @@ public class ClienteResource {
         Map<String, Object> res = new HashMap<>();
         res.put("clienteId", cliente.getId());
         res.put("sesionMovilActiva", true);
-        res.put("mensaje", "Sesión móvil activada exitosamente.");
+        res.put("mensaje", "Sesion movil activada exitosamente.");
         return Response.ok(res).build();
     }
 
@@ -322,9 +313,6 @@ public class ClienteResource {
     @Transactional
     public Response reactivarRenovacion(@PathParam("id") Long id) {
         Cliente cliente = clienteRepository.findById(id);
-        if (cliente == null && !clienteRepository.listAll().isEmpty()) {
-            cliente = clienteRepository.listAll().get(0);
-        }
         if (cliente == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Cliente no encontrado")).build();
         }
@@ -336,7 +324,7 @@ public class ClienteResource {
         res.put("clienteId", cliente.getId());
         res.put("estadoSuscripcion", "ACTIVA");
         res.put("autoRenovar", true);
-        res.put("mensaje", "Renovación automática reactivada exitosamente.");
+        res.put("mensaje", "Renovacion automatica reactivada exitosamente.");
         return Response.ok(res).build();
     }
 

@@ -349,7 +349,7 @@
       <div class="modal-body py-4">
         <div *ngIf="promoSeleccionadaConfirmacion() as p">
           <p class="fs-6 mb-2">
-            ¿Esta seguro de <strong [ngClass]="accionConfirmacion() === 'inactivar' ? 'text-danger' : 'text-success'">{{ accionConfirmacion() === 'inactivar' ? 'inactivar' : 'reactivar' }}</strong> la siguiente promocion?
+            Esta seguro de <strong [ngClass]="accionConfirmacion() === 'inactivar' ? 'text-danger' : 'text-success'">{{ accionConfirmacion() === 'inactivar' ? 'inactivar' : 'reactivar' }}</strong> la siguiente promocion?
           </p>
 
           <div class="card bg-light border-0 p-3 mb-3">

@@ -4,8 +4,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { PisoService } from '../../../shared/piso/piso.service';
 import { Piso } from "../../../shared/piso/piso.model";
-
 import { SedeService, Sede } from '../../../shared/sede/sede.service';
+import { AlertModalService } from '../../../shared/services/alert-modal.service';
 
 @Component({
   selector: 'app-editar-piso',
@@ -23,7 +23,8 @@ export class EditarPisoComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private pisoService: PisoService,
-    private sedeService: SedeService
+    private sedeService: SedeService,
+    private alertModal: AlertModalService
   ) { }
 
   ngOnInit() {
@@ -51,13 +52,28 @@ export class EditarPisoComponent implements OnInit {
       this.piso.sedeId = this.piso.sede_id;
     }
     this.pisoService.updatePiso(this.id, this.piso)
-      .subscribe(data => {
-        this.gotoList();
-      }, error => console.error(error));
+      .subscribe({
+        next: () => {
+          this.alertModal.success('Piso actualizado exitosamente.', 'Piso Actualizado');
+          this.gotoList();
+        },
+        error: (error) => {
+          console.error(error);
+          this.alertModal.error('No se pudo actualizar el piso.', 'Error al Actualizar');
+        }
+      });
   }
 
   onSubmit() {
     this.submitted = true;
+    if (!this.piso.piso || !this.piso.piso.trim()) {
+      this.alertModal.warning('Por favor ingrese el numero o nombre del piso.', 'Campo Requerido');
+      return;
+    }
+    if (!this.piso.descripcion || !this.piso.descripcion.trim()) {
+      this.alertModal.warning('Por favor ingrese la descripcion del piso.', 'Campo Requerido');
+      return;
+    }
     this.save();
   }
 

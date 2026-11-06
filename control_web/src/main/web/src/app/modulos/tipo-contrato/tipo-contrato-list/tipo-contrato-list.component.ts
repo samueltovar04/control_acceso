@@ -174,6 +174,7 @@ export class TipoContratoListComponent implements OnInit {
 
   mostrarModal: boolean = false;
   editando: boolean = false;
+  guardando: boolean = false;
   contratoActual: TipoContrato = { contrato: '' };
 
   constructor(
@@ -241,22 +242,40 @@ export class TipoContratoListComponent implements OnInit {
   }
 
   guardarContrato(): void {
-    if (!this.contratoActual.contrato) return;
+    if (this.guardando) return;
+    if (!this.contratoActual.contrato || !this.contratoActual.contrato.trim()) {
+      this.alertModal.warning('Por favor ingresa el nombre de la modalidad de contrato.', 'Campo Requerido');
+      return;
+    }
+    this.contratoActual.contrato = this.contratoActual.contrato.trim();
+    this.guardando = true;
     if (this.editando && this.contratoActual.id) {
       this.tipoContratoService.updateTipoContrato(this.contratoActual.id, this.contratoActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarContratos();
+          this.alertModal.success('Tipo de contrato actualizado exitosamente.', 'Actualizacion Exitosa');
         },
-        error: (err) => console.error('Error al actualizar tipo contrato:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al actualizar tipo contrato:', err);
+          this.alertModal.error('No se pudo actualizar el tipo de contrato.', 'Error al Actualizar');
+        }
       });
     } else {
       this.tipoContratoService.createTipoContrato(this.contratoActual).subscribe({
         next: () => {
+          this.guardando = false;
           this.cerrarModal();
           this.cargarContratos();
+          this.alertModal.success('Tipo de contrato registrado exitosamente.', 'Registro Exitoso');
         },
-        error: (err) => console.error('Error al crear tipo contrato:', err)
+        error: (err) => {
+          this.guardando = false;
+          console.error('Error al crear tipo contrato:', err);
+          this.alertModal.error('No se pudo crear el tipo de contrato.', 'Error al Crear');
+        }
       });
     }
   }
@@ -271,8 +290,14 @@ export class TipoContratoListComponent implements OnInit {
     );
     if (confirmado) {
       this.tipoContratoService.deleteTipoContrato(c.id).subscribe({
-        next: () => this.cargarContratos(),
-        error: (err) => console.error('Error al eliminar tipo contrato:', err)
+        next: () => {
+          this.cargarContratos();
+          this.alertModal.success(`El contrato "${c.contrato}" fue eliminado correctamente.`, 'Contrato Eliminado');
+        },
+        error: (err) => {
+          console.error('Error al eliminar tipo contrato:', err);
+          this.alertModal.error('No se pudo eliminar el tipo de contrato porque esta en uso.', 'Error al Eliminar');
+        }
       });
     }
   }
