@@ -57,18 +57,18 @@ db-migrate:
 DOCKER_BIN ?= PATH="$$PATH:/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin"
 
 suprema-build:
-	@echo "==> Compilando imagen Linux x86_64 del servicio Suprema USB Bridge..."
-	@$(DOCKER_BIN) docker compose build suprema_usb_bridge
+	@echo "==> Verificando dependencias de Suprema USB Bridge..."
+	@chmod +x scripts/suprema_usb_bridge.py 2>/dev/null || true
 
-suprema-up:
-	@echo "==> Iniciando servicio Suprema USB Bridge en contenedor Docker Linux (puerto 8085)..."
+suprema-up: suprema-build
+	@echo "==> Iniciando servicio Suprema USB Bridge en background (puerto 8085)..."
 	@-pkill -f "suprema_usb_bridge.py" 2>/dev/null || true
-	@$(DOCKER_BIN) docker compose up -d suprema_usb_bridge
-	@echo "==> Suprema USB Bridge en línea en contenedor Docker (http://127.0.0.1:8085)."
+	@python3 scripts/suprema_usb_bridge.py > /tmp/suprema_usb_bridge.log 2>&1 &
+	@echo "==> Suprema USB Bridge en linea (http://127.0.0.1:8085)."
 
 suprema-down:
-	@echo "==> Deteniendo contenedor Suprema USB Bridge..."
-	@$(DOCKER_BIN) docker compose stop suprema_usb_bridge
+	@echo "==> Deteniendo servicio Suprema USB Bridge..."
+	@-pkill -f "suprema_usb_bridge.py" 2>/dev/null || true
 	@echo "==> Suprema USB Bridge detenido."
 
 qemu-up:

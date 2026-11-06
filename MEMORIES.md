@@ -1,5 +1,30 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Auditoria de Persistencia CRUD (MySQL y MongoDB) y Eliminacion de Mocks (06-Nov-2026)**:
+  - **Patron de Persistencia Hibrida (Relacional + Documental NoSQL)**:
+    - `MySQL (Panache ORM / @Transactional)`:
+      - Validado que todas las entidades maestras (`Sede`, `Piso`, `Gerencia`, `TipoContrato`, `Dispositivo`, `Cliente`, `Empleado`, `Visita`, `User`, `Membresia`, `Promocion`, `Banco`, `Pago`, `TasaCambio`, `Permisos`) se creen, editen y eliminen bajo transacciones JPA activas.
+      - `MembresiaResource.java`: Creado endpoint `DELETE /api/v1/membresias/{id}` con `@Transactional` que realiza soft-delete (`setActivo(false)`) si existen clientes o suscripciones vinculadas, o borrado fisico si la entidad esta huerfana.
+      - `SedesController.java`: Integrada proteccion preventiva de integridad referencial. Si existen pisos o usuarios asociados, aborta con `409 CONFLICT` indicando las dependencias en lugar de fallar con 500.
+      - `PisosController.java`: Valida dispositivos vinculados al piso antes del borrado respondiendo `409 CONFLICT`.
+      - `GerenciasController.java`: Valida empleados asignados antes del borrado respondiendo `409 CONFLICT`.
+      - `ClienteResource.java`: En `deleteCliente()`, si el cliente posee historial contable en `pagos`, realiza soft-delete (`setEstadoSuscripcion("INACTIVO")`), limpia `pisosPermitidos` y previene violaciones de Foreign Key.
+      - `EmpleadosServiceImpl.java` y `VisitasServiceImpl.java`: Desvinculacion explicita de `pisosPermitidos` y `User` antes de la eliminacion fisica en MySQL.
+    - `MongoDB (Panache Mongo / Standalone)`:
+      - `BitacoraEventoPaso`: Persistencia directa en coleccion `bitacora_eventos_paso` sin FKs.
+      - `AuditoriaAcceso`: Persistencia de eventos de seguridad desacoplada de transaccion JTA (`TxType.NOT_SUPPORTED`) en coleccion `auditoria_accesos`.
+      - `SesionActiva`: Persistencia y revocacion en coleccion `sesiones_activas`.
+      - `Telemetria`: Ingestion de sensores en series temporales de MongoDB (`telemetria_signos_vitales`).
+    - `Cero Mocks y Cero Simulaciones`:
+      - `biometria-facial.component.ts`: Eliminado el fallback simulado `this.activarReleApertura('Pulso de apertura simulado con exito.')`. Ahora reporta transparentemente la indisponibilidad de hardware o red mediante `alertModal.error()`.
+  - **Bateria de Pruebas Automatizadas de Persistencia**:
+    - Creada suite `tests/run_crud_persistence_tests.js` con 37 validaciones automatizadas (MySQL transaccional, MongoDB desacoplado, 0% mocks, manejo 409 de foreign keys y codificacion ASCII estricta).
+    - Resultado: **PASSED=37 | FAILED=0**.
+    - Re-ejecucion de suite `tests/run_security_rbac_tests.js`: **PASSED=46 | FAILED=0**.
+    - Re-ejecucion de suite `tests/run_frontend_tests.js`: **PASSED=65 | FAILED=0**.
+    - Total de pruebas en verde: **148 / 148 PASSED**.
+
+
 - **Auditoria de Seguridad por Modulos, Reles Fisicos, GraphQL y Blindaje RBAC (06-Nov-2026)**:
   - **Patron de Defensa en Profundidad y Principio de Menor Privilegio**:
     - `RbacDataProtectionFilter.java`:

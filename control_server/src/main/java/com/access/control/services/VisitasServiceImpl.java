@@ -106,7 +106,13 @@ public class VisitasServiceImpl implements VisitasService {
     @Transactional
     public boolean deleteVisita(Visita visita) {
         if (visita != null && visita.getId() != null) {
-            return visitaRepository.deleteById(visita.getId());
+            Visita v = visitaRepository.findById(visita.getId());
+            if (v != null) {
+                if (v.getPisosPermitidos() != null) {
+                    v.getPisosPermitidos().clear();
+                }
+                return visitaRepository.deleteById(v.getId());
+            }
         }
         return false;
     }

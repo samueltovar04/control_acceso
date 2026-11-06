@@ -16,6 +16,12 @@ public class SedesController {
     @Inject
     SedeService sedeService;
 
+    @Inject
+    com.access.control.repository.PisoRepository pisoRepository;
+
+    @Inject
+    com.access.control.repository.UserRepository userRepository;
+
     @GET
     public List<Sede> getAllSedes() {
         return sedeService.getListSedes();
@@ -51,9 +57,19 @@ public class SedesController {
     @Path("/{id}")
     public Response deleteSede(@PathParam("id") Long id) {
         Sede s = sedeService.getSedeById(id);
-        if (s != null && sedeService.deleteSede(s)) {
+        if (s == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        long pisosCount = pisoRepository.count("sede.id = ?1", id);
+        long usersCount = userRepository.count("sede.id = ?1", id);
+        if (pisosCount > 0 || usersCount > 0) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(java.util.Map.of("error", "No se puede eliminar la sede: tiene " + pisosCount + " pisos y " + usersCount + " usuarios asociados. Reasigne o elimine primero las dependencias."))
+                    .build();
+        }
+        if (sedeService.deleteSede(s)) {
             return Response.noContent().build();
         }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 }

@@ -200,7 +200,15 @@ public class EmpleadosServiceImpl implements EmpleadosService {
     @Transactional
     public boolean deleteEmpleado(Empleado empleado) {
         if (empleado != null && empleado.getId() != null) {
-            return empleadoRepository.deleteById(empleado.getId());
+            Empleado e = empleadoRepository.findById(empleado.getId());
+            if (e != null) {
+                if (e.getPisosPermitidos() != null) {
+                    e.getPisosPermitidos().clear();
+                }
+                e.setUser(null);
+                empleadoRepository.persist(e);
+                return empleadoRepository.deleteById(e.getId());
+            }
         }
         return false;
     }

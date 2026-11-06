@@ -7,6 +7,7 @@ import { Subject, Observable, Subscription } from 'rxjs';
 import jsQR from 'jsqr';
 import { SedeStateService } from '../../shared/sede/sede-state.service';
 import { BiometricDeviceStateService, DispositivoBiometrico } from '../../shared/dispositivo/biometric-device-state.service';
+import { AlertModalService } from '../../shared/services/alert-modal.service';
 
 export interface DispositivoItem {
   id: number;
@@ -80,7 +81,8 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private sedeStateService: SedeStateService,
-    public biometricDeviceState: BiometricDeviceStateService
+    public biometricDeviceState: BiometricDeviceStateService,
+    private alertModal: AlertModalService
   ) {}
 
   ngOnInit(): void {
@@ -615,8 +617,10 @@ export class BiometriaFacialComponent implements OnInit, OnDestroy {
         const nombreTorniquete = dispo.nombre || dispo.descripcion || 'Torniquete';
         this.agregarLog(`Apertura fisica enviada a ${nombreTorniquete} (${dispo.ip})`, 'info');
       },
-      error: () => {
-        this.activarReleApertura('Pulso de apertura simulado con exito.');
+      error: (err) => {
+        const msg = (err && err.error && err.error.error) ? err.error.error : 'Dispositivo no alcanzable o acceso denegado.';
+        this.agregarLog(`Error al accionar torniquete: ${msg}`, 'danger');
+        this.alertModal.error(`No se pudo enviar el pulso al dispositivo: ${msg}`, 'Fallo en Torniquete');
       }
     });
   }

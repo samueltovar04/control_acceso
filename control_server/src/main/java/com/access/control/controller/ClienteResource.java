@@ -210,10 +210,24 @@ public class ClienteResource {
     @Path("/{id}")
     @Transactional
     public Response deleteCliente(@PathParam("id") Long id) {
-        boolean deleted = clienteRepository.deleteById(id);
-        if (!deleted) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        long pagosCount = pagoRepository.count("cliente.id = ?1", id);
+        if (pagosCount > 0) {
+            cliente.setEstadoSuscripcion("INACTIVO");
+            cliente.setAutoRenovar(false);
+            if (cliente.getPisosPermitidos() != null) {
+                cliente.getPisosPermitidos().clear();
+            }
+            clienteRepository.persist(cliente);
+            return Response.ok(Map.of("message", "Cliente inactivado correctamente para preservar historial contable.")).build();
+        }
+        if (cliente.getPisosPermitidos() != null) {
+            cliente.getPisosPermitidos().clear();
+        }
+        clienteRepository.delete(cliente);
         return Response.noContent().build();
     }
 

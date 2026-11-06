@@ -16,6 +16,9 @@ public class PisosController {
     @Inject
     PisoService pisoService;
 
+    @Inject
+    com.access.control.repository.DispositivoRepository dispositivoRepository;
+
     @GET
     public List<Piso> getAllPisos(@QueryParam("sedeId") Long sedeId) {
         if (sedeId != null) {
@@ -54,9 +57,18 @@ public class PisosController {
     @Path("/{id}")
     public Response deletePiso(@PathParam("id") Long id) {
         Piso p = pisoService.getPisoById(id);
-        if (p != null && pisoService.deletePiso(p)) {
+        if (p == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        long dispoCount = dispositivoRepository.count("piso.id = ?1", id);
+        if (dispoCount > 0) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(java.util.Map.of("error", "No se puede eliminar el piso: tiene " + dispoCount + " dispositivos asociados. Reasigne o elimine primero los dispositivos."))
+                    .build();
+        }
+        if (pisoService.deletePiso(p)) {
             return Response.noContent().build();
         }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 }

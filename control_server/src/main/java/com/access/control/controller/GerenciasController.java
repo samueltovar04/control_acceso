@@ -16,6 +16,9 @@ public class GerenciasController {
     @Inject
     GerenciaService gerenciaService;
 
+    @Inject
+    com.access.control.repository.EmpleadoRepository empleadoRepository;
+
     @GET
     public List<Gerencia> getAllGerencias() {
         return gerenciaService.getListGerencias();
@@ -51,9 +54,18 @@ public class GerenciasController {
     @Path("/{id}")
     public Response deleteGerencia(@PathParam("id") Long id) {
         Gerencia g = gerenciaService.getGerenciaById(id);
-        if (g != null && gerenciaService.deleteGerencia(g)) {
+        if (g == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        long empCount = empleadoRepository.count("gerencia.id = ?1", id);
+        if (empCount > 0) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(java.util.Map.of("error", "No se puede eliminar la gerencia: tiene " + empCount + " empleados asociados. Reasigne o elimine primero los empleados."))
+                    .build();
+        }
+        if (gerenciaService.deleteGerencia(g)) {
             return Response.noContent().build();
         }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
 }

@@ -88,6 +88,16 @@ services:
     depends_on:
       - access_control_backend
 
+  suprema_usb_bridge:
+    image: python:3.10-alpine
+    container_name: suprema_usb_bridge
+    restart: always
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./scripts:/scripts:ro
+    command: python3 -u /scripts/suprema_usb_bridge.py
+
 volumes:
   postgres_data:
   mongodb_data:

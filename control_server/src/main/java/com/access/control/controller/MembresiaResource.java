@@ -27,6 +27,9 @@ public class MembresiaResource {
     @Inject
     SuscripcionClienteRepository suscripcionRepository;
 
+    @Inject
+    com.access.control.repository.ClienteRepository clienteRepository;
+
     @GET
     public List<Membresia> getMembresiasActivas() {
         return membresiaRepository.findActivas();
@@ -62,6 +65,24 @@ public class MembresiaResource {
             entity.setActivo(updated.getActivo());
         }
         return Response.ok(entity).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response deleteMembresia(@PathParam("id") Long id) {
+        Membresia entity = membresiaRepository.findById(id);
+        if (entity == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        long clientesAsociados = clienteRepository.count("membresiaActual.id = ?1", id);
+        long suscripcionesAsociadas = suscripcionRepository.count("membresia.id = ?1", id);
+        if (clientesAsociados > 0 || suscripcionesAsociadas > 0) {
+            entity.setActivo(false);
+            return Response.ok(java.util.Map.of("message", "Membresia inactivada correctamente por tener historico de clientes o suscripciones.")).build();
+        }
+        membresiaRepository.delete(entity);
+        return Response.noContent().build();
     }
 
     @GET
