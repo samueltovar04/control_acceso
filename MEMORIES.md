@@ -1,5 +1,32 @@
 # MEMORIES.md - Persistent Memory Protocol
 
+- **Correccion de Etiqueta Dinamica de Rol en Topbar (06-Nov-2026)**:
+  - **Causa Raiz**: En `topbar.component.html`, la etiqueta secundaria de perfil estaba fijada de forma estatica con el texto `<small ...>superadmin</small>`, independientemente del usuario o rol autenticado.
+  - **Solucion Implementada**:
+    - `topbar.component.ts`: Creado getter `rolDisplay` que lee reactivamente `authService.currentUserValue.role` y mapea el rol al identificador en minusculas correspondiente (`admin`, `superadmin`, `contable`, `analista`, `recepcion`, `seguridad`, `operador`, `cliente`).
+    - `topbar.component.ts`: Creados getters `usuarioNombre` y `usuarioInicial` para actualizar dinamicamente el nombre y la letra del avatar sin depender de fallbacks estaticos.
+    - `topbar.component.html`: Sustituido el texto quemado `superadmin` por `{{ rolDisplay }}` y `{{ usuarioActivo.charAt(0) }}` por `{{ usuarioInicial }}`.
+    - Desplegado y compilado en produccion (`13.140.162.113`) en el contenedor `access_control_frontend`.
+
+
+- **Diagnostico y Resolucion de Falla de Login en Servidor de Produccion (13.140.162.113) (06-Nov-2026)**:
+  - **Causa Raiz en Servidor**:
+    - El contenedor `access_control_backend` se encontraba en bucle de reinicio infinito (`Restarting (1)`).
+    - Causa del crash: En `docker-compose.yml` del servidor se habia configurado `QUARKUS_DATASOURCE_PASSWORD: admin`, pero el volumen persistente de PostgreSQL (`postgres_data`) habia sido inicializado originalmente con `adminpassword`.
+    - La directiva `pg_hba.conf` exige autenticacion `scram-sha-256` para conexiones entre contenedores. Quarkus fallaba al autenticarse: `FATAL: password authentication failed for user "admin"`.
+    - Al estar caido el backend Quarkus, el proxy Nginx en `acceso.andessistemas.com` respondia `502 Bad Gateway` en `/api/v1/auth/login`.
+  - **Acciones Correctivas**:
+    - Ejecutado `ALTER USER admin WITH PASSWORD 'admin';` directamente en el cluster de PostgreSQL en el servidor remoto.
+    - Verificada autenticacion SCRAM sobre la IP de red interna del contenedor (`172.21.0.4`).
+    - Reiniciado el contenedor `access_control_backend`.
+    - `DatabaseMigrationBean` ejecuto la inicializacion de usuarios: `Usuario superadmin verificado y actualizado con BCrypt` y `Usuario admin verificado y actualizado`.
+  - **Pruebas de Validacion en Produccion (`https://acceso.andessistemas.com`)**:
+    - `POST /api/v1/auth/login` con `superadmin` / `Admin123!`: `HTTP/1.1 200 OK` (Rol `ROLE_SUPER_ADMIN`, `clienteId: 0`).
+    - `POST /api/v1/auth/login` con `admin` / `Admin123!`: `HTTP/1.1 200 OK` (Rol `ROLE_ADMIN`, `clienteId: 0`).
+    - `GET /api/v1/membresias` con JWT emitido: `HTTP/1.1 200 OK`.
+    - `GET /api/v1/membresias/promociones?incluirInactivas=true` con JWT emitido: `HTTP/1.1 200 OK`.
+
+
 - **Diagnostico y Resolucion de Login de Administradores y Prevencion de Degeneracion de Roles (06-Nov-2026)**:
   - **Causa Raiz Identificada**:
     - Usuario `admin` no existia en la tabla `users` de PostgreSQL (unicamente existia `superadmin` y cuentas cliente/empleado de prueba).

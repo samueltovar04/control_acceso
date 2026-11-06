@@ -76,6 +76,54 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.subs.forEach(s => s.unsubscribe());
   }
 
+  get rolDisplay(): string {
+    const user = this.authService.currentUserValue;
+    if (!user || !user.role) {
+      return 'usuario';
+    }
+    const r = user.role.toUpperCase().replace('ROLE_', '');
+    switch (r) {
+      case 'SUPER_ADMIN':
+      case 'SUPERADMIN':
+        return 'superadmin';
+      case 'ADMIN':
+        return 'admin';
+      case 'CONTABLE':
+      case 'CONTADOR':
+        return 'contable';
+      case 'ANALISTA':
+        return 'analista';
+      case 'RECEPCION':
+      case 'RECEPCIONISTA':
+        return 'recepcion';
+      case 'SEGURIDAD':
+      case 'OFICIAL':
+        return 'seguridad';
+      case 'OPERACION':
+      case 'OPERADOR':
+        return 'operador';
+      case 'CLIENTE':
+        return 'cliente';
+      case 'EMPLEADO':
+        return 'empleado';
+      default:
+        return r.toLowerCase();
+    }
+  }
+
+  get usuarioNombre(): string {
+    const u = this.authService.currentUserValue;
+    if (u && u.username) {
+      return u.username;
+    }
+    return this.usuarioActivo;
+  }
+
+  get usuarioInicial(): string {
+    const name = this.usuarioNombre;
+    return (name && name.length > 0) ? name.charAt(0).toUpperCase() : 'U';
+  }
+
   cerrarSesion(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

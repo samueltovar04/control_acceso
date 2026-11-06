@@ -84,11 +84,11 @@
       <div class="user-profile-chip pill-white d-flex align-items-center gap-2 shadow-sm">
         <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center shadow-sm"
              style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 800; background: #0284c7; color: #ffffff;">
-          {{ usuarioActivo.charAt(0).toUpperCase() }}
+          {{ usuarioInicial }}
         </div>
         <div class="d-none d-sm-block me-1 text-start">
-          <div class="small fw-bold text-white lh-1 topbar-user-name">{{ usuarioActivo }}</div>
-          <small class="text-info fw-bold topbar-role-text" style="font-size: 0.68rem;">superadmin</small>
+          <div class="small fw-bold text-white lh-1 topbar-user-name">{{ usuarioNombre }}</div>
+          <small class="text-info fw-bold topbar-role-text" style="font-size: 0.68rem;">{{ rolDisplay }}</small>
         </div>
       </div>
       <button class="btn btn-sm d-flex align-items-center gap-1 fw-bold px-2 px-md-3 py-1.5 shadow-sm rounded-pill"
